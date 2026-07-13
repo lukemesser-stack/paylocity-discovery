@@ -435,6 +435,35 @@
     color: var(--competitor);
   }
 
+  .pages-cell { max-width: 250px; }
+
+  .page-line {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.7;
+  }
+
+  .page-date {
+    color: var(--text-dim);
+    margin-right: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .page-link {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .page-link:hover { text-decoration: underline; }
+
+  .page-more {
+    color: var(--text-dim);
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
   .kw-tag.contact {
     background: rgba(34, 197, 94, 0.15);
     color: var(--green);
@@ -442,9 +471,7 @@
 
   /* ── Upload Zone ── */
   .upload-zone {
-    margin-top: 32px;
-    border-top: 1px solid var(--border);
-    padding-top: 32px;
+    margin-bottom: 20px;
   }
 
   .upload-toggle {
@@ -640,23 +667,6 @@
 <!-- Main Content -->
 <main>
   <h2 class="section-title">📊 Account Intelligence</h2>
-  <div class="table-container">
-    <table id="accountTable">
-      <thead>
-        <tr>
-          <th data-col="company" onclick="sortBy('company')" style="cursor:pointer;">Company</th>
-          <th data-col="stage" onclick="sortBy('stage')" style="cursor:pointer;">Stage</th>
-          <th data-col="fit" onclick="sortBy('fit')" style="cursor:pointer;">Fit</th>
-          <th data-col="signal_count" onclick="sortBy('signal_count')" style="cursor:pointer;">Signals</th>
-          <th data-col="web_visits" onclick="sortBy('web_visits')" style="cursor:pointer;">Web Visits</th>
-          <th>Keywords</th>
-          <th data-col="_latest_date" onclick="sortBy('_latest_date')" style="cursor:pointer;">Latest</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-  </div>
 
   <!-- Upload Zone -->
   <div class="upload-zone" id="uploadZone">
@@ -684,6 +694,26 @@
       </div>
     </div>
   </div>
+
+  <div class="table-container">
+    <table id="accountTable">
+      <thead>
+        <tr>
+          <th data-col="company" onclick="sortBy('company')" style="cursor:pointer;">Company</th>
+          <th data-col="stage" onclick="sortBy('stage')" style="cursor:pointer;">Stage</th>
+          <th data-col="fit" onclick="sortBy('fit')" style="cursor:pointer;">Fit</th>
+          <th data-col="signal_count" onclick="sortBy('signal_count')" style="cursor:pointer;">Signals</th>
+          <th data-col="web_visits" onclick="sortBy('web_visits')" style="cursor:pointer;">Web Visits</th>
+          <th>Pages Visited</th>
+          <th>Keywords</th>
+          <th data-col="_latest_date" onclick="sortBy('_latest_date')" style="cursor:pointer;">Latest</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
 </main>
 
 <!-- Footer -->
@@ -852,7 +882,8 @@ function renderTable() {
       <td><span class="badge stage-badge">${escHtml(acct.stage || '?')}</span></td>
       <td><span class="badge ${fitBadgeClass(acct.fit)}">${escHtml(acct.fit || '?')}</span></td>
       <td><strong>${acct.signal_count || 0}</strong></td>
-      <td>${acct.web_visits || 0}</td>
+      <td><strong>${acct.web_visits || 0}</strong></td>
+      <td class="pages-cell">${renderPagesCell(acct)}</td>
       <td>${(acct.keywords || []).slice(0, 2).map(k => `<span class="kw-tag">${escHtml(k)}</span>`).join('')}${(acct.keywords || []).length > 2 ? `<span class="kw-tag">+${(acct.keywords || []).length - 2}</span>` : ''}</td>
       <td>${fmtDate(acct._latest_date)}</td>
       <td>${getAction(acct)}</td>
@@ -865,7 +896,7 @@ function renderTable() {
     expanded.id = expandedId;
     expanded.style.display = 'none';
     expanded.innerHTML = `
-      <td colspan="8">
+      <td colspan="9">
         <span class="section-label">Keywords</span>
         <div class="content-list">${(acct.keywords || []).map(k => `<span class="kw-tag">${escHtml(k)}</span>`).join('')}${(acct.competitor_keywords || []).length ? `<br/>${(acct.competitor_keywords || []).map(k => `<span class="kw-tag comp">${escHtml(k)}</span>`).join('')}` : ''}</div>
         ${acct.contacts && acct.contacts.length ? `<span class="section-label" style="margin-top:12px;">Contacts</span><div class="content-list"><ul>${acct.contacts.map(c => `<li><span class="kw-tag contact">${escHtml(c.name || '?')}</span> ${escHtml(c.title || '(no title)')}</li>`).join('')}</ul></div>` : ''}
@@ -898,6 +929,27 @@ function fitBadgeClass(fit) {
 function escHtml(s) {
   const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};
   return String(s == null ? '' : s).replace(/[&<>"']/g, m => map[m]);
+}
+
+function pagePath(u) {
+  const href = u.decoded || u.raw || '';
+  try {
+    const p = new URL(href).pathname;
+    return (p === '/' || p === '') ? '(homepage)' : p;
+  } catch (e) {
+    return href;
+  }
+}
+
+function renderPagesCell(acct) {
+  const urls = acct.decoded_urls || [];
+  if (!urls.length) return '<span style="color:var(--text-dim);">—</span>';
+  const recent = urls.slice(-4).reverse(); // urls are date-sorted ascending
+  const lines = recent.map(u =>
+    `<div class="page-line"><span class="page-date">${fmtDate(u.date)}</span><a class="page-link" href="${escHtml(u.decoded || u.raw || '#')}" target="_blank" rel="noopener">${escHtml(pagePath(u))}</a></div>`
+  ).join('');
+  const more = urls.length > recent.length ? `<div class="page-more">+${urls.length - recent.length} more</div>` : '';
+  return lines + more;
 }
 
 function urlLabel(u) {
