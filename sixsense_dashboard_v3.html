@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6sense Intelligence · data through 2026-07-12</title>
+<!-- Uses system/UI font stacks for consistency, speed, and offline portability -->
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface-2: #181c23;
+    --surface-3: #1e2330;
+    --border: #232938;
+    --border-bright: #2d3448;
+    --text-primary: #e8eaf0;
+    --text-secondary: #8891a8;
+    --text-dim: #4a5168;
+    --accent: #4f6ef7;
+    --accent-glow: rgba(79,110,247,0.18);
+    --accent-2: #22d3ee;
+    --hot: #f97316;
+    --hot-glow: rgba(249,115,22,0.15);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --yellow: #eab308;
+    --yellow-dim: rgba(234,179,8,0.12);
+    --competitor: #f97316;
+    --competitor-bg: rgba(249,115,22,0.12);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Scanline texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.04) 2px,
+      rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px 16px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(79,110,247,0.06) 0%, transparent 100%);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: ui-sans-serif, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: #fff;
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  .header-title {
+    font-family: ui-sans-serif, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+  }
+
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+  }
+
+  .save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 10px;
+  }
+
+  .save-indicator.saved {
+    color: var(--green);
+    border-color: rgba(34,197,94,0.3);
+    background: rgba(34,197,94,0.06);
+  }
+
+  .save-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .date-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+  }
+
+  .date-range span {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* ── Main Grid ── */
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 24px 32px;
+  }
+
+  /* ── Stat Cards ── */
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stat-card:hover {
+    border-color: var(--border-bright);
+    background: var(--surface-2);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .stat-unit {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: -4px;
+  }
+
+  /* ── Main Content ── */
+  main {
+    padding: 0 32px 32px 32px;
+  }
+
+  .section-title {
+    font-family: ui-sans-serif, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Table ── */
+  .table-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead {
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border-bright);
+  }
+
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  th:hover {
+    background: rgba(79,110,247,0.06);
+  }
+
+  th.sorted {
+    color: var(--accent);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover {
+    background: var(--surface-2);
+  }
+
+  tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  td {
+    padding: 12px 16px;
+    vertical-align: top;
+    color: var(--text-primary);
+  }
+
+  .company-name {
+    font-weight: 600;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge.hot {
+    background: var(--hot-glow);
+    color: var(--hot);
+  }
+
+  .badge.strong {
+    background: var(--green-dim);
+    color: var(--green);
+  }
+
+  .badge.mod {
+    background: var(--yellow-dim);
+    color: var(--yellow);
+  }
+
+  .badge.weak {
+    background: rgba(107, 114, 128, 0.12);
+    color: var(--text-secondary);
+  }
+
+  .stage-badge {
+    background: rgba(79,110,247,0.12);
+    color: var(--accent);
+  }
+
+  .action-badge {
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    margin-top: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .action-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .action-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.4;
+  }
+
+  .action-why {
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: block;
+  }
+
+  .action-p1 {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+  }
+
+  .action-p2 {
+    background: var(--hot-glow);
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    color: var(--hot);
+  }
+
+  .action-p3 {
+    background: var(--green-dim);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: var(--green);
+  }
+
+  .action-p4 {
+    background: rgba(107, 114, 128, 0.06);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+    color: var(--text-secondary);
+  }
+
+  /* ── Expandable Row ── */
+  .expander {
+    cursor: pointer;
+    user-select: none;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  .expander:hover {
+    color: var(--accent);
+  }
+
+  .expand-icon {
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+
+  .expand-icon.open {
+    transform: rotate(90deg);
+  }
+
+  .expanded-content {
+    display: none;
+  }
+
+  .expanded-content.open {
+    display: contents;
+  }
+
+  .expanded-row {
+    background: var(--surface-3);
+  }
+
+  .expanded-row td {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .expanded-row td:first-child {
+    padding-left: 40px;
+  }
+
+  .section-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    display: block;
+  }
+
+  .content-list {
+    font-size: 12px;
+    line-height: 1.6;
+    margin-top: 4px;
+    color: var(--text-primary);
+  }
+
+  .content-list li {
+    margin-left: 18px;
+  }
+
+  .kw-tag {
+    display: inline-block;
+    background: rgba(79,110,247,0.15);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+  }
+
+  .kw-tag.comp {
+    background: var(--competitor-bg);
+    color: var(--competitor);
+  }
+
+  .kw-tag.contact {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--green);
+  }
+
+  /* ── Upload Zone ── */
+  .upload-zone {
+    margin-top: 32px;
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+  }
+
+  .upload-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    color: var(--text-secondary);
+    padding: 12px 16px;
+    border-radius: var(--radius) var(--radius) 0 0;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .upload-toggle:hover { color: var(--text-primary); }
+  .upload-toggle.open { border-bottom-color: var(--border); color: var(--text-primary); }
+
+  .upload-toggle-icon { font-size: 16px; }
+  .upload-toggle-label { font-weight: 500; }
+  .upload-toggle-hint { color: var(--text-dim); font-size: 11px; margin-left: auto; }
+
+  .upload-body {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 20px;
+  }
+
+  .upload-body.open { display: block; }
+
+  .drop-area {
+    border: 2px dashed var(--border-bright);
+    border-radius: var(--radius-sm);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .drop-area.active {
+    border-color: var(--accent);
+    background: rgba(79,110,247,0.06);
+  }
+
+  .drop-area input[type=file] {
+    display: none;
+  }
+
+  .drop-title {
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+
+  .drop-hint {
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+
+  .upload-progress {
+    display: none;
+    margin-top: 16px;
+  }
+
+  .upload-progress.active { display: block; }
+
+  .upload-status {
+    color: var(--text-secondary);
+    font-size: 12px;
+    padding: 8px 0;
+  }
+
+  .upload-log {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 8px;
+  }
+
+  .upload-log .log-ok { color: var(--green); }
+  .upload-log .log-new { color: var(--accent-2); }
+  .upload-log .log-skip { color: var(--text-dim); }
+  .upload-log .log-err { color: var(--hot); }
+
+  .upload-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .btn-clear-upload {
+    display: none;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+
+  .btn-clear-upload.visible { display: inline-block; }
+  .btn-clear-upload:hover { color: var(--hot); border-color: var(--hot); }
+
+  .btn-download {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+
+  .btn-download:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ── Footer ── */
+  footer {
+    padding: 16px 32px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin-top: 32px;
+  }
+
+  /* ── Utility ── */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo-mark">6</div>
+    <div>
+      <div class="header-title">6sense Intelligence</div>
+      <div class="header-sub">Buyer Intent Dashboard</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="date-range">
+      <span id="dateRangeDisplay">Loading...</span>
+    </div>
+    <div class="save-indicator" id="saveIndicator">
+      <div class="save-dot"></div>
+      <span id="saveLabel">Ready</span>
+    </div>
+  </div>
+</header>
+
+<!-- Stats Grid -->
+<div class="container">
+  <div class="stat-card">
+    <div class="stat-label">Hot Accounts</div>
+    <div class="stat-value" id="statHot">0</div>
+    <div class="stat-unit">10+ signals</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Web Visits</div>
+    <div class="stat-value" id="statWeb">0</div>
+    <div class="stat-unit">All accounts</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Signals</div>
+    <div class="stat-value" id="statSignals">0</div>
+    <div class="stat-unit">Keywords + activity</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Accounts</div>
+    <div class="stat-value" id="statCompanies">0</div>
+    <div class="stat-unit">Tracked</div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<main>
+  <h2 class="section-title">📊 Account Intelligence</h2>
+  <div class="table-container">
+    <table id="accountTable">
+      <thead>
+        <tr>
+          <th data-col="company" onclick="sortBy('company')" style="cursor:pointer;">Company</th>
+          <th data-col="stage" onclick="sortBy('stage')" style="cursor:pointer;">Stage</th>
+          <th data-col="fit" onclick="sortBy('fit')" style="cursor:pointer;">Fit</th>
+          <th data-col="signal_count" onclick="sortBy('signal_count')" style="cursor:pointer;">Signals</th>
+          <th>Keywords</th>
+          <th data-col="_latest_date" onclick="sortBy('_latest_date')" style="cursor:pointer;">Latest</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Upload Zone -->
+  <div class="upload-zone" id="uploadZone">
+    <button class="upload-toggle" id="uploadToggle" onclick="toggleUploadZone()">
+      <span class="upload-toggle-icon">📥</span>
+      <span class="upload-toggle-label">Add 6sense Emails or Update Files</span>
+      <span class="upload-toggle-hint">Drag &amp; drop .msg emails or .json update files · auto-saves your progress</span>
+      <svg id="uploadChevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:8px;transition:transform 0.2s"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+    <div class="upload-body" id="uploadBody">
+      <div class="drop-area" id="dropArea" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" multiple accept=".msg,.eml,.txt,.json" onchange="handleFileSelect(this.files)">
+        <div class="drop-title">Drop .msg emails or .json update files here, or click to browse</div>
+        <div class="drop-hint">Drag multiple files · they're merged into your dashboard (re-loading the same update file won't double count)</div>
+      </div>
+      <div class="upload-progress" id="uploadProgress">
+        <div class="upload-status" id="uploadStatus">Ready</div>
+        <div class="upload-log" id="uploadLog"></div>
+      </div>
+      <div class="upload-actions">
+        <button class="btn-clear-upload" id="btnClearUpload" onclick="clearUpload()">Clear</button>
+        <button class="btn-download visible" type="button" onclick="document.getElementById('jsonFileInput').click()">📂 Restore Backup (replace all)</button>
+        <button class="btn-download visible" type="button" onclick="saveDashboardJson()">💾 Save & Download JSON</button>
+        <input type="file" id="jsonFileInput" accept=".json" onchange="loadJsonFile(this.files[0])" style="display:none;">
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer id="footerInfo">
+  Ready to ingest 6sense emails
+</footer>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+const EMBEDDED_DATA = {"Environmental Consulting & Technology, Inc.": {"company": "Environmental Consulting & Technology, Inc.","email_date": "2026-03-11","activity_date": "2026-03-10","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://ectinc.com","web_visits": 12,"signal_count": 66,"keywords": ["ADP","Benefits Software","Paycor","e verify","employee development","employee retention","on boarding process","sage hr","talent development","talent management"],"competitor_keywords": ["ADP"],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-24"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-26"},{"raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","date": "2026-01-30"},{"raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","date": "2026-02-07"},{"raw": "https://www.paylocity.com/lp/software/hr/demo/payroll/","decoded": "https://www.paylocity.com/lp/software/hr/demo/payroll/","date": "2026-03-06"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-03-11"}],"contacts": [],"form_fills": [],"dates": ["2026-01-03","2026-01-05","2026-01-07","2026-01-08","2026-01-22","2026-01-24","2026-01-26","2026-01-30","2026-02-01","2026-02-03","2026-02-06","2026-02-07","2026-02-12","2026-02-14","2026-02-15","2026-02-17","2026-02-19","2026-02-21","2026-02-22","2026-02-23","2026-02-28","2026-03-03","2026-03-06","2026-03-09","2026-03-11","2026-03-29"],"activity_dates": ["2026-01-02","2026-01-04","2026-01-06","2026-01-07","2026-01-21","2026-01-25","2026-01-29","2026-01-31","2026-02-02","2026-02-05","2026-02-06","2026-02-11","2026-02-13","2026-02-14","2026-02-16","2026-02-20","2026-02-21","2026-02-22","2026-02-27","2026-03-02","2026-03-05","2026-03-08","2026-03-10","2026-03-29"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__17_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__22_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__25_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__28_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__34_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__35_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__38_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__40_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__41_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__43_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__48_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__49_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__52_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__63_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__77_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__82_.msg"],"_latest_date": "2026-03-29"},"Kissimmee Utility Authority": {"company": "Kissimmee Utility Authority","email_date": "2026-03-01","activity_date": "2026-02-28","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://kua.com","web_visits": 20,"signal_count": 54,"keywords": ["Benefits Software","CARES act","safe harbor","talent management"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/products/hr/benefits/","decoded": "https://www.paylocity.com/products/hr/benefits/","date": "2026-01-08"},{"raw": "https://www.paylocity.com/products/hr/benefits/","decoded": "https://www.paylocity.com/products/hr/benefits/","date": "2026-01-10"},{"raw": "https://www.paylocity.com/products/it/asset-management/","decoded": "https://www.paylocity.com/products/it/asset-management/","date": "2026-01-17"},{"raw": "https://www.paylocity.com/products/hr/talent-management-system/recruiting/","decoded": "https://www.paylocity.com/products/hr/talent-management-system/recruiting/","date": "2026-01-20"},{"raw": "https://www.paylocity.com/products/hr/benefits/","decoded": "https://www.paylocity.com/products/hr/benefits/","date": "2026-01-21"},{"raw": "https://www.paylocity.com/products/it/asset-management/","decoded": "https://www.paylocity.com/products/it/asset-management/","date": "2026-01-22"},{"raw": "https://www.paylocity.com/products/hr/benefits/","decoded": "https://www.paylocity.com/products/hr/benefits/","date": "2026-01-27"},{"raw": "https://www.paylocity.com/products/it/asset-management/","decoded": "https://www.paylocity.com/products/it/asset-management/","date": "2026-02-01"},{"raw": "https://www.paylocity.com/products/hr/talent-management-system/recruiting/","decoded": "https://www.paylocity.com/products/hr/talent-management-system/recruiting/","date": "2026-02-14"},{"decoded": "https://www.paylocity.com/products/it/asset-management/","raw": "https://www.paylocity.com/products/it/asset-management/","date": "2026-04-04"},{"decoded": "https://www.paylocity.com/products/hr/benefits/","raw": "https://www.paylocity.com/products/hr/benefits/","date": "2026-04-05"}],"contacts": [],"form_fills": [],"dates": ["2026-01-08","2026-01-09","2026-01-10","2026-01-17","2026-01-20","2026-01-21","2026-01-22","2026-01-26","2026-01-27","2026-01-28","2026-02-01","2026-02-14","2026-02-19","2026-02-22","2026-03-01","2026-04-04","2026-04-05"],"activity_dates": ["2026-01-07","2026-01-08","2026-01-09","2026-01-16","2026-01-19","2026-01-20","2026-01-21","2026-01-25","2026-01-26","2026-01-27","2026-01-31","2026-02-13","2026-02-21","2026-02-28","2026-04-04","2026-04-05"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__27_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__34_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__41_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__57_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__58_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__63_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__64_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__65_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__68_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__75_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__76_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__77_.msg"],"_latest_date": "2026-04-05"},"Currency Exchange International": {"company": "Currency Exchange International","email_date": "2026-03-13","activity_date": "2026-03-12","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://ceifx.com","web_visits": 9,"signal_count": 53,"keywords": ["ADP","hcm","pluralsight","position management","spend management"],"competitor_keywords": ["ADP","pluralsight"],"decoded_urls": [{"raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","date": "2026-03-03"},{"raw": "https://www.paylocity.com/learn-more/one/","decoded": "https://www.paylocity.com/learn-more/one/","date": "2026-03-06"},{"raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","date": "2026-03-25"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-03-25"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-07-06"}],"contacts": [],"form_fills": [],"dates": ["2026-01-11","2026-01-14","2026-01-19","2026-01-26","2026-02-02","2026-02-07","2026-02-13","2026-02-26","2026-03-02","2026-03-03","2026-03-06","2026-03-09","2026-03-12","2026-03-13","2026-03-20","2026-03-25","2026-03-28","2026-07-02","2026-07-06"],"activity_dates": ["2026-01-10","2026-01-13","2026-01-18","2026-01-25","2026-02-01","2026-02-06","2026-02-12","2026-02-25","2026-03-01","2026-03-02","2026-03-05","2026-03-08","2026-03-11","2026-03-12","2026-03-19","2026-03-24","2026-03-28","2026-07-02","2026-07-06"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__15_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__22_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__25_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__30_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__3_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__42_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__48_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__53_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__71_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__74_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__8_.msg"],"_latest_date": "2026-07-06"},"Fleet Landing WELLInspired Living": {"company": "Fleet Landing WELLInspired Living","email_date": "2026-02-19","activity_date": null,"stage": "Awareness","fit": "Strong","reach": "Low","website": "https://fleetlanding.com","web_visits": 4,"signal_count": 49,"keywords": ["Benefits Software","airbase","exit interviews","learning software","pluralsight","talent management"],"competitor_keywords": ["pluralsight"],"decoded_urls": [{"raw": "https://www.paylocity.com/lp/software/hr/demo/payroll/","decoded": "https://www.paylocity.com/lp/software/hr/demo/payroll/","date": "2026-01-16"},{"raw": "https://www.paylocity.com/company/protecting-our-clients/privacy-center/","decoded": "https://www.paylocity.com/company/protecting-our-clients/privacy-center/","date": "2026-02-19"}],"contacts": [],"form_fills": [],"dates": ["2026-01-04","2026-01-05","2026-01-09","2026-01-11","2026-01-12","2026-01-16","2026-01-22","2026-02-04","2026-02-09","2026-02-14","2026-02-19","2026-04-14"],"activity_dates": ["2026-01-03","2026-01-04","2026-01-08","2026-01-10","2026-01-11","2026-01-15","2026-01-21","2026-02-03","2026-02-08","2026-02-13","2026-04-14"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__41_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__51_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__63_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__69_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__74_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__76_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__81_.msg"],"_latest_date": "2026-04-14"},"XYMOGEN": {"company": "XYMOGEN","email_date": "2026-03-18","activity_date": "2026-03-17","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://xymogen.com","web_visits": 13,"signal_count": 46,"keywords": ["Benefits Software","Performance Software","Ultimate Software","employee communication","employee compensation","employee training","on boarding process","talent management"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-10"},{"raw": "https://www.paylocity.com/request-a-demo/","decoded": "https://www.paylocity.com/request-a-demo/","date": "2026-01-20"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-20"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-19"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-20"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-04-01"}],"contacts": [],"form_fills": [],"dates": ["2026-01-09","2026-01-10","2026-01-20","2026-01-23","2026-01-24","2026-01-25","2026-01-30","2026-02-19","2026-02-20","2026-03-02","2026-03-12","2026-03-18","2026-03-19","2026-03-29","2026-03-31","2026-04-01","2026-04-05","2026-04-09","2026-04-19","2026-07-03","2026-07-05"],"activity_dates": ["2026-01-08","2026-01-09","2026-01-19","2026-01-22","2026-01-24","2026-01-29","2026-02-19","2026-03-01","2026-03-11","2026-03-17","2026-03-18","2026-03-29","2026-03-31","2026-04-01","2026-04-05","2026-04-09","2026-04-19","2026-07-03","2026-07-05"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__10_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__36_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__60_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__62_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__65_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__75_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__76_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__9_.msg"],"_latest_date": "2026-07-05"},"Smart City Telecom": {"company": "Smart City Telecom","email_date": "2026-03-18","activity_date": "2026-03-17","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://smartcitytelecom.com","web_visits": 3,"signal_count": 38,"keywords": ["pluralsight","talent management","time clock software","upskilling"],"competitor_keywords": ["pluralsight"],"decoded_urls": [{"decoded": "https://www.paylocity.com/lp/software/hr/demo/hr-payroll/","raw": "https://www.paylocity.com/lp/software/hr/demo/hr-payroll/","date": "2026-04-07"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-04-23"},{"decoded": "https://www.paylocity.com/who-we-serve/company-size/small/","raw": "https://www.paylocity.com/who-we-serve/company-size/small/","date": "2026-05-07"}],"contacts": [],"form_fills": [],"dates": ["2026-01-05","2026-01-12","2026-01-19","2026-01-21","2026-01-26","2026-02-06","2026-02-27","2026-03-04","2026-03-11","2026-03-12","2026-03-18","2026-04-07","2026-04-14","2026-04-23","2026-05-07","2026-05-15","2026-06-04","2026-06-09","2026-06-12","2026-06-15"],"activity_dates": ["2026-01-04","2026-01-11","2026-01-18","2026-01-20","2026-01-25","2026-02-04","2026-02-26","2026-03-03","2026-03-10","2026-03-11","2026-03-17","2026-04-07","2026-04-14","2026-04-23","2026-05-07","2026-05-15","2026-06-04","2026-06-09","2026-06-12","2026-06-15"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__10_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__17_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__24_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__29_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__50_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__64_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg"],"_latest_date": "2026-06-15"},"DME Delivers": {"company": "DME Delivers","email_date": "2026-03-15","activity_date": "2026-03-14","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://dmedelivers.com","web_visits": 2,"signal_count": 35,"keywords": ["Flexible Benefits","HR Software","HRIS","Rippling","compensation tool","employee engagement","hr data","hris software","talent management","upskilling"],"competitor_keywords": ["Rippling"],"decoded_urls": [{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-04-29"},{"decoded": "https://www.paylocity.com/products/hr/employee-experience/","raw": "https://www.paylocity.com/products/hr/employee-experience/","date": "2026-06-10"}],"contacts": [],"form_fills": [],"dates": ["2026-01-12","2026-01-23","2026-01-24","2026-02-19","2026-03-11","2026-03-15","2026-03-20","2026-03-29","2026-04-29","2026-05-07","2026-06-10","2026-07-02","2026-07-05","2026-07-12"],"activity_dates": ["2026-01-11","2026-01-22","2026-03-10","2026-03-14","2026-03-19","2026-03-29","2026-04-29","2026-05-07","2026-06-10","2026-07-02","2026-07-05","2026-07-12"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__13_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__17_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__62_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__8_.msg"],"_latest_date": "2026-07-12"},"Electrosonic": {"company": "Electrosonic","email_date": "2026-03-15","activity_date": "2026-03-14","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://electrosonic.com","web_visits": 6,"signal_count": 35,"keywords": ["Compensation Software","Paycor","Workable","corporate card","hcm","position management","safe harbor","talent management","time clock software"],"competitor_keywords": ["Workable"],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-01"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-12"},{"raw": "https://www.paylocity.com/resources/glossary/statutory-employee/","decoded": "https://www.paylocity.com/resources/glossary/statutory-employee/","date": "2026-03-11"}],"contacts": [],"form_fills": [],"dates": ["2026-02-01","2026-02-08","2026-02-12","2026-02-13","2026-02-19","2026-02-23","2026-03-02","2026-03-09","2026-03-11","2026-03-12","2026-03-15","2026-03-25","2026-04-07","2026-04-10","2026-04-12","2026-04-18","2026-04-19","2026-04-21","2026-04-26","2026-06-21","2026-06-28","2026-07-01","2026-07-05","2026-07-09","2026-07-10"],"activity_dates": ["2026-01-31","2026-02-07","2026-02-11","2026-02-12","2026-02-22","2026-03-01","2026-03-08","2026-03-10","2026-03-11","2026-03-14","2026-03-24","2026-04-07","2026-04-10","2026-04-12","2026-04-18","2026-04-19","2026-04-21","2026-04-26","2026-06-21","2026-06-28","2026-07-01","2026-07-05","2026-07-09","2026-07-10"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__13_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__17_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__3_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__42_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__43_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__47_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg"],"_latest_date": "2026-07-10"},"Vermeer Southeast Sales & Svc, Inc.": {"company": "Vermeer Southeast Sales & Svc, Inc.","email_date": "2026-03-13","activity_date": "2026-03-12","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://vermeersoutheast.com","web_visits": 5,"signal_count": 27,"keywords": ["ADP","Expense Software","Rippling","Talent Software","bill.com","exit interviews","modern workforce","on boarding process","talent management","talent management software"],"competitor_keywords": ["ADP","Rippling"],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-12"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-05-05"}],"contacts": [],"form_fills": [],"dates": ["2026-01-10","2026-01-12","2026-01-24","2026-03-08","2026-03-13","2026-03-20","2026-03-30","2026-05-05","2026-05-09","2026-06-04","2026-07-05","2026-07-12"],"activity_dates": ["2026-01-09","2026-01-11","2026-03-07","2026-03-12","2026-03-19","2026-03-30","2026-05-05","2026-05-09","2026-06-04","2026-07-05","2026-07-12"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__15_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__20_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__75_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__8_.msg"],"_latest_date": "2026-07-12"},"CAMPUS USA Credit Union": {"company": "CAMPUS USA Credit Union","email_date": "2026-03-12","activity_date": "2026-03-11","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://campuscu.com","web_visits": 4,"signal_count": 27,"keywords": ["ADP","Performance Software","employee retention","position management","talent management"],"competitor_keywords": ["ADP"],"decoded_urls": [{"raw": "https://www.paylocity.com/learn-more/one/","decoded": "https://www.paylocity.com/learn-more/one/","date": "2026-01-13"},{"decoded": "https://www.paylocity.com/who-we-serve/company-size/large/","raw": "https://www.paylocity.com/who-we-serve/company-size/large/","date": "2026-04-01"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-04-01"}],"contacts": [],"form_fills": [],"dates": ["2026-01-04","2026-01-13","2026-01-16","2026-01-17","2026-02-12","2026-03-12","2026-03-30","2026-04-01"],"activity_dates": ["2026-01-03","2026-01-12","2026-01-15","2026-01-16","2026-02-11","2026-03-11","2026-03-30","2026-04-01"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__43_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__68_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__69_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__72_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__81_.msg"],"_latest_date": "2026-04-01"},"InterMed": {"company": "InterMed","email_date": "2026-02-23","activity_date": "2026-02-22","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://intermed1.com","web_visits": 9,"signal_count": 23,"keywords": ["Benefits Software","Payroll Software","applicant tracking system","talent management"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","date": "2026-02-17"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-17"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-06-22"},{"decoded": "https://www.paylocity.com/products/it/asset-management/","raw": "https://www.paylocity.com/products/it/asset-management/","date": "2026-06-24"},{"decoded": "https://www.paylocity.com/products/it/asset-management/","raw": "https://www.paylocity.com/products/it/asset-management/","date": "2026-06-25"},{"decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","date": "2026-06-26"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-06-26"}],"contacts": [],"form_fills": [],"dates": ["2026-01-06","2026-01-07","2026-01-18","2026-01-27","2026-02-16","2026-02-17","2026-02-23","2026-05-03","2026-06-22","2026-06-24","2026-06-25","2026-06-26"],"activity_dates": ["2026-01-05","2026-01-06","2026-01-17","2026-01-26","2026-02-15","2026-02-16","2026-02-22","2026-05-03","2026-06-22","2026-06-24","2026-06-25","2026-06-26"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__38_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__58_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__67_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__79_.msg"],"_latest_date": "2026-06-26"},"InDyne": {"company": "InDyne","email_date": "2026-03-12","activity_date": "2026-03-11","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://indyneinc.com","web_visits": 0,"signal_count": 21,"keywords": ["ADP","airbase","feedback","hr data","pluralsight","talent management","time clock software","upskilling"],"competitor_keywords": ["ADP","pluralsight"],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-01","2026-01-12","2026-01-19","2026-01-26","2026-01-30","2026-02-01","2026-02-13","2026-03-04","2026-03-10","2026-03-12","2026-03-22","2026-03-23","2026-03-26","2026-03-29"],"activity_dates": ["2025-12-31","2026-01-11","2026-01-18","2026-01-25","2026-01-29","2026-01-31","2026-02-12","2026-03-03","2026-03-09","2026-03-11","2026-03-21","2026-03-22","2026-03-25","2026-03-29"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__18_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__24_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__2_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__42_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__5_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__6_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts.msg (Dec 31 2025)"],"_latest_date": "2026-03-29"},"WFTV": {"company": "WFTV","email_date": "2026-03-12","activity_date": "2026-03-11","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://wftv.com","web_visits": 8,"signal_count": 20,"keywords": ["candidate experience","employee engagement","pluralsight"],"competitor_keywords": ["pluralsight"],"decoded_urls": [{"raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","date": "2026-01-10"},{"raw": "https://www.paylocity.com/who-we-serve/company-size/small/","decoded": "https://www.paylocity.com/who-we-serve/company-size/small/","date": "2026-02-11"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-15"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-03-12"}],"contacts": [],"form_fills": [],"dates": ["2026-01-07","2026-01-10","2026-01-21","2026-02-11","2026-02-15","2026-03-02","2026-03-03","2026-03-09","2026-03-12"],"activity_dates": ["2026-01-06","2026-01-09","2026-01-20","2026-02-10","2026-02-14","2026-03-01","2026-03-02","2026-03-08","2026-03-11"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__25_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__40_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__44_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__64_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__75_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg"],"_latest_date": "2026-03-12"},"Sea Best Inc": {"company": "Sea Best Inc","email_date": "2026-03-26","activity_date": "2026-03-25","stage": "Consideration","fit": "Weak","reach": "High","website": "https://seabest.com","web_visits": 0,"signal_count": 20,"keywords": ["airbase","safe harbor","time clock software"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-03-26","2026-06-23","2026-06-24","2026-06-25","2026-06-30","2026-07-01","2026-07-02","2026-07-03","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10"],"activity_dates": ["2026-03-25","2026-06-23","2026-06-24","2026-06-25","2026-06-30","2026-07-01","2026-07-02","2026-07-03","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__2_.msg"],"_latest_date": "2026-07-10"},"Orthomerica": {"company": "Orthomerica","email_date": "2026-03-12","activity_date": "2026-03-11","stage": "Target","fit": "Strong","reach": "Low","website": "https://orthomerica.com","web_visits": 6,"signal_count": 18,"keywords": ["airbase","modern workforce","pluralsight","talent management"],"competitor_keywords": ["pluralsight"],"decoded_urls": [{"raw": "https://www.paylocity.com/learn-more/one/","decoded": "https://www.paylocity.com/learn-more/one/","date": "2026-01-12"},{"raw": "https://www.paylocity.com/learn-more/one/","decoded": "https://www.paylocity.com/learn-more/one/","date": "2026-02-08"},{"raw": "https://www.paylocity.com/learn-more/one/","decoded": "https://www.paylocity.com/learn-more/one/","date": "2026-03-12"}],"contacts": [],"form_fills": [],"dates": ["2026-01-12","2026-01-19","2026-01-22","2026-01-24","2026-02-02","2026-02-08","2026-03-02","2026-03-09","2026-03-12","2026-06-26","2026-07-02","2026-07-05","2026-07-12"],"activity_dates": ["2026-01-11","2026-01-18","2026-01-21","2026-02-01","2026-02-07","2026-03-01","2026-03-08","2026-03-11","2026-06-26","2026-07-02","2026-07-05","2026-07-12"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__47_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__53_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__63_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg"],"_latest_date": "2026-07-12"},"Entec Polymers": {"company": "Entec Polymers","email_date": "2026-03-16","activity_date": "2026-03-15","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://entecpolymers.com","web_visits": 2,"signal_count": 16,"keywords": ["Rippling","hr compliance","pluralsight","position management","talent management"],"competitor_keywords": ["Rippling","pluralsight"],"decoded_urls": [{"decoded": "https://www.paylocity.com/lp/software/brand/company-size/small-business/","raw": "https://www.paylocity.com/lp/software/brand/company-size/small-business/","date": "2026-06-05"},{"decoded": "https://www.paylocity.com/lp/software/brand/case-studies/scrubdaddy/","raw": "https://www.paylocity.com/lp/software/brand/case-studies/scrubdaddy/","date": "2026-06-17"}],"contacts": [],"form_fills": [],"dates": ["2026-01-05","2026-01-12","2026-01-13","2026-01-19","2026-01-26","2026-02-23","2026-03-02","2026-03-09","2026-03-16","2026-03-30","2026-05-08","2026-06-05","2026-06-07","2026-06-09","2026-06-14","2026-06-17","2026-06-21","2026-06-28"],"activity_dates": ["2026-01-04","2026-01-11","2026-01-12","2026-01-18","2026-01-25","2026-02-22","2026-03-01","2026-03-08","2026-03-15","2026-03-30","2026-05-08","2026-06-05","2026-06-07","2026-06-09","2026-06-14","2026-06-17","2026-06-21","2026-06-28"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__12_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__72_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg"],"_latest_date": "2026-06-28"},"Toho Water Authority": {"company": "Toho Water Authority","email_date": "2026-01-14","activity_date": "2026-01-13","stage": "Decision","fit": "Moderate","reach": "Low","website": "https://tohowater.com","web_visits": 0,"signal_count": 16,"keywords": ["ADP","Benefits Software","Performance Software","Tipalti","Workable","talent management","training software"],"competitor_keywords": ["ADP","Workable"],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-05","2026-01-07","2026-01-14","2026-04-09","2026-04-10","2026-04-12","2026-04-28","2026-04-29","2026-06-16","2026-06-19"],"activity_dates": ["2026-01-04","2026-01-06","2026-01-13","2026-04-09","2026-04-10","2026-04-12","2026-04-28","2026-04-29","2026-06-16","2026-06-19"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__71_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg"],"_latest_date": "2026-06-19"},"BRIDG": {"company": "BRIDG","email_date": "2026-02-06","activity_date": "2026-02-05","stage": "Target","fit": "Strong","reach": "Low","website": "https://gobridg.com","web_visits": 0,"signal_count": 16,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-23","2026-01-24","2026-01-30","2026-02-06"],"activity_dates": ["2026-01-22","2026-01-29","2026-02-05"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__49_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__62_.msg"],"_latest_date": "2026-02-06"},"Jeff Ellis Management, LLC": {"company": "Jeff Ellis Management, LLC","email_date": "2026-02-10","activity_date": "2026-02-09","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://jeffellismanagement.com","web_visits": 2,"signal_count": 15,"keywords": ["ADP","community management","open sesame","talent management"],"competitor_keywords": ["ADP"],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-10"}],"contacts": [],"form_fills": [],"dates": ["2026-01-03","2026-01-04","2026-02-10","2026-04-05","2026-04-15","2026-05-03","2026-06-04","2026-06-09","2026-06-28","2026-07-09","2026-07-11"],"activity_dates": ["2026-01-02","2026-01-03","2026-02-09","2026-04-05","2026-04-15","2026-05-03","2026-06-04","2026-06-09","2026-06-28","2026-07-09","2026-07-11"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__45_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__81_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__82_.msg"],"_latest_date": "2026-07-11"},"Park Square Homes": {"company": "Park Square Homes","email_date": "2026-02-19","activity_date": null,"stage": "Awareness","fit": "Strong","reach": "Low","website": "https://parksquarehomes.com","web_visits": 10,"signal_count": 14,"keywords": ["Ultimate Software"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-24"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-28"},{"raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","date": "2026-02-19"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-19"}],"contacts": [],"form_fills": [],"dates": ["2026-01-18","2026-01-19","2026-01-24","2026-01-26","2026-01-28","2026-02-19"],"activity_dates": ["2026-01-17","2026-01-18","2026-01-25","2026-01-27"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__57_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__67_.msg"],"_latest_date": "2026-02-19"},"Real Life Christian Church": {"company": "Real Life Christian Church","email_date": "2026-02-25","activity_date": "2026-02-24","stage": "Awareness","fit": "Moderate","reach": "Low","website": "https://real.life","web_visits": 4,"signal_count": 13,"keywords": ["ADP","candidate experience","talent management"],"competitor_keywords": ["ADP"],"decoded_urls": [{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-04-15"},{"decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","date": "2026-04-30"},{"decoded": "https://www.paylocity.com/learn-more/one/","raw": "https://www.paylocity.com/learn-more/one/","date": "2026-05-06"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-06-04"}],"contacts": [],"form_fills": [],"dates": ["2026-02-25","2026-04-15","2026-04-20","2026-04-30","2026-05-06","2026-06-04","2026-06-17","2026-06-26","2026-07-05","2026-07-12"],"activity_dates": ["2026-02-24","2026-04-15","2026-04-20","2026-04-30","2026-05-06","2026-06-04","2026-06-17","2026-06-26","2026-07-05","2026-07-12"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__31_.msg"],"_latest_date": "2026-07-12"},"ACCESS | MANAGEMENT \u2219 REALTY \u2219 MAINTENANCE \u2219 LIFESTYLE": {"company": "ACCESS | MANAGEMENT \u2219 REALTY \u2219 MAINTENANCE \u2219 LIFESTYLE","email_date": "2026-03-18","activity_date": "2026-03-17","stage": "Target","fit": "Strong","reach": "Low","website": "https://accessdifference.com","web_visits": 0,"signal_count": 13,"keywords": ["Benefits Software","employee training","hcm","pay transparency","talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-17","2026-01-30","2026-03-17","2026-03-18","2026-03-21","2026-06-06"],"activity_dates": ["2026-01-16","2026-01-29","2026-03-16","2026-03-17","2026-03-20","2026-06-06"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__10_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__11_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__68_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__7_.msg"],"_latest_date": "2026-06-06"},"WorldHotels": {"company": "WorldHotels","email_date": "2026-02-10","activity_date": "2026-02-09","stage": "Target","fit": "Strong","reach": "Low","website": "https://worldhotels.com","web_visits": 9,"signal_count": 13,"keywords": ["upskilling"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-06"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-10"},{"decoded": "https://www.paylocity.com/learn-more/one/","raw": "https://www.paylocity.com/learn-more/one/","date": "2026-04-07"}],"contacts": [],"form_fills": [],"dates": ["2026-01-06","2026-01-11","2026-02-10","2026-04-07","2026-07-05","2026-07-12"],"activity_dates": ["2026-01-05","2026-01-10","2026-02-09","2026-04-07","2026-07-05","2026-07-12"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__45_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__74_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__79_.msg"],"_latest_date": "2026-07-12"},"VisitOrlando": {"company": "VisitOrlando","email_date": "2026-01-09","activity_date": "2026-01-08","stage": "Decision","fit": "Moderate","reach": "Low","website": "https://visitorlando.com","web_visits": 7,"signal_count": 13,"keywords": ["Benefits Software","safe harbor","upskilling"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/company/careers/all-listings/","decoded": "https://www.paylocity.com/company/careers/all-listings/","date": "2026-01-03"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-03"},{"raw": "https://www.paylocity.com/company/careers/all-listings/","decoded": "https://www.paylocity.com/company/careers/all-listings/","date": "2026-01-09"},{"decoded": "https://www.paylocity.com/products/it/asset-management/","raw": "https://www.paylocity.com/products/it/asset-management/","date": "2026-04-21"}],"contacts": [],"form_fills": [],"dates": ["2026-01-03","2026-01-04","2026-01-05","2026-01-06","2026-01-09","2026-04-21"],"activity_dates": ["2026-01-02","2026-01-03","2026-01-04","2026-01-05","2026-01-08","2026-04-21"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__76_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__79_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__81_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__82_.msg"],"_latest_date": "2026-04-21"},"Daytona Toyota": {"company": "Daytona Toyota","email_date": "2026-01-14","activity_date": "2026-01-13","stage": "Target","fit": "Moderate","reach": "Low","website": "https://daytonatoyota.com","web_visits": 0,"signal_count": 13,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-14","2026-07-04"],"activity_dates": ["2026-01-13","2026-07-04"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__71_.msg"],"_latest_date": "2026-07-04"},"Sarcom": {"company": "Sarcom","email_date": "2026-03-02","activity_date": "2026-03-01","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://sarcom.com","web_visits": 6,"signal_count": 10,"keywords": ["airbase"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-30"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-04"},{"raw": "https://www.paylocity.com/who-we-serve/company-size/small/","decoded": "https://www.paylocity.com/who-we-serve/company-size/small/","date": "2026-02-28"}],"contacts": [],"form_fills": [],"dates": ["2026-01-19","2026-01-30","2026-02-04","2026-02-23","2026-02-28","2026-03-02"],"activity_dates": ["2026-01-18","2026-01-29","2026-02-03","2026-02-22","2026-02-27","2026-03-01"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__28_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__51_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg"],"_latest_date": "2026-03-02"},"Frontline Performance Group": {"company": "Frontline Performance Group","email_date": "2026-02-23","activity_date": "2026-02-22","stage": "Awareness","fit": "Moderate","reach": "Low","website": "https://frontlinepg.com","web_visits": 2,"signal_count": 10,"keywords": ["HRIS","hris software","on boarding process"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-27"}],"contacts": [],"form_fills": [],"dates": ["2026-01-12","2026-01-22","2026-01-27","2026-02-16","2026-02-23"],"activity_dates": ["2026-01-11","2026-01-21","2026-01-26","2026-02-15","2026-02-22"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__58_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__63_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg"],"_latest_date": "2026-02-23"},"Velovita": {"company": "Velovita","email_date": "2026-03-03","activity_date": "2026-03-02","stage": "Awareness","fit": "Moderate","reach": "High","website": "https://velovita.com","web_visits": 3,"signal_count": 10,"keywords": ["pay transparency","talent management"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-03-02"},{"decoded": "https://www.paylocity.com/products/hr/benefits/","raw": "https://www.paylocity.com/products/hr/benefits/","date": "2026-04-23"}],"contacts": [],"form_fills": [],"dates": ["2026-03-02","2026-03-03","2026-04-08","2026-04-23","2026-04-26","2026-06-28","2026-07-12"],"activity_dates": ["2026-03-01","2026-03-02","2026-04-08","2026-04-23","2026-04-26","2026-06-28","2026-07-12"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__25_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg"],"_latest_date": "2026-07-12"},"Ocala Eye": {"company": "Ocala Eye","email_date": "2026-03-05","activity_date": "2026-03-04","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://ocalaeye.com","web_visits": 4,"signal_count": 9,"keywords": ["hcm","pluralsight","safe harbor"],"competitor_keywords": ["pluralsight"],"decoded_urls": [{"raw": "https://www.paylocity.com/learn-more/one/","decoded": "https://www.paylocity.com/learn-more/one/","date": "2026-01-07"},{"raw": "https://www.paylocity.com/learn-more/one/","decoded": "https://www.paylocity.com/learn-more/one/","date": "2026-03-05"}],"contacts": [],"form_fills": [],"dates": ["2026-01-07","2026-01-08","2026-03-05","2026-05-09","2026-05-15"],"activity_dates": ["2026-01-06","2026-01-07","2026-03-04","2026-05-09","2026-05-15"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__23_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__77_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg"],"_latest_date": "2026-05-15"},"Makotek": {"company": "Makotek","email_date": "2026-02-01","activity_date": "2026-01-31","stage": "Target","fit": "Strong","reach": "High","website": "https://makotek.net","web_visits": 9,"signal_count": 9,"keywords": [],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-30"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-01"},{"decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/","date": "2026-04-14"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-05-07"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-06-24"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-07-07"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-07-09"}],"contacts": [],"form_fills": [],"dates": ["2026-01-30","2026-02-01","2026-04-05","2026-04-14","2026-04-19","2026-04-26","2026-05-07","2026-06-24","2026-07-07","2026-07-09"],"activity_dates": ["2026-01-29","2026-01-31","2026-04-05","2026-04-14","2026-04-19","2026-04-26","2026-05-07","2026-06-24","2026-07-07","2026-07-09"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg"],"_latest_date": "2026-07-09"},"Di Pasqua Enterprises": {"company": "Di Pasqua Enterprises","email_date": "2026-03-28","activity_date": "2026-03-27","stage": "Target","fit": "Strong","reach": "Low","website": "https://dipasqua.com","web_visits": 2,"signal_count": 8,"keywords": ["Beti","annual enrollment","safe harbor","talent management"],"competitor_keywords": ["Beti"],"decoded_urls": [{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-06-17"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-07-11"}],"contacts": [],"form_fills": [],"dates": ["2026-03-12","2026-03-28","2026-05-01","2026-06-16","2026-06-17","2026-07-11"],"activity_dates": ["2026-03-11","2026-03-27","2026-05-01","2026-06-16","2026-06-17","2026-07-11"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg"],"_latest_date": "2026-07-11"},"Blue Water Industries": {"company": "Blue Water Industries","email_date": "2026-03-09","activity_date": "2026-03-08","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://bluewaterindustries.com","web_visits": 8,"signal_count": 8,"keywords": [],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/resources/tax-compliance/tax-facts/","decoded": "https://www.paylocity.com/resources/tax-compliance/tax-facts/","date": "2026-01-27"},{"raw": "https://www.paylocity.com/resources/tax-compliance/tax-facts/kentucky/","decoded": "https://www.paylocity.com/resources/tax-compliance/tax-facts/kentucky/","date": "2026-01-27"},{"raw": "https://www.paylocity.com/request-a-demo/","decoded": "https://www.paylocity.com/request-a-demo/","date": "2026-03-09"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-03-09"}],"contacts": [],"form_fills": [],"dates": ["2026-01-27","2026-03-09"],"activity_dates": ["2026-01-26","2026-03-08"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__58_.msg"],"_latest_date": "2026-03-09"},"Signature Brands, LLC": {"company": "Signature Brands, LLC","email_date": "2026-03-09","activity_date": "2026-03-08","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://signaturebrands.com","web_visits": 2,"signal_count": 8,"keywords": ["Benefits Software","talent management"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/lp/software/hr/demo/hr-payroll/","decoded": "https://www.paylocity.com/lp/software/hr/demo/hr-payroll/","date": "2026-01-20"}],"contacts": [],"form_fills": [],"dates": ["2026-01-19","2026-01-20","2026-01-26","2026-02-02","2026-02-16","2026-02-23","2026-02-24","2026-03-02","2026-03-09"],"activity_dates": ["2026-01-18","2026-01-19","2026-01-25","2026-02-01","2026-02-15","2026-02-22","2026-02-23","2026-03-01","2026-03-08"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__32_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__53_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__65_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg"],"_latest_date": "2026-03-09"},"Lutheran Haven": {"company": "Lutheran Haven","email_date": "2026-02-09","activity_date": "2026-02-08","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://lutheranhaven.org","web_visits": 2,"signal_count": 8,"keywords": ["candidate experience","pluralsight","talent management"],"competitor_keywords": ["pluralsight"],"decoded_urls": [{"raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","date": "2026-02-09"}],"contacts": [],"form_fills": [],"dates": ["2026-02-03","2026-02-09","2026-04-05","2026-04-07","2026-04-25"],"activity_dates": ["2026-02-02","2026-02-08","2026-04-05","2026-04-07","2026-04-25"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__52_.msg"],"_latest_date": "2026-04-25"},"Florida Credit Union": {"company": "Florida Credit Union","email_date": "2026-03-16","activity_date": "2026-03-15","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://flcu.org","web_visits": 2,"signal_count": 7,"keywords": ["HRIS","airbase","employee development","employee training","talent development"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-20"}],"contacts": [],"form_fills": [],"dates": ["2026-02-20","2026-02-23","2026-03-02","2026-03-16","2026-03-29","2026-03-31","2026-04-11","2026-06-04","2026-06-07"],"activity_dates": ["2026-02-19","2026-02-22","2026-03-01","2026-03-15","2026-03-29","2026-03-31","2026-04-11","2026-06-04","2026-06-07"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__12_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__36_.msg"],"_latest_date": "2026-06-07"},"United Mortgage Corp.": {"company": "United Mortgage Corp.","email_date": "2026-02-01","activity_date": "2026-01-31","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://unitedmortgage.com","web_visits": 1,"signal_count": 7,"keywords": ["payroll preparation","talent management"],"competitor_keywords": [],"decoded_urls": [{"decoded": "https://www.paylocity.com/learn-more/one/","raw": "https://www.paylocity.com/learn-more/one/","date": "2026-04-25"}],"contacts": [],"form_fills": [],"dates": ["2026-01-12","2026-01-19","2026-01-25","2026-01-26","2026-02-01","2026-04-09","2026-04-25","2026-04-26","2026-04-30","2026-05-03","2026-05-10"],"activity_dates": ["2026-01-11","2026-01-18","2026-01-24","2026-01-25","2026-01-31","2026-04-09","2026-04-25","2026-04-26","2026-04-30","2026-05-03","2026-05-10"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__60_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg"],"_latest_date": "2026-05-10"},"Professional Management": {"company": "Professional Management","website": "https://pmiflorida.com","stage": "Awareness","fit": "Strong","reach": "Medium","signal_count": 7,"web_visits": 0,"keywords": ["ADP","Benefits Software","Ultimate Software","talent management"],"competitor_keywords": ["ADP"],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-05-07","2026-06-20","2026-06-22"],"activity_dates": ["2026-05-07","2026-06-20","2026-06-22"],"source_files": [""],"_latest_date": "2026-06-22"},"Gas South": {"company": "Gas South","email_date": "2026-01-25","activity_date": "2026-01-24","stage": "Decision","fit": "Strong","reach": "Low","website": "https://gassouth.com","web_visits": 2,"signal_count": 6,"keywords": ["Brex","annual enrollment"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/products/hr/payroll/","decoded": "https://www.paylocity.com/products/hr/payroll/","date": "2026-01-21"}],"contacts": [],"form_fills": [],"dates": ["2026-01-19","2026-01-21","2026-01-24","2026-01-25"],"activity_dates": ["2026-01-18","2026-01-20","2026-01-24"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__60_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__64_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg"],"_latest_date": "2026-01-25"},"JASMIN HOSPITALITY MANAGEMENT, INC.": {"company": "JASMIN HOSPITALITY MANAGEMENT, INC.","email_date": "2026-03-06","activity_date": "2026-03-05","stage": "Target","fit": "Weak","reach": "Low","website": "https://jasminhospitality.com","web_visits": 0,"signal_count": 6,"keywords": ["Brex","talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-24","2026-01-28","2026-03-06"],"activity_dates": ["2026-01-27","2026-03-05"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__22_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__57_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg"],"_latest_date": "2026-03-06"},"Oren, LLC": {"company": "Oren, LLC","email_date": "2026-03-04","activity_date": "2026-03-03","stage": "Consideration","fit": "Weak","reach": "Low","website": "https://universal-nissan.com","web_visits": 0,"signal_count": 6,"keywords": ["Benefits Software","IC=<null>;HDTR=0;HDTF=V154\u0000\u0000\u0000\u0000\u0000ucf:0;jmr:0;auth:0;dest:I;ENG:","amazonses.com;PTR:a9-34.smtp-out.amazonses.com;CAT:NONE;SFS:","employee training","human capital management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-03-04","2026-04-07","2026-07-04","2026-07-12"],"activity_dates": ["2026-03-03","2026-04-07","2026-07-04","2026-07-12"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__24_.msg"],"_latest_date": "2026-07-12"},"Sandcastle Homecare": {"company": "Sandcastle Homecare","email_date": "2026-02-26","activity_date": "2026-02-25","stage": "Target","fit": "Strong","reach": "Low","website": "https://sandcastlehomecare.com","web_visits": 0,"signal_count": 6,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-02-26","2026-07-02","2026-07-03"],"activity_dates": ["2026-02-25","2026-07-02","2026-07-03"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__30_.msg"],"_latest_date": "2026-07-03"},"Best Lockers": {"company": "Best Lockers","email_date": "2026-03-25","activity_date": "2026-03-24","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://venuplus.com","web_visits": 2,"signal_count": 6,"keywords": ["hcm","talent management"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","date": "2026-03-25"}],"contacts": [],"form_fills": [],"dates": ["2026-03-19","2026-03-24","2026-03-25","2026-04-05"],"activity_dates": ["2026-03-18","2026-03-23","2026-03-24","2026-04-05"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__3_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__4_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__9_.msg"],"_latest_date": "2026-04-05"},"Arnold Palmer's Bay Hill Club & Lodge": {"company": "Arnold Palmer's Bay Hill Club & Lodge","email_date": "2026-02-09","activity_date": "2026-02-08","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://bayhill.com","web_visits": 4,"signal_count": 6,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-06"},{"decoded": "https://www.paylocity.com/products/hr/benefits/","raw": "https://www.paylocity.com/products/hr/benefits/","date": "2026-05-08"},{"decoded": "https://www.paylocity.com/company/protecting-our-clients/privacy-center/","raw": "https://www.paylocity.com/company/protecting-our-clients/privacy-center/","date": "2026-06-16"}],"contacts": [],"form_fills": [],"dates": ["2026-02-06","2026-02-09","2026-04-05","2026-05-08","2026-05-10","2026-06-16","2026-06-22","2026-06-28"],"activity_dates": ["2026-02-05","2026-02-08","2026-04-05","2026-05-08","2026-05-10","2026-06-16","2026-06-22","2026-06-28"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__49_.msg"],"_latest_date": "2026-06-28"},"Mitsukoshi, Inc.": {"company": "Mitsukoshi, Inc.","email_date": "2026-02-04","activity_date": "2026-02-03","stage": "Consideration","fit": "Moderate","reach": "Low","website": "https://mitsukoshi-orlando.com","web_visits": 0,"signal_count": 6,"keywords": ["time clock software","transformational learning"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-05","2026-01-07","2026-01-12","2026-02-04"],"activity_dates": ["2026-01-04","2026-01-06","2026-01-11","2026-02-03"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__51_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg"],"_latest_date": "2026-02-04"},"Tropical Ford": {"company": "Tropical Ford","email_date": "2026-01-24","activity_date": null,"stage": "Target","fit": "Strong","reach": "Low","website": "https://tropicalford.com","web_visits": 0,"signal_count": 6,"keywords": ["Benefits Software","Ultimate Software","on boarding process"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-23","2026-01-24","2026-06-11","2026-07-08"],"activity_dates": ["2026-01-22","2026-06-11","2026-07-08"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__62_.msg"],"_latest_date": "2026-07-08"},"Service Spring Corp": {"company": "Service Spring Corp","email_date": "2026-01-20","activity_date": "2026-01-19","stage": "Consideration","fit": "Moderate","reach": "Low","website": "https://servicespring.com","web_visits": 4,"signal_count": 6,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/lp/software/finance/demo/explore/hr-pros/","decoded": "https://www.paylocity.com/lp/software/finance/demo/explore/hr-pros/","date": "2026-01-12"},{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-20"}],"contacts": [],"form_fills": [],"dates": ["2026-01-12","2026-01-20"],"activity_dates": ["2026-01-11","2026-01-19"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__65_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg"],"_latest_date": "2026-01-20"},"Colorvision": {"company": "Colorvision","email_date": "2026-03-11","activity_date": "2026-03-10","stage": "Awareness","fit": "Strong","reach": "Low","website": "https://amazingpictures.com","web_visits": 2,"signal_count": 5,"keywords": ["employee compensation","talent management"],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","date": "2026-02-15"}],"contacts": [],"form_fills": [],"dates": ["2026-02-02","2026-02-09","2026-02-15","2026-03-11","2026-04-29","2026-05-03"],"activity_dates": ["2026-02-01","2026-02-08","2026-02-14","2026-03-10","2026-04-29","2026-05-03"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__17_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__40_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__53_.msg"],"_latest_date": "2026-05-03"},"Silver Springs Bottled Water Company": {"company": "Silver Springs Bottled Water Company","email_date": "2026-03-25","activity_date": "2026-03-24","stage": "Consideration","fit": "Strong","reach": "Low","website": "https://ssbwc.com","web_visits": 0,"signal_count": 5,"keywords": ["Expense Software","expense management software","time clock software"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-03-25","2026-03-31"],"activity_dates": ["2026-03-24","2026-03-31"],"source_files": ["","Luke_s_6sense_Hot_Accounts__Email_Alerts__3_.msg"],"_latest_date": "2026-03-31"},"Challenge Enterprises": {"company": "Challenge Enterprises","email_date": "2026-01-24","activity_date": null,"stage": "Target","fit": "Moderate","reach": "Low","website": "https://challengeenterprises.org","web_visits": 0,"signal_count": 5,"keywords": ["on boarding process","talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-23","2026-01-24","2026-03-29","2026-04-20"],"activity_dates": ["2026-01-22","2026-03-29","2026-04-20"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__62_.msg"],"_latest_date": "2026-04-20"},"Star Island Resort & Club": {"company": "Star Island Resort & Club","email_date": "2026-02-16","activity_date": "2026-02-15","stage": "Target","fit": "Moderate","reach": "Low","website": "https://star-island.com","web_visits": 0,"signal_count": 4,"keywords": ["airbase"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-26","2026-02-09","2026-02-16","2026-07-09"],"activity_dates": ["2026-01-25","2026-02-08","2026-02-15","2026-07-09"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg"],"_latest_date": "2026-07-09"},"SMART Financial Operations LLC": {"company": "SMART Financial Operations LLC","email_date": "2026-01-11","activity_date": "2026-01-10","stage": "Consideration","fit": "Weak","reach": "Low","website": "https://smartfinancialent.com","web_visits": 0,"signal_count": 4,"keywords": ["pay transparency"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-11"],"activity_dates": ["2026-01-10"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__74_.msg"],"_latest_date": "2026-01-11"},"Quality Labor Management": {"company": "Quality Labor Management","website": "https://myqlm.com","stage": "Target","fit": "Strong","reach": "Medium","signal_count": 4,"web_visits": 0,"keywords": ["airbase","time clock software"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-06-27","2026-07-08"],"activity_dates": ["2026-06-27","2026-07-08"],"source_files": [""],"_latest_date": "2026-07-08"},"High Life Farms": {"company": "High Life Farms","email_date": "2026-01-06","activity_date": "2026-01-05","stage": "Target","fit": "Moderate","reach": "Low","website": "https://highlifefarms.com","web_visits": 0,"signal_count": 3,"keywords": ["Benefits Software","Rippling"],"competitor_keywords": ["Rippling"],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-06","2026-06-28","2026-07-01","2026-07-12"],"activity_dates": ["2026-01-05","2026-06-28","2026-07-01","2026-07-12"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__79_.msg"],"_latest_date": "2026-07-12"},"JST Power Equipment": {"company": "JST Power Equipment","website": "https://jstpower.com","stage": "Consideration","fit": "Strong","reach": "Low","signal_count": 3,"web_visits": 2,"keywords": ["UKG"],"competitor_keywords": [],"decoded_urls": [{"decoded": "https://www.paylocity.com/who-we-serve/company-size/small/payroll/","raw": "https://www.paylocity.com/who-we-serve/company-size/small/payroll/","date": "2026-07-02"},{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-07-02"}],"contacts": [],"form_fills": [],"dates": ["2026-06-21","2026-07-02"],"activity_dates": ["2026-06-21","2026-07-02"],"source_files": [""],"_latest_date": "2026-07-02"},"National Realty Of Brevard": {"company": "National Realty Of Brevard","email_date": "2026-03-16","activity_date": "2026-03-15","stage": "Target","fit": "Weak","reach": "Low","website": "https://nationalrealtyfla.com","web_visits": 0,"signal_count": 2,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-02-09","2026-02-21","2026-03-16","2026-03-29","2026-04-05","2026-04-19","2026-04-26"],"activity_dates": ["2026-02-08","2026-02-20","2026-03-15","2026-03-29","2026-04-05","2026-04-19","2026-04-26"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__12_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__35_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg"],"_latest_date": "2026-04-26"},"SDI": {"company": "SDI","email_date": "2026-03-06","activity_date": "2026-03-05","stage": "Awareness","fit": "Moderate","reach": "Low","website": "https://sdi.com","web_visits": 0,"signal_count": 2,"keywords": ["ADP"],"competitor_keywords": ["ADP"],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-03-06"],"activity_dates": ["2026-03-05"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__22_.msg"],"_latest_date": "2026-03-06"},"Jeunesse.Global": {"company": "Jeunesse.Global","email_date": "2026-02-16","activity_date": "2026-02-15","stage": "Awareness","fit": "Moderate","reach": "High","website": "https://velovita.com","web_visits": 2,"signal_count": 2,"keywords": [],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-01-31"}],"contacts": [],"form_fills": [],"dates": ["2026-01-31","2026-02-02","2026-02-09","2026-02-16"],"activity_dates": ["2026-01-30","2026-02-01","2026-02-08","2026-02-15"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__53_.msg","Luke_s_6sense_Hot_Accounts__Email_Alerts__55_.msg"],"_latest_date": "2026-02-16"},"Island H2o Live": {"company": "Island H2o Live","email_date": "2026-02-16","activity_date": "2026-02-15","stage": "Consideration","fit": "Weak","reach": "Low","website": "https://islandh2olive.com","web_visits": 0,"signal_count": 2,"keywords": ["position management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-02-16"],"activity_dates": ["2026-02-15"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg"],"_latest_date": "2026-02-16"},"Direct Insite Corp": {"company": "Direct Insite Corp","email_date": "2026-02-11","activity_date": "2026-02-10","stage": "Awareness","fit": "Weak","reach": "Low","website": "https://leapfamily.com","web_visits": 2,"signal_count": 2,"keywords": [],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/resources/glossary/proximity-bias/","decoded": "https://www.paylocity.com/resources/glossary/proximity-bias/","date": "2026-02-11"}],"contacts": [],"form_fills": [],"dates": ["2026-02-11"],"activity_dates": ["2026-02-10"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__44_.msg"],"_latest_date": "2026-02-11"},"WSFL-TV": {"company": "WSFL-TV","email_date": "2026-02-11","activity_date": "2026-02-10","stage": "Target","fit": "Strong","reach": "Low","website": "https://wsfltv.com","web_visits": 2,"signal_count": 2,"keywords": [],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/","decoded": "https://www.paylocity.com/","date": "2026-02-11"}],"contacts": [],"form_fills": [],"dates": ["2026-02-11"],"activity_dates": ["2026-02-10"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__44_.msg"],"_latest_date": "2026-02-11"},"Andor Health": {"company": "Andor Health","email_date": "2026-01-15","activity_date": "2026-01-14","stage": "Awareness","fit": "Moderate","reach": "Low","website": "https://andorhealth.com","web_visits": 0,"signal_count": 2,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-15"],"activity_dates": ["2026-01-14"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__70_.msg"],"_latest_date": "2026-01-15"},"Conway Lakes Health & Rehabilitation Center": {"company": "Conway Lakes Health & Rehabilitation Center","email_date": "2026-01-16","activity_date": "2026-01-15","stage": "Awareness","fit": "Moderate","reach": "Low","website": "https://conwaylakesrehab.com","web_visits": 0,"signal_count": 2,"keywords": ["airbase"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-16"],"activity_dates": ["2026-01-15"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__69_.msg"],"_latest_date": "2026-01-16"},"Intego Group": {"company": "Intego Group","email_date": "2026-01-10","activity_date": "2026-01-09","stage": "Target","fit": "Weak","reach": "Low","website": "https://integogroup.com","web_visits": 0,"signal_count": 2,"keywords": ["Benefits Software"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-10"],"activity_dates": ["2026-01-09"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__75_.msg"],"_latest_date": "2026-01-10"},"Aza Health": {"company": "Aza Health","email_date": "2026-01-09","activity_date": "2026-01-08","stage": "Target","fit": "Moderate","reach": "Low","website": "https://azahealth.org","web_visits": 0,"signal_count": 2,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-09"],"activity_dates": ["2026-01-08"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__76_.msg"],"_latest_date": "2026-01-09"},"Simform": {"company": "Simform","email_date": "2026-01-07","activity_date": "2026-01-06","stage": "Awareness","fit": "Weak","reach": "Low","website": "https://simform.com","web_visits": 2,"signal_count": 2,"keywords": [],"competitor_keywords": [],"decoded_urls": [{"raw": "https://www.paylocity.com/lp/software/finance/demo/explore/hr-pros/","decoded": "https://www.paylocity.com/lp/software/finance/demo/explore/hr-pros/","date": "2026-01-07"}],"contacts": [],"form_fills": [],"dates": ["2026-01-07"],"activity_dates": ["2026-01-06"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg"],"_latest_date": "2026-01-07"},"Joffrey's Coffee & Tea Company": {"company": "Joffrey's Coffee & Tea Company","email_date": "2026-01-06","activity_date": "2026-01-05","stage": "Consideration","fit": "Moderate","reach": "Medium","website": "https://joffreys.com","web_visits": 0,"signal_count": 2,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-06"],"activity_dates": ["2026-01-05"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__79_.msg"],"_latest_date": "2026-01-06"},"Haliczer Pettis & Schwamm": {"company": "Haliczer Pettis & Schwamm","email_date": "2026-03-20","activity_date": "2026-03-19","stage": "Target","fit": "Moderate","reach": "Low","website": "https://hpslegal.com","web_visits": 0,"signal_count": 2,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-03-20"],"activity_dates": ["2026-03-19"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__8_.msg"],"_latest_date": "2026-03-20"},"Skymantics": {"company": "Skymantics","website": "https://skymantics.com","stage": "Awareness","fit": "Moderate","reach": "Low","signal_count": 2,"web_visits": 0,"keywords": ["airbase"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-03-28"],"activity_dates": ["2026-03-28"],"source_files": [""],"_latest_date": "2026-03-28"},"Atlantic Care Services": {"company": "Atlantic Care Services","website": "https://atlanticcareservices.com","stage": "Consideration","fit": "Strong","reach": "Low","signal_count": 2,"web_visits": 1,"keywords": ["ADP"],"competitor_keywords": ["ADP"],"decoded_urls": [{"decoded": "https://www.paylocity.com/learn-more/one/","raw": "https://www.paylocity.com/learn-more/one/","date": "2026-05-07"}],"contacts": [],"form_fills": [],"dates": ["2026-04-09","2026-05-07"],"activity_dates": ["2026-04-09","2026-05-07"],"source_files": [""],"_latest_date": "2026-05-07"},"andCo Hospitality, a Certified B Corp": {"company": "andCo Hospitality, a Certified B Corp","website": "https://andco.earth","stage": "Awareness","fit": "Weak","reach": "Low","signal_count": 2,"web_visits": 0,"keywords": ["employee engagement","time clock software"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-04-11","2026-07-03"],"activity_dates": ["2026-04-11","2026-07-03"],"source_files": [""],"_latest_date": "2026-07-03"},"You've Got Maids": {"company": "You've Got Maids","website": "https://youvegotmaids.com","stage": "Awareness","fit": "Strong","reach": "Low","signal_count": 2,"web_visits": 0,"keywords": ["ADP","talent management"],"competitor_keywords": ["ADP"],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-05-03","2026-05-10","2026-07-03","2026-07-04"],"activity_dates": ["2026-05-03","2026-05-10","2026-07-03","2026-07-04"],"source_files": [""],"_latest_date": "2026-07-04"},"Entertainment Technology Partners": {"company": "Entertainment Technology Partners","website": "https://etp.net","stage": "Target","fit": "Strong","reach": "Low","signal_count": 1,"web_visits": 1,"keywords": [],"competitor_keywords": [],"decoded_urls": [{"decoded": "https://www.paylocity.com/","raw": "https://www.paylocity.com/","date": "2026-04-16"}],"contacts": [],"form_fills": [],"dates": ["2026-04-16"],"activity_dates": ["2026-04-16"],"source_files": [""],"_latest_date": "2026-04-16"},"Access Residential Management, LLC": {"company": "Access Residential Management, LLC","website": "https://accessdifference.com","stage": "Target","fit": "Strong","reach": "Low","signal_count": 1,"web_visits": 0,"keywords": ["talent management"],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-06-30"],"activity_dates": ["2026-06-30"],"source_files": [""],"_latest_date": "2026-06-30"},"Kalera": {"company": "Kalera","website": "https://kalera.com","stage": "Awareness","fit": "Strong","reach": "Low","signal_count": 1,"web_visits": 1,"keywords": [],"competitor_keywords": [],"decoded_urls": [{"decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...","date": "2026-07-07"}],"contacts": [],"form_fills": [],"dates": ["2026-07-07"],"activity_dates": ["2026-07-07"],"source_files": [""],"_latest_date": "2026-07-07"},"FMK Hospitality Group": {"company": "FMK Hospitality Group","website": "https://fmkrestaurants.com","stage": "Awareness","fit": "Moderate","reach": "Medium","signal_count": 1,"web_visits": 1,"keywords": [],"competitor_keywords": [],"decoded_urls": [{"decoded": "https://www.paylocity.com/lp/software/brand/company-size/small-business/","raw": "https://www.paylocity.com/lp/software/brand/company-size/small-business/","date": "2026-07-10"}],"contacts": [],"form_fills": [],"dates": ["2026-07-10"],"activity_dates": ["2026-07-10"],"source_files": [""],"_latest_date": "2026-07-10"},"Sterile Environment Technologies": {"company": "Sterile Environment Technologies","email_date": "2026-03-21","activity_date": "2026-03-20","stage": "Purchase","fit": "Strong","reach": "Low","website": "https://set3.com","web_visits": 0,"signal_count": 0,"keywords": [],"competitor_keywords": [],"decoded_urls": [],"contacts": [{"name": "Natalie Vazquez Account","title": "Manager","email": "nvazquez@set3.com"}],"form_fills": [],"dates": ["2026-03-21"],"activity_dates": ["2026-03-20"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__7_.msg"],"_latest_date": "2026-03-21"},"Corbitt": {"company": "Corbitt","email_date": "2026-02-16","activity_date": "2026-02-15","stage": "Target","fit": "Moderate","reach": "Low","website": "https://corbittmfg.com","web_visits": 0,"signal_count": 0,"keywords": [],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-02-16"],"activity_dates": ["2026-02-15"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg"],"_latest_date": "2026-02-16"},"Eckler Industries, Inc.": {"company": "Eckler Industries, Inc.","email_date": "2026-01-26","activity_date": "2026-01-25","stage": "Target","fit": "Strong","reach": "Low","website": "https://ecklers.com","web_visits": 0,"signal_count": 0,"keywords": [],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-26","2026-06-07","2026-06-14","2026-06-21"],"activity_dates": ["2026-01-25","2026-06-07","2026-06-14","2026-06-21"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg"],"_latest_date": "2026-06-21"},"Complete Care": {"company": "Complete Care","email_date": "2026-01-12","activity_date": "2026-01-11","stage": "Target","fit": "Moderate","reach": "Low","website": "https://visitcompletecare.com","web_visits": 0,"signal_count": 0,"keywords": [],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-12","2026-07-12"],"activity_dates": ["2026-01-11","2026-07-12"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg"],"_latest_date": "2026-07-12"},"CREO Group": {"company": "CREO Group","email_date": "2026-01-05","activity_date": "2026-01-04","stage": "Awareness","fit": "Moderate","reach": "Low","website": "https://creogroup.com","web_visits": 0,"signal_count": 0,"keywords": [],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-01-05"],"activity_dates": ["2026-01-04"],"source_files": ["Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg"],"_latest_date": "2026-01-05"},"BUENA VIVA, INC.": {"company": "BUENA VIVA, INC.","website": "https://oertherfoods.com","stage": "Target","fit": "Weak","reach": "Low","signal_count": 0,"web_visits": 0,"keywords": [],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-04-05","2026-04-12"],"activity_dates": ["2026-04-05","2026-04-12"],"source_files": [""],"_latest_date": "2026-04-12"},"Mid Florida Dermatology": {"company": "Mid Florida Dermatology","website": "https://midflmed.com","stage": "Target","fit": "Moderate","reach": "Low","signal_count": 0,"web_visits": 0,"keywords": [],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-04-19","2026-04-26","2026-05-03","2026-06-21"],"activity_dates": ["2026-04-19","2026-04-26","2026-05-03","2026-06-21"],"source_files": [""],"_latest_date": "2026-06-21"},"BlackFish Federal": {"company": "BlackFish Federal","website": "https://blackfishfederal.com","stage": "Awareness","fit": "Moderate","reach": "Medium","signal_count": 0,"web_visits": 0,"keywords": [],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-04-26"],"activity_dates": ["2026-04-26"],"source_files": [""],"_latest_date": "2026-04-26"},"Hospice Of Marion County": {"company": "Hospice Of Marion County","website": "https://hospiceofmarion.com","stage": "Target","fit": "Strong","reach": "Low","signal_count": 0,"web_visits": 0,"keywords": [],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-06-21","2026-07-05"],"activity_dates": ["2026-06-21","2026-07-05"],"source_files": [""],"_latest_date": "2026-07-05"},"Kester": {"company": "Kester","website": "https://kester.com","stage": "Awareness","fit": "Strong","reach": "Low","signal_count": 0,"web_visits": 0,"keywords": [],"competitor_keywords": [],"decoded_urls": [],"contacts": [],"form_fills": [],"dates": ["2026-07-12"],"activity_dates": ["2026-07-12"],"source_files": [""],"_latest_date": "2026-07-12"}};
+
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+let allAccounts = [];
+let sortCol = '';
+let sortDir = 1;
+
+// ── localStorage Storage & Retrieval ──
+const STORAGE_KEY = 'sixsense_dashboard_data';
+
+function saveToLocalStorage(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    showSaveIndicator(true);
+  } catch (e) {
+    console.error('Failed to save to localStorage:', e);
+    showSaveIndicator(false, 'Save failed');
+  }
+}
+
+function loadFromLocalStorage() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (e) {
+    console.error('Failed to load from localStorage:', e);
+    return null;
+  }
+}
+
+function showSaveIndicator(isSaved, label = null) {
+  const el = document.getElementById('saveIndicator');
+  const lbl = document.getElementById('saveLabel');
+  el.classList.toggle('saved', isSaved);
+  lbl.textContent = label || (isSaved ? 'Saved ✓' : 'Not saved');
+}
+
+// ── Ingest ──
+const STAGE_ORDER = ['Awareness', 'Consideration', 'Target', 'Decision', 'Purchase'];
+const FIT_ORDER = ['Weak', 'Moderate', 'Strong'];
+const NAME_SUFFIXES = ['incorporated', 'company', 'corporation', 'inc', 'llc', 'corp', 'ltd', 'co'];
+
+// Key used to match "Colorvision" with "COLORVISION INC" etc. across update files
+function normCompanyKey(name) {
+  let s = String(name || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const suf of NAME_SUFFIXES) {
+      if (s.endsWith(' ' + suf)) { s = s.slice(0, -suf.length - 1).trim(); changed = true; }
+    }
+  }
+  return s;
+}
+
+function dedupeUrls(urls) {
+  const seen = new Set();
+  return urls.filter(u => {
+    const k = (u.decoded || u.raw || '') + '|' + (u.date || '');
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+}
+
+function dedupeObjects(list) {
+  const seen = new Set();
+  return list.filter(o => {
+    const k = JSON.stringify(o);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+function recomputeLatest(acct) {
+  const all = [...(acct.dates || []), ...(acct.activity_dates || [])].filter(Boolean);
+  acct._latest_date = all.length ? all.reduce((a, b) => (a > b ? a : b)) : acct.email_date;
+}
+
+// mode 'snapshot': incoming data is a cumulative export (like 6SENSE_Update_File.json) —
+//   counters take the max, so re-loading the same file is a no-op instead of double counting.
+// mode 'increment': incoming data is a single newly parsed email — counters add.
+function ingestDataObject(data, mode = 'snapshot') {
+  const existing = {};
+  allAccounts.forEach(a => {
+    existing[normCompanyKey(a.company)] = a;
+  });
+
+  Object.values(data).forEach(acct => {
+    const company = acct.company;
+    if (!company) return;
+    const key = normCompanyKey(company);
+    if (existing[key]) {
+      const ex = existing[key];
+      const mergeArrays = (a, b) => Array.from(new Set([...(a || []), ...(b || [])])).sort();
+      ex.keywords = mergeArrays(ex.keywords, acct.keywords);
+      ex.competitor_keywords = mergeArrays(ex.competitor_keywords, acct.competitor_keywords);
+      ex.dates = mergeArrays(ex.dates, acct.dates);
+      ex.activity_dates = mergeArrays(ex.activity_dates, acct.activity_dates);
+      ex.source_files = mergeArrays(ex.source_files, acct.source_files);
+      ex.decoded_urls = dedupeUrls([...(ex.decoded_urls || []), ...(acct.decoded_urls || [])]);
+      ex.contacts = dedupeObjects([...(ex.contacts || []), ...(acct.contacts || [])]);
+      ex.form_fills = dedupeObjects([...(ex.form_fills || []), ...(acct.form_fills || [])]);
+      if (mode === 'increment') {
+        ex.web_visits = (ex.web_visits || 0) + (acct.web_visits || 0);
+        ex.signal_count = (ex.signal_count || 0) + (acct.signal_count || 0);
+      } else {
+        ex.web_visits = Math.max(ex.web_visits || 0, acct.web_visits || 0);
+        ex.signal_count = Math.max(ex.signal_count || 0, acct.signal_count || 0);
+      }
+      if (!ex.reach && acct.reach) ex.reach = acct.reach;
+      if (!ex.website && acct.website) ex.website = acct.website;
+      if (!ex.email_date || (acct.email_date && acct.email_date > ex.email_date)) {
+        ex.email_date = acct.email_date;
+        ex.activity_date = acct.activity_date;
+      }
+      if (acct.stage && STAGE_ORDER.indexOf(acct.stage) > STAGE_ORDER.indexOf(ex.stage || '')) ex.stage = acct.stage;
+      if (acct.fit && FIT_ORDER.indexOf(acct.fit) > FIT_ORDER.indexOf(ex.fit || '')) ex.fit = acct.fit;
+      recomputeLatest(ex);
+    } else {
+      const copy = { ...acct };
+      copy.decoded_urls = dedupeUrls(copy.decoded_urls || []);
+      recomputeLatest(copy);
+      existing[key] = copy;
+      allAccounts.push(copy);
+    }
+  });
+
+  applySort();
+  updateStats();
+  updateDateRange();
+  renderTable();
+
+  // Auto-save to localStorage after ingesting
+  saveToLocalStorage(
+    Object.fromEntries(allAccounts.map(a => [a.company, a]))
+  );
+}
+
+// ── Rendering ──
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  
+  allAccounts.forEach((acct, idx) => {
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + idx;
+    tr.innerHTML = `
+      <td class="company-name"><span class="expander" onclick="toggleRow(${idx})"><span class="expand-icon">▶</span> ${escHtml(acct.company)}</span></td>
+      <td><span class="badge stage-badge">${escHtml(acct.stage || '?')}</span></td>
+      <td><span class="badge ${fitBadgeClass(acct.fit)}">${escHtml(acct.fit || '?')}</span></td>
+      <td><strong>${acct.signal_count || 0}</strong></td>
+      <td>${(acct.keywords || []).slice(0, 2).map(k => `<span class="kw-tag">${escHtml(k)}</span>`).join('')}${(acct.keywords || []).length > 2 ? `<span class="kw-tag">+${(acct.keywords || []).length - 2}</span>` : ''}</td>
+      <td>${fmtDate(acct._latest_date)}</td>
+      <td>${getAction(acct)}</td>
+    `;
+    tbody.appendChild(tr);
+
+    const expandedId = 'expanded-' + idx;
+    const expanded = document.createElement('tr');
+    expanded.className = 'expanded-row';
+    expanded.id = expandedId;
+    expanded.style.display = 'none';
+    expanded.innerHTML = `
+      <td colspan="7">
+        <span class="section-label">Keywords</span>
+        <div class="content-list">${(acct.keywords || []).map(k => `<span class="kw-tag">${escHtml(k)}</span>`).join('')}${(acct.competitor_keywords || []).length ? `<br/>${(acct.competitor_keywords || []).map(k => `<span class="kw-tag comp">${escHtml(k)}</span>`).join('')}` : ''}</div>
+        ${acct.contacts && acct.contacts.length ? `<span class="section-label" style="margin-top:12px;">Contacts</span><div class="content-list"><ul>${acct.contacts.map(c => `<li><span class="kw-tag contact">${escHtml(c.name || '?')}</span> ${escHtml(c.title || '(no title)')}</li>`).join('')}</ul></div>` : ''}
+        ${acct.web_visits ? `<span class="section-label" style="margin-top:12px;">Web Visits</span><div class="content-list">${acct.web_visits} visit${acct.web_visits !== 1 ? 's' : ''}</div>` : ''}
+        ${acct.decoded_urls && acct.decoded_urls.length ? `<span class="section-label" style="margin-top:12px;">Links</span><div class="content-list"><ul>${acct.decoded_urls.slice(0, 5).map(u => `<li><a href="${escHtml(u.decoded || u.raw || '#')}" target="_blank" style="color:var(--accent);text-decoration:none;">${escHtml(urlLabel(u))}</a> <span style="color:var(--text-dim);">${fmtDate(u.date)}</span></li>`).join('')}</ul></div>` : ''}
+        ${acct.source_files && acct.source_files.length ? `<span class="section-label" style="margin-top:12px;">Source</span><div class="content-list">${acct.source_files.length} email${acct.source_files.length !== 1 ? 's' : ''} parsed</div>` : ''}
+      </td>
+    `;
+    tbody.appendChild(expanded);
+  });
+}
+
+function toggleRow(idx) {
+  const expanded = document.getElementById('expanded-' + idx);
+  const icon = document.querySelector('#row-' + idx + ' .expand-icon');
+  if (expanded.style.display === 'none') {
+    expanded.style.display = 'table-row';
+    icon.classList.add('open');
+  } else {
+    expanded.style.display = 'none';
+    icon.classList.remove('open');
+  }
+}
+
+function fitBadgeClass(fit) {
+  if (fit === 'Strong') return 'strong';
+  if (fit === 'Moderate') return 'mod';
+  return 'weak';
+}
+
+function escHtml(s) {
+  const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};
+  return String(s == null ? '' : s).replace(/[&<>"']/g, m => map[m]);
+}
+
+function urlLabel(u) {
+  const href = u.decoded || u.raw || '';
+  try {
+    const segs = new URL(href).pathname.split('/').filter(Boolean);
+    return segs.length ? segs[segs.length - 1] : href;
+  } catch (e) {
+    return href;
+  }
+}
+
+// ── Actions ──
+const TALENT_KWS = ['talent management', 'talent development'];
+const BENEFITS_KWS = ['benefits software', 'benefits platform'];
+const PAYROLL_KWS = ['payroll software', 'payroll platform'];
+const HRIS_KWS = ['hris', 'hr software', 'hrms'];
+const COMP_KWS = ['compensation software', 'compensation platform'];
+const TRAINING_KWS = ['training software', 'learning software', 'upskilling', 'learning platform'];
+const ENGAGEMENT_KWS = ['employee engagement', 'engagement platform'];
+const ONBOARDING_KWS = ['on boarding process', 'onboarding', 'employee onboarding'];
+const TIME_KWS = ['time clock software', 'time tracking'];
+const TAX_KWS = ['tax', 'tax compliance'];
+const EXPENSE_KWS = ['expense management software', 'expense software'];
+
+function hasKwMatch(kwList, patterns) {
+  return kwList.some(kw => patterns.some(p => kw.toLowerCase().includes(p.toLowerCase())));
+}
+
+function getAction(acct) {
+  const kws = acct.keywords || [];
+  const competitors = acct.competitor_keywords || [];
+  const stage = (acct.stage || '').toLowerCase();
+  const fit = (acct.fit || '').toLowerCase();
+  const signals = acct.signal_count || 0;
+
+  // ── Rule 1: Purchase stage + strong fit ──
+  if (stage === 'purchase' && fit === 'strong') {
+    return badge('p1', '🎯', 'Close deal', `High intent — sales-driven next step`);
+  }
+
+  // ── Rule 2: Decision stage + strong fit ──
+  if (stage === 'decision' && fit === 'strong') {
+    return badge('p1', '💰', 'Demo/POC push', `In final stages — prepare demo or proof of concept`);
+  }
+
+  // ── Rule 3: High activity + consideration stage ──
+  if (signals >= 15 && stage === 'consideration') {
+    const comp = competitors.length ? competitors[0] : null;
+    return badge('p1', '⚔️', comp ? `Displace ${comp}` : 'Win the deal',
+      comp ? `Actively comparing with ${comp} — position against them directly`
+           : `Heavy evaluation — target objection handling & differentiation`);
+  }
+
+  // ── Rule 4: Competitor keywords ──
+  if (competitors.length) {
+    const comp = competitors[0];
+    if (hasKwMatch(kws, TALENT_KWS)) {
+      return badge('p2', '👥', `Beat ${comp} on talent`, `Researching talent — position Paylocity's TM advantage`);
+    }
+    if (hasKwMatch(kws, BENEFITS_KWS)) {
+      return badge('p2', '❤️', `Beat ${comp} on benefits`, `Researching benefits — highlight compliance & flexibility`);
+    }
+    return badge('p2', '⚔️', `Replace ${comp}`, `Competitive signal — prepare replacement playbook`);
+  }
+
+  // ── Rule 5: Talent management heavy buyers ──
+  if (hasKwMatch(kws, TALENT_KWS) && signals >= 8) {
+    return badge('p2', '👥', 'Talent-first pitch', `Strong TM focus — lead with recruiting, retention, development`);
+  }
+
+  // ── Rule 6: Benefits-heavy buyers ──
+  if (hasKwMatch(kws, BENEFITS_KWS) && signals >= 8) {
+    return badge('p2', '❤️', 'Benefits value', `Researching benefits — surface compliance, open enrollment, ACA`);
+  }
+
+  // ── Rule 7: Payroll buyers ──
+  if (hasKwMatch(kws, PAYROLL_KWS) && signals >= 5) {
+    return badge('p2', '💳', 'Multi-product upsell', `Payroll interest — position suite for HR, benefits, talent`);
+  }
+
+  // ── Rule 8: Training/upskilling ──
+  if (hasKwMatch(kws, TRAINING_KWS) && signals >= 5) {
+    return badge('p3', '📚', 'Learning angle', `Upskilling focus — connect to talent development & retention`);
+  }
+
+  // ── Rule 9: Engagement ──
+  if (hasKwMatch(kws, ENGAGEMENT_KWS) && signals >= 5) {
+    return badge('p3', '📢', 'Employee experience', `Engagement priority — show Paylocity's comms & culture features`);
+  }
+
+  // ── Rule 10: Onboarding ──
+  if (hasKwMatch(kws, ONBOARDING_KWS) && signals >= 3) {
+    return badge('p3', '🚀', 'Onboarding efficiency', `Process-driven buyer — highlight 90-day adoption, compliance automation`);
+  }
+
+  // ── Rule 11: Time tracking ──
+  if (hasKwMatch(kws, TIME_KWS)) {
+    return badge('p3', '⏰', 'Time & attendance angle', `Tracking focus — show integration with payroll & labor cost control`);
+  }
+
+  // ── Rule 12: Expense/spend management ──
+  if (hasKwMatch(kws, EXPENSE_KWS)) {
+    const comp = competitors.find(c => EXPENSE_KWS.some(p => c.toLowerCase().includes(p)));
+    return badge('p3', '💳', comp ? `Displace ${comp}` : 'Expense management angle',
+      comp ? `Actively researching ${comp} — position Paylocity's expense tools as the all-in-one alternative`
+           : `Researching expense management — surface Paylocity's expense & reimbursement features`);
+  }
+
+  // ── Rule 13: Awareness, strong fit, some activity ──
+  if (stage === 'awareness' && fit === 'strong') {
+    return badge('p3', '📡', 'Early nurture',
+      `Strong fit but early Awareness — add to a sequence, soft touch to get on radar`);
+  }
+
+  // ── Rule 14: Target stage ──
+  if (stage === 'target') {
+    return badge('p3', '🎪', 'Qualify first',
+      `Target stage — confirm they're in your territory & ICP before investing time`);
+  }
+
+  // ── Default ──
+  return badge('p4', '👁️', 'Monitor',
+    `Low signal volume — watch for stage progression before prioritizing outreach`);
+}
+
+function badge(priority, icon, title, why) {
+  return `<div class="action-badge action-${priority}">
+    <span class="action-icon">${icon}</span>
+    <span class="action-text">${escHtml(title)}<span class="action-why">${why}</span></span>
+  </div>`;
+}
+
+// ── Date ──
+function fmtDate(d) {
+  if (!d) return '';
+  const parts = d.split('-');
+  if (parts.length !== 3) return d;
+  return `${parseInt(parts[1])}/${parseInt(parts[2])}/${parts[0]}`;
+}
+
+// ── Save/Load/Download ──
+function saveDashboardJson() {
+  const payload = {};
+  allAccounts.forEach((acct, idx) => {
+    payload[acct.company || ('account_' + idx)] = acct;
+  });
+  
+  // Save to localStorage
+  saveToLocalStorage(payload);
+  
+  // Also download as file for backup
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.href = url;
+  a.download = 'sixsense-dashboard-data-' + stamp + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  
+  showSaveIndicator(true, 'Saved locally + downloaded');
+}
+
+function loadDashboardJson(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      allAccounts = [];
+      ingestDataObject(parsed);
+      clearUpload();
+      showSaveIndicator(true, `Loaded: ${file.name}`);
+    } catch (err) {
+      showSaveIndicator(false, 'Failed to load');
+      logLine(`<span class="log-err">✗ ${file.name} — ${err && err.message ? err.message : String(err)}</span>`);
+    }
+    event.target.value = '';
+  };
+  reader.onerror = () => {
+    showSaveIndicator(false, 'Read failed');
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function loadJsonFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      allAccounts = [];
+      ingestDataObject(parsed);
+      showSaveIndicator(true, `Loaded: ${file.name}`);
+      logLine(`<span class="log-ok">✓ ${file.name} — ${Object.keys(parsed).length} accounts loaded</span>`);
+    } catch (err) {
+      showSaveIndicator(false, 'Failed to load JSON');
+      logLine(`<span class="log-err">✗ ${file.name} — ${err && err.message ? err.message : String(err)}</span>`);
+    }
+    document.getElementById('jsonFileInput').value = '';
+  };
+  reader.onerror = () => {
+    showSaveIndicator(false, 'Read failed');
+    document.getElementById('jsonFileInput').value = '';
+  };
+  reader.readAsText(file);
+}
+
+async function loadData() {
+  // Merge embedded snapshot with anything saved in the browser — whichever is
+  // fresher wins per account, so an updated dashboard file is never shadowed
+  // by stale localStorage (and vice versa).
+  const stored = loadFromLocalStorage();
+  if (typeof EMBEDDED_DATA !== 'undefined') {
+    ingestDataObject(EMBEDDED_DATA, 'snapshot');
+  }
+  if (stored && Object.keys(stored).length > 0) {
+    ingestDataObject(stored, 'snapshot');
+    showSaveIndicator(true, 'Merged embedded + browser storage');
+  }
+}
+
+// ── Stats ──
+function updateStats() {
+  const total = allAccounts.length;
+  const hot = allAccounts.filter(a => a.signal_count >= 10).length;
+  const totalWeb = allAccounts.reduce((s,a) => s + (a.web_visits || 0), 0);
+  const totalSig = allAccounts.reduce((s,a) => s + (a.signal_count || 0), 0);
+
+  animateCount('statHot', hot);
+  animateCount('statWeb', totalWeb);
+  animateCount('statSignals', totalSig);
+  animateCount('statCompanies', total);
+}
+
+function animateCount(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let cur = 0;
+  const step = Math.ceil(target / 30);
+  const timer = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = cur.toLocaleString();
+    if (cur >= target) clearInterval(timer);
+  }, 16);
+}
+
+function updateDateRange() {
+  const activityDates = allAccounts.flatMap(a => a.activity_dates || []).filter(Boolean).sort();
+  const fallbackDates = allAccounts.flatMap(a => a.dates || []).filter(Boolean).sort();
+  const all = activityDates.length ? activityDates : fallbackDates;
+  const el = document.getElementById('dateRangeDisplay');
+  const footer = document.getElementById('footerInfo');
+  if (all.length) {
+    const first = all[0], last = all[all.length - 1];
+    const label = activityDates.length ? 'activity days' : 'email signals parsed';
+    el.innerHTML = `<span>${fmtDate(first)}</span> → <span>${fmtDate(last)}</span>`;
+    footer.textContent = `${all.length} ${label} · ${allAccounts.length} accounts · Last: ${fmtDate(last)}`;
+  } else {
+    el.textContent = 'No dates found';
+    footer.textContent = 'No data loaded';
+  }
+}
+
+// ── Sort ──
+function sortBy(col) {
+  if (sortCol === col) {
+    sortDir = -sortDir;
+  } else {
+    sortCol = col;
+    sortDir = col === 'company' ? 1 : -1;
+  }
+  applySort();
+  renderTable();
+}
+
+function applySort() {
+  if (!sortCol) return;
+  const ranks = { stage: STAGE_ORDER, fit: FIT_ORDER };
+  allAccounts.sort((a, b) => {
+    let aVal, bVal;
+    if (ranks[sortCol]) {
+      aVal = ranks[sortCol].indexOf(a[sortCol]);
+      bVal = ranks[sortCol].indexOf(b[sortCol]);
+    } else {
+      aVal = a[sortCol] || 0;
+      bVal = b[sortCol] || 0;
+      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+    }
+    if (aVal < bVal) return -1 * sortDir;
+    if (aVal > bVal) return 1 * sortDir;
+    return 0;
+  });
+  document.querySelectorAll('th[data-col]').forEach(th => {
+    th.classList.toggle('sorted', th.dataset.col === sortCol);
+  });
+}
+
+// ── Upload ──
+function toggleUploadZone() {
+  const body = document.getElementById('uploadBody');
+  const toggle = document.getElementById('uploadToggle');
+  const chev = document.getElementById('uploadChevron');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('dropArea').classList.add('active');
+}
+
+function handleDragLeave() {
+  document.getElementById('dropArea').classList.remove('active');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropArea').classList.remove('active');
+  handleFileSelect(e.dataTransfer.files);
+}
+
+function handleFileSelect(files) {
+  if (!files.length) return;
+  document.getElementById('uploadProgress').classList.add('active');
+  document.getElementById('uploadLog').innerHTML = '';
+  logLine('<span class="log-new">Processing files...</span>');
+  let processed = 0;
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      try {
+        const txt = e.target.result;
+        if (/\.json$/i.test(file.name)) {
+          const parsed = JSON.parse(txt);
+          const n = Object.keys(parsed).length;
+          ingestDataObject(parsed, 'snapshot');
+          logLine(`<span class="log-ok">✓ ${file.name} — ${n} account(s) merged (snapshot)</span>`);
+        } else {
+          const data = parseSixsenseEmail(txt);
+          if (data && Object.keys(data).length) {
+            ingestDataObject(data, 'increment');
+            logLine(`<span class="log-ok">✓ ${file.name} — ${Object.keys(data).length} account(s) merged</span>`);
+          } else {
+            logLine(`<span class="log-skip">~ ${file.name} — no accounts parsed</span>`);
+          }
+        }
+      } catch (err) {
+        logLine(`<span class="log-err">✗ ${file.name} — ${err.message || 'Unknown error'}</span>`);
+      }
+      processed++;
+      if (processed === files.length) {
+        logLine('<span class="log-new">✓ Done. Click Save to persist your changes.</span>');
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+function parseSixsenseEmail(text) {
+  const payload = {};
+  const lines = text.split('\n');
+  let inBody = false;
+  let bodyLines = [];
+
+  lines.forEach(line => {
+    if (inBody) {
+      bodyLines.push(line);
+    } else if (line.trim() === '') {
+      inBody = true;
+    }
+  });
+
+  const bodyText = bodyLines.join('\n');
+  if (!bodyText.includes('Company Name:') || !bodyText.includes('Stage:')) {
+    return {};
+  }
+
+  const extract = (pattern) => {
+    const match = bodyText.match(pattern);
+    return match ? match[1].trim() : null;
+  };
+
+  const company = extract(/Company Name:\s*([^\n]+)/i);
+  const stage = extract(/Stage:\s*([^\n]+)/i);
+  const fit = extract(/Fit:\s*([^\n]+)/i);
+  const reach = extract(/Reach:\s*([^\n]+)/i);
+  const website = extract(/Website:\s*([^\n]+)/i);
+
+  if (!company) return {};
+
+  const keywordSection = bodyText.match(/Keywords:\s*([\s\S]*?)(?:Competitor Keywords:|$)/i);
+  const keywords = keywordSection ? 
+    keywordSection[1].split('\n').map(k => k.trim()).filter(k => k && !k.includes('Keywords')) : [];
+
+  const compSection = bodyText.match(/Competitor Keywords:\s*([\s\S]*?)(?:Decoded URLs:|Signal Count:|$)/i);
+  const competitor_keywords = compSection ?
+    compSection[1].split('\n').map(k => k.trim()).filter(k => k && !k.includes('Competitor')) : [];
+
+  const signalMatch = bodyText.match(/Signal Count:\s*(\d+)/i);
+  const signal_count = signalMatch ? parseInt(signalMatch[1]) : 0;
+
+  const urlSection = bodyText.match(/Decoded URLs:\s*([\s\S]*?)(?:Contacts:|Contacts Detected:|$)/i);
+  const decoded_urls = [];
+  if (urlSection) {
+    const urlLines = urlSection[1].split('\n').filter(l => l.trim());
+    urlLines.forEach(line => {
+      const match = line.match(/\[(\d{4}-\d{2}-\d{2})\]\s+(.+)/);
+      if (match) {
+        decoded_urls.push({
+          raw: match[2].trim(),
+          decoded: match[2].trim(),
+          date: match[1]
+        });
+      }
+    });
+  }
+
+  const dates = [new Date().toISOString().split('T')[0]];
+  const activity_dates = dates;
+
+  payload[company] = {
+    company,
+    stage: stage || 'Awareness',
+    fit: fit || 'Moderate',
+    reach: reach || 'Low',
+    website: website || '',
+    keywords: keywords.filter(k => k),
+    competitor_keywords: competitor_keywords.filter(k => k),
+    signal_count,
+    decoded_urls,
+    web_visits: decoded_urls.length,
+    contacts: [],
+    form_fills: [],
+    dates,
+    activity_dates,
+    email_date: dates[0],
+    activity_date: activity_dates[0],
+    source_files: ['(pasted)'],
+    _latest_date: dates[0]
+  };
+
+  return payload;
+}
+
+function logLine(html) {
+  const log = document.getElementById('uploadLog');
+  const line = document.createElement('div');
+  line.innerHTML = html;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+function clearUpload() {
+  document.getElementById('uploadProgress').classList.remove('active');
+  document.getElementById('uploadLog').innerHTML = '';
+  document.getElementById('fileInput').value = '';
+}
+
+// ── Init ──
+sortCol = 'signal_count';
+sortDir = -1;
+loadData();
+</script>
+</body>
+</html>

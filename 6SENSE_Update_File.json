@@ -1,0 +1,4197 @@
+{
+  "Environmental Consulting & Technology, Inc.": {
+    "company": "Environmental Consulting & Technology, Inc.",
+    "email_date": "2026-03-11",
+    "activity_date": "2026-03-10",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://ectinc.com",
+    "web_visits": 12,
+    "signal_count": 66,
+    "keywords": [
+      "ADP",
+      "Benefits Software",
+      "Paycor",
+      "e verify",
+      "employee development",
+      "employee retention",
+      "on boarding process",
+      "sage hr",
+      "talent development",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "ADP"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-24"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-26"
+      },
+      {
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "date": "2026-01-30"
+      },
+      {
+        "raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "date": "2026-02-07"
+      },
+      {
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/payroll/",
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/payroll/",
+        "date": "2026-03-06"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-03-11"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-03",
+      "2026-01-05",
+      "2026-01-07",
+      "2026-01-08",
+      "2026-01-22",
+      "2026-01-24",
+      "2026-01-26",
+      "2026-01-30",
+      "2026-02-01",
+      "2026-02-03",
+      "2026-02-06",
+      "2026-02-07",
+      "2026-02-12",
+      "2026-02-14",
+      "2026-02-15",
+      "2026-02-17",
+      "2026-02-19",
+      "2026-02-21",
+      "2026-02-22",
+      "2026-02-23",
+      "2026-02-28",
+      "2026-03-03",
+      "2026-03-06",
+      "2026-03-09",
+      "2026-03-11",
+      "2026-03-29"
+    ],
+    "activity_dates": [
+      "2026-01-02",
+      "2026-01-04",
+      "2026-01-06",
+      "2026-01-07",
+      "2026-01-21",
+      "2026-01-25",
+      "2026-01-29",
+      "2026-01-31",
+      "2026-02-02",
+      "2026-02-05",
+      "2026-02-06",
+      "2026-02-11",
+      "2026-02-13",
+      "2026-02-14",
+      "2026-02-16",
+      "2026-02-20",
+      "2026-02-21",
+      "2026-02-22",
+      "2026-02-27",
+      "2026-03-02",
+      "2026-03-05",
+      "2026-03-08",
+      "2026-03-10",
+      "2026-03-29"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__17_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__22_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__25_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__28_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__34_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__35_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__38_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__40_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__41_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__43_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__48_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__49_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__52_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__63_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__77_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__82_.msg"
+    ],
+    "_latest_date": "2026-03-29"
+  },
+  "Kissimmee Utility Authority": {
+    "company": "Kissimmee Utility Authority",
+    "email_date": "2026-03-01",
+    "activity_date": "2026-02-28",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://kua.com",
+    "web_visits": 20,
+    "signal_count": 54,
+    "keywords": [
+      "Benefits Software",
+      "CARES act",
+      "safe harbor",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/products/hr/benefits/",
+        "decoded": "https://www.paylocity.com/products/hr/benefits/",
+        "date": "2026-01-08"
+      },
+      {
+        "raw": "https://www.paylocity.com/products/hr/benefits/",
+        "decoded": "https://www.paylocity.com/products/hr/benefits/",
+        "date": "2026-01-10"
+      },
+      {
+        "raw": "https://www.paylocity.com/products/it/asset-management/",
+        "decoded": "https://www.paylocity.com/products/it/asset-management/",
+        "date": "2026-01-17"
+      },
+      {
+        "raw": "https://www.paylocity.com/products/hr/talent-management-system/recruiting/",
+        "decoded": "https://www.paylocity.com/products/hr/talent-management-system/recruiting/",
+        "date": "2026-01-20"
+      },
+      {
+        "raw": "https://www.paylocity.com/products/hr/benefits/",
+        "decoded": "https://www.paylocity.com/products/hr/benefits/",
+        "date": "2026-01-21"
+      },
+      {
+        "raw": "https://www.paylocity.com/products/it/asset-management/",
+        "decoded": "https://www.paylocity.com/products/it/asset-management/",
+        "date": "2026-01-22"
+      },
+      {
+        "raw": "https://www.paylocity.com/products/hr/benefits/",
+        "decoded": "https://www.paylocity.com/products/hr/benefits/",
+        "date": "2026-01-27"
+      },
+      {
+        "raw": "https://www.paylocity.com/products/it/asset-management/",
+        "decoded": "https://www.paylocity.com/products/it/asset-management/",
+        "date": "2026-02-01"
+      },
+      {
+        "raw": "https://www.paylocity.com/products/hr/talent-management-system/recruiting/",
+        "decoded": "https://www.paylocity.com/products/hr/talent-management-system/recruiting/",
+        "date": "2026-02-14"
+      },
+      {
+        "decoded": "https://www.paylocity.com/products/it/asset-management/",
+        "raw": "https://www.paylocity.com/products/it/asset-management/",
+        "date": "2026-04-04"
+      },
+      {
+        "decoded": "https://www.paylocity.com/products/hr/benefits/",
+        "raw": "https://www.paylocity.com/products/hr/benefits/",
+        "date": "2026-04-05"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-08",
+      "2026-01-09",
+      "2026-01-10",
+      "2026-01-17",
+      "2026-01-20",
+      "2026-01-21",
+      "2026-01-22",
+      "2026-01-26",
+      "2026-01-27",
+      "2026-01-28",
+      "2026-02-01",
+      "2026-02-14",
+      "2026-02-19",
+      "2026-02-22",
+      "2026-03-01",
+      "2026-04-04",
+      "2026-04-05"
+    ],
+    "activity_dates": [
+      "2026-01-07",
+      "2026-01-08",
+      "2026-01-09",
+      "2026-01-16",
+      "2026-01-19",
+      "2026-01-20",
+      "2026-01-21",
+      "2026-01-25",
+      "2026-01-26",
+      "2026-01-27",
+      "2026-01-31",
+      "2026-02-13",
+      "2026-02-21",
+      "2026-02-28",
+      "2026-04-04",
+      "2026-04-05"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__27_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__34_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__41_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__57_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__58_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__63_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__64_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__65_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__68_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__75_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__76_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__77_.msg"
+    ],
+    "_latest_date": "2026-04-05"
+  },
+  "Currency Exchange International": {
+    "company": "Currency Exchange International",
+    "email_date": "2026-03-13",
+    "activity_date": "2026-03-12",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://ceifx.com",
+    "web_visits": 9,
+    "signal_count": 53,
+    "keywords": [
+      "ADP",
+      "hcm",
+      "pluralsight",
+      "position management",
+      "spend management"
+    ],
+    "competitor_keywords": [
+      "ADP",
+      "pluralsight"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "date": "2026-03-03"
+      },
+      {
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-03-06"
+      },
+      {
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "date": "2026-03-25"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-03-25"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-07-06"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-11",
+      "2026-01-14",
+      "2026-01-19",
+      "2026-01-26",
+      "2026-02-02",
+      "2026-02-07",
+      "2026-02-13",
+      "2026-02-26",
+      "2026-03-02",
+      "2026-03-03",
+      "2026-03-06",
+      "2026-03-09",
+      "2026-03-12",
+      "2026-03-13",
+      "2026-03-20",
+      "2026-03-25",
+      "2026-03-28",
+      "2026-07-02",
+      "2026-07-06"
+    ],
+    "activity_dates": [
+      "2026-01-10",
+      "2026-01-13",
+      "2026-01-18",
+      "2026-01-25",
+      "2026-02-01",
+      "2026-02-06",
+      "2026-02-12",
+      "2026-02-25",
+      "2026-03-01",
+      "2026-03-02",
+      "2026-03-05",
+      "2026-03-08",
+      "2026-03-11",
+      "2026-03-12",
+      "2026-03-19",
+      "2026-03-24",
+      "2026-03-28",
+      "2026-07-02",
+      "2026-07-06"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__15_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__22_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__25_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__30_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__3_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__42_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__48_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__53_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__71_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__74_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__8_.msg"
+    ],
+    "_latest_date": "2026-07-06"
+  },
+  "Fleet Landing WELLInspired Living": {
+    "company": "Fleet Landing WELLInspired Living",
+    "email_date": "2026-02-19",
+    "activity_date": null,
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://fleetlanding.com",
+    "web_visits": 4,
+    "signal_count": 49,
+    "keywords": [
+      "Benefits Software",
+      "airbase",
+      "exit interviews",
+      "learning software",
+      "pluralsight",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "pluralsight"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/payroll/",
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/payroll/",
+        "date": "2026-01-16"
+      },
+      {
+        "raw": "https://www.paylocity.com/company/protecting-our-clients/privacy-center/",
+        "decoded": "https://www.paylocity.com/company/protecting-our-clients/privacy-center/",
+        "date": "2026-02-19"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-04",
+      "2026-01-05",
+      "2026-01-09",
+      "2026-01-11",
+      "2026-01-12",
+      "2026-01-16",
+      "2026-01-22",
+      "2026-02-04",
+      "2026-02-09",
+      "2026-02-14",
+      "2026-02-19",
+      "2026-04-14"
+    ],
+    "activity_dates": [
+      "2026-01-03",
+      "2026-01-04",
+      "2026-01-08",
+      "2026-01-10",
+      "2026-01-11",
+      "2026-01-15",
+      "2026-01-21",
+      "2026-02-03",
+      "2026-02-08",
+      "2026-02-13",
+      "2026-04-14"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__41_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__51_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__63_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__69_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__74_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__76_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__81_.msg"
+    ],
+    "_latest_date": "2026-04-14"
+  },
+  "XYMOGEN": {
+    "company": "XYMOGEN",
+    "email_date": "2026-03-18",
+    "activity_date": "2026-03-17",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://xymogen.com",
+    "web_visits": 13,
+    "signal_count": 46,
+    "keywords": [
+      "Benefits Software",
+      "Performance Software",
+      "Ultimate Software",
+      "employee communication",
+      "employee compensation",
+      "employee training",
+      "on boarding process",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-10"
+      },
+      {
+        "raw": "https://www.paylocity.com/request-a-demo/",
+        "decoded": "https://www.paylocity.com/request-a-demo/",
+        "date": "2026-01-20"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-20"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-19"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-20"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-04-01"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-09",
+      "2026-01-10",
+      "2026-01-20",
+      "2026-01-23",
+      "2026-01-24",
+      "2026-01-25",
+      "2026-01-30",
+      "2026-02-19",
+      "2026-02-20",
+      "2026-03-02",
+      "2026-03-12",
+      "2026-03-18",
+      "2026-03-19",
+      "2026-03-29",
+      "2026-03-31",
+      "2026-04-01",
+      "2026-04-05",
+      "2026-04-09",
+      "2026-04-19",
+      "2026-07-03",
+      "2026-07-05"
+    ],
+    "activity_dates": [
+      "2026-01-08",
+      "2026-01-09",
+      "2026-01-19",
+      "2026-01-22",
+      "2026-01-24",
+      "2026-01-29",
+      "2026-02-19",
+      "2026-03-01",
+      "2026-03-11",
+      "2026-03-17",
+      "2026-03-18",
+      "2026-03-29",
+      "2026-03-31",
+      "2026-04-01",
+      "2026-04-05",
+      "2026-04-09",
+      "2026-04-19",
+      "2026-07-03",
+      "2026-07-05"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__10_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__36_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__60_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__62_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__65_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__75_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__76_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__9_.msg"
+    ],
+    "_latest_date": "2026-07-05"
+  },
+  "Smart City Telecom": {
+    "company": "Smart City Telecom",
+    "email_date": "2026-03-18",
+    "activity_date": "2026-03-17",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://smartcitytelecom.com",
+    "web_visits": 3,
+    "signal_count": 38,
+    "keywords": [
+      "pluralsight",
+      "talent management",
+      "time clock software",
+      "upskilling"
+    ],
+    "competitor_keywords": [
+      "pluralsight"
+    ],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/hr-payroll/",
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/hr-payroll/",
+        "date": "2026-04-07"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-04-23"
+      },
+      {
+        "decoded": "https://www.paylocity.com/who-we-serve/company-size/small/",
+        "raw": "https://www.paylocity.com/who-we-serve/company-size/small/",
+        "date": "2026-05-07"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-05",
+      "2026-01-12",
+      "2026-01-19",
+      "2026-01-21",
+      "2026-01-26",
+      "2026-02-06",
+      "2026-02-27",
+      "2026-03-04",
+      "2026-03-11",
+      "2026-03-12",
+      "2026-03-18",
+      "2026-04-07",
+      "2026-04-14",
+      "2026-04-23",
+      "2026-05-07",
+      "2026-05-15",
+      "2026-06-04",
+      "2026-06-09",
+      "2026-06-12",
+      "2026-06-15"
+    ],
+    "activity_dates": [
+      "2026-01-04",
+      "2026-01-11",
+      "2026-01-18",
+      "2026-01-20",
+      "2026-01-25",
+      "2026-02-04",
+      "2026-02-26",
+      "2026-03-03",
+      "2026-03-10",
+      "2026-03-11",
+      "2026-03-17",
+      "2026-04-07",
+      "2026-04-14",
+      "2026-04-23",
+      "2026-05-07",
+      "2026-05-15",
+      "2026-06-04",
+      "2026-06-09",
+      "2026-06-12",
+      "2026-06-15"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__10_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__17_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__24_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__29_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__50_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__64_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg"
+    ],
+    "_latest_date": "2026-06-15"
+  },
+  "DME Delivers": {
+    "company": "DME Delivers",
+    "email_date": "2026-03-15",
+    "activity_date": "2026-03-14",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://dmedelivers.com",
+    "web_visits": 2,
+    "signal_count": 35,
+    "keywords": [
+      "Flexible Benefits",
+      "HR Software",
+      "HRIS",
+      "Rippling",
+      "compensation tool",
+      "employee engagement",
+      "hr data",
+      "hris software",
+      "talent management",
+      "upskilling"
+    ],
+    "competitor_keywords": [
+      "Rippling"
+    ],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-04-29"
+      },
+      {
+        "decoded": "https://www.paylocity.com/products/hr/employee-experience/",
+        "raw": "https://www.paylocity.com/products/hr/employee-experience/",
+        "date": "2026-06-10"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-12",
+      "2026-01-23",
+      "2026-01-24",
+      "2026-02-19",
+      "2026-03-11",
+      "2026-03-15",
+      "2026-03-20",
+      "2026-03-29",
+      "2026-04-29",
+      "2026-05-07",
+      "2026-06-10",
+      "2026-07-02",
+      "2026-07-05",
+      "2026-07-12"
+    ],
+    "activity_dates": [
+      "2026-01-11",
+      "2026-01-22",
+      "2026-03-10",
+      "2026-03-14",
+      "2026-03-19",
+      "2026-03-29",
+      "2026-04-29",
+      "2026-05-07",
+      "2026-06-10",
+      "2026-07-02",
+      "2026-07-05",
+      "2026-07-12"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__13_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__17_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__62_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__8_.msg"
+    ],
+    "_latest_date": "2026-07-12"
+  },
+  "Electrosonic": {
+    "company": "Electrosonic",
+    "email_date": "2026-03-15",
+    "activity_date": "2026-03-14",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://electrosonic.com",
+    "web_visits": 6,
+    "signal_count": 35,
+    "keywords": [
+      "Compensation Software",
+      "Paycor",
+      "Workable",
+      "corporate card",
+      "hcm",
+      "position management",
+      "safe harbor",
+      "talent management",
+      "time clock software"
+    ],
+    "competitor_keywords": [
+      "Workable"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-01"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-12"
+      },
+      {
+        "raw": "https://www.paylocity.com/resources/glossary/statutory-employee/",
+        "decoded": "https://www.paylocity.com/resources/glossary/statutory-employee/",
+        "date": "2026-03-11"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-01",
+      "2026-02-08",
+      "2026-02-12",
+      "2026-02-13",
+      "2026-02-19",
+      "2026-02-23",
+      "2026-03-02",
+      "2026-03-09",
+      "2026-03-11",
+      "2026-03-12",
+      "2026-03-15",
+      "2026-03-25",
+      "2026-04-07",
+      "2026-04-10",
+      "2026-04-12",
+      "2026-04-18",
+      "2026-04-19",
+      "2026-04-21",
+      "2026-04-26",
+      "2026-06-21",
+      "2026-06-28",
+      "2026-07-01",
+      "2026-07-05",
+      "2026-07-09",
+      "2026-07-10"
+    ],
+    "activity_dates": [
+      "2026-01-31",
+      "2026-02-07",
+      "2026-02-11",
+      "2026-02-12",
+      "2026-02-22",
+      "2026-03-01",
+      "2026-03-08",
+      "2026-03-10",
+      "2026-03-11",
+      "2026-03-14",
+      "2026-03-24",
+      "2026-04-07",
+      "2026-04-10",
+      "2026-04-12",
+      "2026-04-18",
+      "2026-04-19",
+      "2026-04-21",
+      "2026-04-26",
+      "2026-06-21",
+      "2026-06-28",
+      "2026-07-01",
+      "2026-07-05",
+      "2026-07-09",
+      "2026-07-10"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__13_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__17_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__3_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__42_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__43_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__47_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg"
+    ],
+    "_latest_date": "2026-07-10"
+  },
+  "Vermeer Southeast Sales & Svc, Inc.": {
+    "company": "Vermeer Southeast Sales & Svc, Inc.",
+    "email_date": "2026-03-13",
+    "activity_date": "2026-03-12",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://vermeersoutheast.com",
+    "web_visits": 5,
+    "signal_count": 27,
+    "keywords": [
+      "ADP",
+      "Expense Software",
+      "Rippling",
+      "Talent Software",
+      "bill.com",
+      "exit interviews",
+      "modern workforce",
+      "on boarding process",
+      "talent management",
+      "talent management software"
+    ],
+    "competitor_keywords": [
+      "ADP",
+      "Rippling"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-12"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-05-05"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-10",
+      "2026-01-12",
+      "2026-01-24",
+      "2026-03-08",
+      "2026-03-13",
+      "2026-03-20",
+      "2026-03-30",
+      "2026-05-05",
+      "2026-05-09",
+      "2026-06-04",
+      "2026-07-05",
+      "2026-07-12"
+    ],
+    "activity_dates": [
+      "2026-01-09",
+      "2026-01-11",
+      "2026-03-07",
+      "2026-03-12",
+      "2026-03-19",
+      "2026-03-30",
+      "2026-05-05",
+      "2026-05-09",
+      "2026-06-04",
+      "2026-07-05",
+      "2026-07-12"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__15_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__20_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__75_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__8_.msg"
+    ],
+    "_latest_date": "2026-07-12"
+  },
+  "CAMPUS USA Credit Union": {
+    "company": "CAMPUS USA Credit Union",
+    "email_date": "2026-03-12",
+    "activity_date": "2026-03-11",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://campuscu.com",
+    "web_visits": 4,
+    "signal_count": 27,
+    "keywords": [
+      "ADP",
+      "Performance Software",
+      "employee retention",
+      "position management",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "ADP"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-01-13"
+      },
+      {
+        "decoded": "https://www.paylocity.com/who-we-serve/company-size/large/",
+        "raw": "https://www.paylocity.com/who-we-serve/company-size/large/",
+        "date": "2026-04-01"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-04-01"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-04",
+      "2026-01-13",
+      "2026-01-16",
+      "2026-01-17",
+      "2026-02-12",
+      "2026-03-12",
+      "2026-03-30",
+      "2026-04-01"
+    ],
+    "activity_dates": [
+      "2026-01-03",
+      "2026-01-12",
+      "2026-01-15",
+      "2026-01-16",
+      "2026-02-11",
+      "2026-03-11",
+      "2026-03-30",
+      "2026-04-01"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__43_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__68_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__69_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__72_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__81_.msg"
+    ],
+    "_latest_date": "2026-04-01"
+  },
+  "InterMed": {
+    "company": "InterMed",
+    "email_date": "2026-02-23",
+    "activity_date": "2026-02-22",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://intermed1.com",
+    "web_visits": 9,
+    "signal_count": 23,
+    "keywords": [
+      "Benefits Software",
+      "Payroll Software",
+      "applicant tracking system",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "date": "2026-02-17"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-17"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-06-22"
+      },
+      {
+        "decoded": "https://www.paylocity.com/products/it/asset-management/",
+        "raw": "https://www.paylocity.com/products/it/asset-management/",
+        "date": "2026-06-24"
+      },
+      {
+        "decoded": "https://www.paylocity.com/products/it/asset-management/",
+        "raw": "https://www.paylocity.com/products/it/asset-management/",
+        "date": "2026-06-25"
+      },
+      {
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "date": "2026-06-26"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-06-26"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-06",
+      "2026-01-07",
+      "2026-01-18",
+      "2026-01-27",
+      "2026-02-16",
+      "2026-02-17",
+      "2026-02-23",
+      "2026-05-03",
+      "2026-06-22",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-26"
+    ],
+    "activity_dates": [
+      "2026-01-05",
+      "2026-01-06",
+      "2026-01-17",
+      "2026-01-26",
+      "2026-02-15",
+      "2026-02-16",
+      "2026-02-22",
+      "2026-05-03",
+      "2026-06-22",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-26"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__38_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__58_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__67_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__79_.msg"
+    ],
+    "_latest_date": "2026-06-26"
+  },
+  "InDyne": {
+    "company": "InDyne",
+    "email_date": "2026-03-12",
+    "activity_date": "2026-03-11",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://indyneinc.com",
+    "web_visits": 0,
+    "signal_count": 21,
+    "keywords": [
+      "ADP",
+      "airbase",
+      "feedback",
+      "hr data",
+      "pluralsight",
+      "talent management",
+      "time clock software",
+      "upskilling"
+    ],
+    "competitor_keywords": [
+      "ADP",
+      "pluralsight"
+    ],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-01",
+      "2026-01-12",
+      "2026-01-19",
+      "2026-01-26",
+      "2026-01-30",
+      "2026-02-01",
+      "2026-02-13",
+      "2026-03-04",
+      "2026-03-10",
+      "2026-03-12",
+      "2026-03-22",
+      "2026-03-23",
+      "2026-03-26",
+      "2026-03-29"
+    ],
+    "activity_dates": [
+      "2025-12-31",
+      "2026-01-11",
+      "2026-01-18",
+      "2026-01-25",
+      "2026-01-29",
+      "2026-01-31",
+      "2026-02-12",
+      "2026-03-03",
+      "2026-03-09",
+      "2026-03-11",
+      "2026-03-21",
+      "2026-03-22",
+      "2026-03-25",
+      "2026-03-29"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__18_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__24_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__2_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__42_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__5_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__6_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts.msg (Dec 31 2025)"
+    ],
+    "_latest_date": "2026-03-29"
+  },
+  "WFTV": {
+    "company": "WFTV",
+    "email_date": "2026-03-12",
+    "activity_date": "2026-03-11",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://wftv.com",
+    "web_visits": 8,
+    "signal_count": 20,
+    "keywords": [
+      "candidate experience",
+      "employee engagement",
+      "pluralsight"
+    ],
+    "competitor_keywords": [
+      "pluralsight"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "date": "2026-01-10"
+      },
+      {
+        "raw": "https://www.paylocity.com/who-we-serve/company-size/small/",
+        "decoded": "https://www.paylocity.com/who-we-serve/company-size/small/",
+        "date": "2026-02-11"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-15"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-03-12"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-07",
+      "2026-01-10",
+      "2026-01-21",
+      "2026-02-11",
+      "2026-02-15",
+      "2026-03-02",
+      "2026-03-03",
+      "2026-03-09",
+      "2026-03-12"
+    ],
+    "activity_dates": [
+      "2026-01-06",
+      "2026-01-09",
+      "2026-01-20",
+      "2026-02-10",
+      "2026-02-14",
+      "2026-03-01",
+      "2026-03-02",
+      "2026-03-08",
+      "2026-03-11"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__25_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__40_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__44_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__64_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__75_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg"
+    ],
+    "_latest_date": "2026-03-12"
+  },
+  "Sea Best Inc": {
+    "company": "Sea Best Inc",
+    "email_date": "2026-03-26",
+    "activity_date": "2026-03-25",
+    "stage": "Consideration",
+    "fit": "Weak",
+    "reach": "High",
+    "website": "https://seabest.com",
+    "web_visits": 0,
+    "signal_count": 20,
+    "keywords": [
+      "airbase",
+      "safe harbor",
+      "time clock software"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-03-26",
+      "2026-06-23",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-30",
+      "2026-07-01",
+      "2026-07-02",
+      "2026-07-03",
+      "2026-07-06",
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10"
+    ],
+    "activity_dates": [
+      "2026-03-25",
+      "2026-06-23",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-30",
+      "2026-07-01",
+      "2026-07-02",
+      "2026-07-03",
+      "2026-07-06",
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__2_.msg"
+    ],
+    "_latest_date": "2026-07-10"
+  },
+  "Orthomerica": {
+    "company": "Orthomerica",
+    "email_date": "2026-03-12",
+    "activity_date": "2026-03-11",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://orthomerica.com",
+    "web_visits": 6,
+    "signal_count": 18,
+    "keywords": [
+      "airbase",
+      "modern workforce",
+      "pluralsight",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "pluralsight"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-01-12"
+      },
+      {
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-02-08"
+      },
+      {
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-03-12"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-12",
+      "2026-01-19",
+      "2026-01-22",
+      "2026-01-24",
+      "2026-02-02",
+      "2026-02-08",
+      "2026-03-02",
+      "2026-03-09",
+      "2026-03-12",
+      "2026-06-26",
+      "2026-07-02",
+      "2026-07-05",
+      "2026-07-12"
+    ],
+    "activity_dates": [
+      "2026-01-11",
+      "2026-01-18",
+      "2026-01-21",
+      "2026-02-01",
+      "2026-02-07",
+      "2026-03-01",
+      "2026-03-08",
+      "2026-03-11",
+      "2026-06-26",
+      "2026-07-02",
+      "2026-07-05",
+      "2026-07-12"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__47_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__53_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__63_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg"
+    ],
+    "_latest_date": "2026-07-12"
+  },
+  "Entec Polymers": {
+    "company": "Entec Polymers",
+    "email_date": "2026-03-16",
+    "activity_date": "2026-03-15",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://entecpolymers.com",
+    "web_visits": 2,
+    "signal_count": 16,
+    "keywords": [
+      "Rippling",
+      "hr compliance",
+      "pluralsight",
+      "position management",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "Rippling",
+      "pluralsight"
+    ],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/lp/software/brand/company-size/small-business/",
+        "raw": "https://www.paylocity.com/lp/software/brand/company-size/small-business/",
+        "date": "2026-06-05"
+      },
+      {
+        "decoded": "https://www.paylocity.com/lp/software/brand/case-studies/scrubdaddy/",
+        "raw": "https://www.paylocity.com/lp/software/brand/case-studies/scrubdaddy/",
+        "date": "2026-06-17"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-05",
+      "2026-01-12",
+      "2026-01-13",
+      "2026-01-19",
+      "2026-01-26",
+      "2026-02-23",
+      "2026-03-02",
+      "2026-03-09",
+      "2026-03-16",
+      "2026-03-30",
+      "2026-05-08",
+      "2026-06-05",
+      "2026-06-07",
+      "2026-06-09",
+      "2026-06-14",
+      "2026-06-17",
+      "2026-06-21",
+      "2026-06-28"
+    ],
+    "activity_dates": [
+      "2026-01-04",
+      "2026-01-11",
+      "2026-01-12",
+      "2026-01-18",
+      "2026-01-25",
+      "2026-02-22",
+      "2026-03-01",
+      "2026-03-08",
+      "2026-03-15",
+      "2026-03-30",
+      "2026-05-08",
+      "2026-06-05",
+      "2026-06-07",
+      "2026-06-09",
+      "2026-06-14",
+      "2026-06-17",
+      "2026-06-21",
+      "2026-06-28"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__12_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__72_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg"
+    ],
+    "_latest_date": "2026-06-28"
+  },
+  "Toho Water Authority": {
+    "company": "Toho Water Authority",
+    "email_date": "2026-01-14",
+    "activity_date": "2026-01-13",
+    "stage": "Decision",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://tohowater.com",
+    "web_visits": 0,
+    "signal_count": 16,
+    "keywords": [
+      "ADP",
+      "Benefits Software",
+      "Performance Software",
+      "Tipalti",
+      "Workable",
+      "talent management",
+      "training software"
+    ],
+    "competitor_keywords": [
+      "ADP",
+      "Workable"
+    ],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-05",
+      "2026-01-07",
+      "2026-01-14",
+      "2026-04-09",
+      "2026-04-10",
+      "2026-04-12",
+      "2026-04-28",
+      "2026-04-29",
+      "2026-06-16",
+      "2026-06-19"
+    ],
+    "activity_dates": [
+      "2026-01-04",
+      "2026-01-06",
+      "2026-01-13",
+      "2026-04-09",
+      "2026-04-10",
+      "2026-04-12",
+      "2026-04-28",
+      "2026-04-29",
+      "2026-06-16",
+      "2026-06-19"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__71_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg"
+    ],
+    "_latest_date": "2026-06-19"
+  },
+  "BRIDG": {
+    "company": "BRIDG",
+    "email_date": "2026-02-06",
+    "activity_date": "2026-02-05",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://gobridg.com",
+    "web_visits": 0,
+    "signal_count": 16,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-23",
+      "2026-01-24",
+      "2026-01-30",
+      "2026-02-06"
+    ],
+    "activity_dates": [
+      "2026-01-22",
+      "2026-01-29",
+      "2026-02-05"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__49_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__62_.msg"
+    ],
+    "_latest_date": "2026-02-06"
+  },
+  "Jeff Ellis Management, LLC": {
+    "company": "Jeff Ellis Management, LLC",
+    "email_date": "2026-02-10",
+    "activity_date": "2026-02-09",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://jeffellismanagement.com",
+    "web_visits": 2,
+    "signal_count": 15,
+    "keywords": [
+      "ADP",
+      "community management",
+      "open sesame",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "ADP"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-10"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-03",
+      "2026-01-04",
+      "2026-02-10",
+      "2026-04-05",
+      "2026-04-15",
+      "2026-05-03",
+      "2026-06-04",
+      "2026-06-09",
+      "2026-06-28",
+      "2026-07-09",
+      "2026-07-11"
+    ],
+    "activity_dates": [
+      "2026-01-02",
+      "2026-01-03",
+      "2026-02-09",
+      "2026-04-05",
+      "2026-04-15",
+      "2026-05-03",
+      "2026-06-04",
+      "2026-06-09",
+      "2026-06-28",
+      "2026-07-09",
+      "2026-07-11"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__45_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__81_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__82_.msg"
+    ],
+    "_latest_date": "2026-07-11"
+  },
+  "Park Square Homes": {
+    "company": "Park Square Homes",
+    "email_date": "2026-02-19",
+    "activity_date": null,
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://parksquarehomes.com",
+    "web_visits": 10,
+    "signal_count": 14,
+    "keywords": [
+      "Ultimate Software"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-24"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-28"
+      },
+      {
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "date": "2026-02-19"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-19"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-18",
+      "2026-01-19",
+      "2026-01-24",
+      "2026-01-26",
+      "2026-01-28",
+      "2026-02-19"
+    ],
+    "activity_dates": [
+      "2026-01-17",
+      "2026-01-18",
+      "2026-01-25",
+      "2026-01-27"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__37_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__57_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__67_.msg"
+    ],
+    "_latest_date": "2026-02-19"
+  },
+  "Real Life Christian Church": {
+    "company": "Real Life Christian Church",
+    "email_date": "2026-02-25",
+    "activity_date": "2026-02-24",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://real.life",
+    "web_visits": 4,
+    "signal_count": 13,
+    "keywords": [
+      "ADP",
+      "candidate experience",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "ADP"
+    ],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-04-15"
+      },
+      {
+        "decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "date": "2026-04-30"
+      },
+      {
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-05-06"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-06-04"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-25",
+      "2026-04-15",
+      "2026-04-20",
+      "2026-04-30",
+      "2026-05-06",
+      "2026-06-04",
+      "2026-06-17",
+      "2026-06-26",
+      "2026-07-05",
+      "2026-07-12"
+    ],
+    "activity_dates": [
+      "2026-02-24",
+      "2026-04-15",
+      "2026-04-20",
+      "2026-04-30",
+      "2026-05-06",
+      "2026-06-04",
+      "2026-06-17",
+      "2026-06-26",
+      "2026-07-05",
+      "2026-07-12"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__31_.msg"
+    ],
+    "_latest_date": "2026-07-12"
+  },
+  "ACCESS | MANAGEMENT \u2219 REALTY \u2219 MAINTENANCE \u2219 LIFESTYLE": {
+    "company": "ACCESS | MANAGEMENT \u2219 REALTY \u2219 MAINTENANCE \u2219 LIFESTYLE",
+    "email_date": "2026-03-18",
+    "activity_date": "2026-03-17",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://accessdifference.com",
+    "web_visits": 0,
+    "signal_count": 13,
+    "keywords": [
+      "Benefits Software",
+      "employee training",
+      "hcm",
+      "pay transparency",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-17",
+      "2026-01-30",
+      "2026-03-17",
+      "2026-03-18",
+      "2026-03-21",
+      "2026-06-06"
+    ],
+    "activity_dates": [
+      "2026-01-16",
+      "2026-01-29",
+      "2026-03-16",
+      "2026-03-17",
+      "2026-03-20",
+      "2026-06-06"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__10_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__11_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__68_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__7_.msg"
+    ],
+    "_latest_date": "2026-06-06"
+  },
+  "WorldHotels": {
+    "company": "WorldHotels",
+    "email_date": "2026-02-10",
+    "activity_date": "2026-02-09",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://worldhotels.com",
+    "web_visits": 9,
+    "signal_count": 13,
+    "keywords": [
+      "upskilling"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-06"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-10"
+      },
+      {
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-04-07"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-06",
+      "2026-01-11",
+      "2026-02-10",
+      "2026-04-07",
+      "2026-07-05",
+      "2026-07-12"
+    ],
+    "activity_dates": [
+      "2026-01-05",
+      "2026-01-10",
+      "2026-02-09",
+      "2026-04-07",
+      "2026-07-05",
+      "2026-07-12"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__45_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__74_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__79_.msg"
+    ],
+    "_latest_date": "2026-07-12"
+  },
+  "VisitOrlando": {
+    "company": "VisitOrlando",
+    "email_date": "2026-01-09",
+    "activity_date": "2026-01-08",
+    "stage": "Decision",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://visitorlando.com",
+    "web_visits": 7,
+    "signal_count": 13,
+    "keywords": [
+      "Benefits Software",
+      "safe harbor",
+      "upskilling"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/company/careers/all-listings/",
+        "decoded": "https://www.paylocity.com/company/careers/all-listings/",
+        "date": "2026-01-03"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-03"
+      },
+      {
+        "raw": "https://www.paylocity.com/company/careers/all-listings/",
+        "decoded": "https://www.paylocity.com/company/careers/all-listings/",
+        "date": "2026-01-09"
+      },
+      {
+        "decoded": "https://www.paylocity.com/products/it/asset-management/",
+        "raw": "https://www.paylocity.com/products/it/asset-management/",
+        "date": "2026-04-21"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-03",
+      "2026-01-04",
+      "2026-01-05",
+      "2026-01-06",
+      "2026-01-09",
+      "2026-04-21"
+    ],
+    "activity_dates": [
+      "2026-01-02",
+      "2026-01-03",
+      "2026-01-04",
+      "2026-01-05",
+      "2026-01-08",
+      "2026-04-21"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__76_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__79_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__81_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__82_.msg"
+    ],
+    "_latest_date": "2026-04-21"
+  },
+  "Daytona Toyota": {
+    "company": "Daytona Toyota",
+    "email_date": "2026-01-14",
+    "activity_date": "2026-01-13",
+    "stage": "Target",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://daytonatoyota.com",
+    "web_visits": 0,
+    "signal_count": 13,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-14",
+      "2026-07-04"
+    ],
+    "activity_dates": [
+      "2026-01-13",
+      "2026-07-04"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__71_.msg"
+    ],
+    "_latest_date": "2026-07-04"
+  },
+  "Sarcom": {
+    "company": "Sarcom",
+    "email_date": "2026-03-02",
+    "activity_date": "2026-03-01",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://sarcom.com",
+    "web_visits": 6,
+    "signal_count": 10,
+    "keywords": [
+      "airbase"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-30"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-04"
+      },
+      {
+        "raw": "https://www.paylocity.com/who-we-serve/company-size/small/",
+        "decoded": "https://www.paylocity.com/who-we-serve/company-size/small/",
+        "date": "2026-02-28"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-19",
+      "2026-01-30",
+      "2026-02-04",
+      "2026-02-23",
+      "2026-02-28",
+      "2026-03-02"
+    ],
+    "activity_dates": [
+      "2026-01-18",
+      "2026-01-29",
+      "2026-02-03",
+      "2026-02-22",
+      "2026-02-27",
+      "2026-03-01"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__28_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__51_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg"
+    ],
+    "_latest_date": "2026-03-02"
+  },
+  "Frontline Performance Group": {
+    "company": "Frontline Performance Group",
+    "email_date": "2026-02-23",
+    "activity_date": "2026-02-22",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://frontlinepg.com",
+    "web_visits": 2,
+    "signal_count": 10,
+    "keywords": [
+      "HRIS",
+      "hris software",
+      "on boarding process"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-27"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-12",
+      "2026-01-22",
+      "2026-01-27",
+      "2026-02-16",
+      "2026-02-23"
+    ],
+    "activity_dates": [
+      "2026-01-11",
+      "2026-01-21",
+      "2026-01-26",
+      "2026-02-15",
+      "2026-02-22"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__58_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__63_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg"
+    ],
+    "_latest_date": "2026-02-23"
+  },
+  "Velovita": {
+    "company": "Velovita",
+    "email_date": "2026-03-03",
+    "activity_date": "2026-03-02",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "High",
+    "website": "https://velovita.com",
+    "web_visits": 3,
+    "signal_count": 10,
+    "keywords": [
+      "pay transparency",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-03-02"
+      },
+      {
+        "decoded": "https://www.paylocity.com/products/hr/benefits/",
+        "raw": "https://www.paylocity.com/products/hr/benefits/",
+        "date": "2026-04-23"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-03-02",
+      "2026-03-03",
+      "2026-04-08",
+      "2026-04-23",
+      "2026-04-26",
+      "2026-06-28",
+      "2026-07-12"
+    ],
+    "activity_dates": [
+      "2026-03-01",
+      "2026-03-02",
+      "2026-04-08",
+      "2026-04-23",
+      "2026-04-26",
+      "2026-06-28",
+      "2026-07-12"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__25_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg"
+    ],
+    "_latest_date": "2026-07-12"
+  },
+  "Ocala Eye": {
+    "company": "Ocala Eye",
+    "email_date": "2026-03-05",
+    "activity_date": "2026-03-04",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://ocalaeye.com",
+    "web_visits": 4,
+    "signal_count": 9,
+    "keywords": [
+      "hcm",
+      "pluralsight",
+      "safe harbor"
+    ],
+    "competitor_keywords": [
+      "pluralsight"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-01-07"
+      },
+      {
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-03-05"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-07",
+      "2026-01-08",
+      "2026-03-05",
+      "2026-05-09",
+      "2026-05-15"
+    ],
+    "activity_dates": [
+      "2026-01-06",
+      "2026-01-07",
+      "2026-03-04",
+      "2026-05-09",
+      "2026-05-15"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__23_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__77_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg"
+    ],
+    "_latest_date": "2026-05-15"
+  },
+  "Makotek": {
+    "company": "Makotek",
+    "email_date": "2026-02-01",
+    "activity_date": "2026-01-31",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "High",
+    "website": "https://makotek.net",
+    "web_visits": 9,
+    "signal_count": 9,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-30"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-01"
+      },
+      {
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/scalable-tailored-hr/",
+        "date": "2026-04-14"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-05-07"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-06-24"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-07-07"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-07-09"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-30",
+      "2026-02-01",
+      "2026-04-05",
+      "2026-04-14",
+      "2026-04-19",
+      "2026-04-26",
+      "2026-05-07",
+      "2026-06-24",
+      "2026-07-07",
+      "2026-07-09"
+    ],
+    "activity_dates": [
+      "2026-01-29",
+      "2026-01-31",
+      "2026-04-05",
+      "2026-04-14",
+      "2026-04-19",
+      "2026-04-26",
+      "2026-05-07",
+      "2026-06-24",
+      "2026-07-07",
+      "2026-07-09"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__56_.msg"
+    ],
+    "_latest_date": "2026-07-09"
+  },
+  "Di Pasqua Enterprises": {
+    "company": "Di Pasqua Enterprises",
+    "email_date": "2026-03-28",
+    "activity_date": "2026-03-27",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://dipasqua.com",
+    "web_visits": 2,
+    "signal_count": 8,
+    "keywords": [
+      "Beti",
+      "annual enrollment",
+      "safe harbor",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "Beti"
+    ],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-06-17"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-07-11"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-03-12",
+      "2026-03-28",
+      "2026-05-01",
+      "2026-06-16",
+      "2026-06-17",
+      "2026-07-11"
+    ],
+    "activity_dates": [
+      "2026-03-11",
+      "2026-03-27",
+      "2026-05-01",
+      "2026-06-16",
+      "2026-06-17",
+      "2026-07-11"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__16_.msg"
+    ],
+    "_latest_date": "2026-07-11"
+  },
+  "Blue Water Industries": {
+    "company": "Blue Water Industries",
+    "email_date": "2026-03-09",
+    "activity_date": "2026-03-08",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://bluewaterindustries.com",
+    "web_visits": 8,
+    "signal_count": 8,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/resources/tax-compliance/tax-facts/",
+        "decoded": "https://www.paylocity.com/resources/tax-compliance/tax-facts/",
+        "date": "2026-01-27"
+      },
+      {
+        "raw": "https://www.paylocity.com/resources/tax-compliance/tax-facts/kentucky/",
+        "decoded": "https://www.paylocity.com/resources/tax-compliance/tax-facts/kentucky/",
+        "date": "2026-01-27"
+      },
+      {
+        "raw": "https://www.paylocity.com/request-a-demo/",
+        "decoded": "https://www.paylocity.com/request-a-demo/",
+        "date": "2026-03-09"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-03-09"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-27",
+      "2026-03-09"
+    ],
+    "activity_dates": [
+      "2026-01-26",
+      "2026-03-08"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__58_.msg"
+    ],
+    "_latest_date": "2026-03-09"
+  },
+  "Signature Brands, LLC": {
+    "company": "Signature Brands, LLC",
+    "email_date": "2026-03-09",
+    "activity_date": "2026-03-08",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://signaturebrands.com",
+    "web_visits": 2,
+    "signal_count": 8,
+    "keywords": [
+      "Benefits Software",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/lp/software/hr/demo/hr-payroll/",
+        "decoded": "https://www.paylocity.com/lp/software/hr/demo/hr-payroll/",
+        "date": "2026-01-20"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-19",
+      "2026-01-20",
+      "2026-01-26",
+      "2026-02-02",
+      "2026-02-16",
+      "2026-02-23",
+      "2026-02-24",
+      "2026-03-02",
+      "2026-03-09"
+    ],
+    "activity_dates": [
+      "2026-01-18",
+      "2026-01-19",
+      "2026-01-25",
+      "2026-02-01",
+      "2026-02-15",
+      "2026-02-22",
+      "2026-02-23",
+      "2026-03-01",
+      "2026-03-08"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__19_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__32_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__53_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__65_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg"
+    ],
+    "_latest_date": "2026-03-09"
+  },
+  "Lutheran Haven": {
+    "company": "Lutheran Haven",
+    "email_date": "2026-02-09",
+    "activity_date": "2026-02-08",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://lutheranhaven.org",
+    "web_visits": 2,
+    "signal_count": 8,
+    "keywords": [
+      "candidate experience",
+      "pluralsight",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "pluralsight"
+    ],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "date": "2026-02-09"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-03",
+      "2026-02-09",
+      "2026-04-05",
+      "2026-04-07",
+      "2026-04-25"
+    ],
+    "activity_dates": [
+      "2026-02-02",
+      "2026-02-08",
+      "2026-04-05",
+      "2026-04-07",
+      "2026-04-25"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__52_.msg"
+    ],
+    "_latest_date": "2026-04-25"
+  },
+  "Florida Credit Union": {
+    "company": "Florida Credit Union",
+    "email_date": "2026-03-16",
+    "activity_date": "2026-03-15",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://flcu.org",
+    "web_visits": 2,
+    "signal_count": 7,
+    "keywords": [
+      "HRIS",
+      "airbase",
+      "employee development",
+      "employee training",
+      "talent development"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-20"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-20",
+      "2026-02-23",
+      "2026-03-02",
+      "2026-03-16",
+      "2026-03-29",
+      "2026-03-31",
+      "2026-04-11",
+      "2026-06-04",
+      "2026-06-07"
+    ],
+    "activity_dates": [
+      "2026-02-19",
+      "2026-02-22",
+      "2026-03-01",
+      "2026-03-15",
+      "2026-03-29",
+      "2026-03-31",
+      "2026-04-11",
+      "2026-06-04",
+      "2026-06-07"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__12_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__26_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__33_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__36_.msg"
+    ],
+    "_latest_date": "2026-06-07"
+  },
+  "United Mortgage Corp.": {
+    "company": "United Mortgage Corp.",
+    "email_date": "2026-02-01",
+    "activity_date": "2026-01-31",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://unitedmortgage.com",
+    "web_visits": 1,
+    "signal_count": 7,
+    "keywords": [
+      "payroll preparation",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-04-25"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-12",
+      "2026-01-19",
+      "2026-01-25",
+      "2026-01-26",
+      "2026-02-01",
+      "2026-04-09",
+      "2026-04-25",
+      "2026-04-26",
+      "2026-04-30",
+      "2026-05-03",
+      "2026-05-10"
+    ],
+    "activity_dates": [
+      "2026-01-11",
+      "2026-01-18",
+      "2026-01-24",
+      "2026-01-25",
+      "2026-01-31",
+      "2026-04-09",
+      "2026-04-25",
+      "2026-04-26",
+      "2026-04-30",
+      "2026-05-03",
+      "2026-05-10"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__54_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__60_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg"
+    ],
+    "_latest_date": "2026-05-10"
+  },
+  "Professional Management": {
+    "company": "Professional Management",
+    "website": "https://pmiflorida.com",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Medium",
+    "signal_count": 7,
+    "web_visits": 0,
+    "keywords": [
+      "ADP",
+      "Benefits Software",
+      "Ultimate Software",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "ADP"
+    ],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-05-07",
+      "2026-06-20",
+      "2026-06-22"
+    ],
+    "activity_dates": [
+      "2026-05-07",
+      "2026-06-20",
+      "2026-06-22"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-06-22"
+  },
+  "Gas South": {
+    "company": "Gas South",
+    "email_date": "2026-01-25",
+    "activity_date": "2026-01-24",
+    "stage": "Decision",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://gassouth.com",
+    "web_visits": 2,
+    "signal_count": 6,
+    "keywords": [
+      "Brex",
+      "annual enrollment"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/products/hr/payroll/",
+        "decoded": "https://www.paylocity.com/products/hr/payroll/",
+        "date": "2026-01-21"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-19",
+      "2026-01-21",
+      "2026-01-24",
+      "2026-01-25"
+    ],
+    "activity_dates": [
+      "2026-01-18",
+      "2026-01-20",
+      "2026-01-24"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__60_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__64_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__66_.msg"
+    ],
+    "_latest_date": "2026-01-25"
+  },
+  "JASMIN HOSPITALITY MANAGEMENT, INC.": {
+    "company": "JASMIN HOSPITALITY MANAGEMENT, INC.",
+    "email_date": "2026-03-06",
+    "activity_date": "2026-03-05",
+    "stage": "Target",
+    "fit": "Weak",
+    "reach": "Low",
+    "website": "https://jasminhospitality.com",
+    "web_visits": 0,
+    "signal_count": 6,
+    "keywords": [
+      "Brex",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-24",
+      "2026-01-28",
+      "2026-03-06"
+    ],
+    "activity_dates": [
+      "2026-01-27",
+      "2026-03-05"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__22_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__57_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg"
+    ],
+    "_latest_date": "2026-03-06"
+  },
+  "Oren, LLC": {
+    "company": "Oren, LLC",
+    "email_date": "2026-03-04",
+    "activity_date": "2026-03-03",
+    "stage": "Consideration",
+    "fit": "Weak",
+    "reach": "Low",
+    "website": "https://universal-nissan.com",
+    "web_visits": 0,
+    "signal_count": 6,
+    "keywords": [
+      "Benefits Software",
+      "IC=<null>;HDTR=0;HDTF=V154\u0000\u0000\u0000\u0000\u0000ucf:0;jmr:0;auth:0;dest:I;ENG:",
+      "amazonses.com;PTR:a9-34.smtp-out.amazonses.com;CAT:NONE;SFS:",
+      "employee training",
+      "human capital management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-03-04",
+      "2026-04-07",
+      "2026-07-04",
+      "2026-07-12"
+    ],
+    "activity_dates": [
+      "2026-03-03",
+      "2026-04-07",
+      "2026-07-04",
+      "2026-07-12"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__24_.msg"
+    ],
+    "_latest_date": "2026-07-12"
+  },
+  "Sandcastle Homecare": {
+    "company": "Sandcastle Homecare",
+    "email_date": "2026-02-26",
+    "activity_date": "2026-02-25",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://sandcastlehomecare.com",
+    "web_visits": 0,
+    "signal_count": 6,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-26",
+      "2026-07-02",
+      "2026-07-03"
+    ],
+    "activity_dates": [
+      "2026-02-25",
+      "2026-07-02",
+      "2026-07-03"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__30_.msg"
+    ],
+    "_latest_date": "2026-07-03"
+  },
+  "Best Lockers": {
+    "company": "Best Lockers",
+    "email_date": "2026-03-25",
+    "activity_date": "2026-03-24",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://venuplus.com",
+    "web_visits": 2,
+    "signal_count": 6,
+    "keywords": [
+      "hcm",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "date": "2026-03-25"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-03-19",
+      "2026-03-24",
+      "2026-03-25",
+      "2026-04-05"
+    ],
+    "activity_dates": [
+      "2026-03-18",
+      "2026-03-23",
+      "2026-03-24",
+      "2026-04-05"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__3_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__4_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__9_.msg"
+    ],
+    "_latest_date": "2026-04-05"
+  },
+  "Arnold Palmer's Bay Hill Club & Lodge": {
+    "company": "Arnold Palmer's Bay Hill Club & Lodge",
+    "email_date": "2026-02-09",
+    "activity_date": "2026-02-08",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://bayhill.com",
+    "web_visits": 4,
+    "signal_count": 6,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-06"
+      },
+      {
+        "decoded": "https://www.paylocity.com/products/hr/benefits/",
+        "raw": "https://www.paylocity.com/products/hr/benefits/",
+        "date": "2026-05-08"
+      },
+      {
+        "decoded": "https://www.paylocity.com/company/protecting-our-clients/privacy-center/",
+        "raw": "https://www.paylocity.com/company/protecting-our-clients/privacy-center/",
+        "date": "2026-06-16"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-06",
+      "2026-02-09",
+      "2026-04-05",
+      "2026-05-08",
+      "2026-05-10",
+      "2026-06-16",
+      "2026-06-22",
+      "2026-06-28"
+    ],
+    "activity_dates": [
+      "2026-02-05",
+      "2026-02-08",
+      "2026-04-05",
+      "2026-05-08",
+      "2026-05-10",
+      "2026-06-16",
+      "2026-06-22",
+      "2026-06-28"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__49_.msg"
+    ],
+    "_latest_date": "2026-06-28"
+  },
+  "Mitsukoshi, Inc.": {
+    "company": "Mitsukoshi, Inc.",
+    "email_date": "2026-02-04",
+    "activity_date": "2026-02-03",
+    "stage": "Consideration",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://mitsukoshi-orlando.com",
+    "web_visits": 0,
+    "signal_count": 6,
+    "keywords": [
+      "time clock software",
+      "transformational learning"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-05",
+      "2026-01-07",
+      "2026-01-12",
+      "2026-02-04"
+    ],
+    "activity_dates": [
+      "2026-01-04",
+      "2026-01-06",
+      "2026-01-11",
+      "2026-02-03"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__51_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg"
+    ],
+    "_latest_date": "2026-02-04"
+  },
+  "Tropical Ford": {
+    "company": "Tropical Ford",
+    "email_date": "2026-01-24",
+    "activity_date": null,
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://tropicalford.com",
+    "web_visits": 0,
+    "signal_count": 6,
+    "keywords": [
+      "Benefits Software",
+      "Ultimate Software",
+      "on boarding process"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-23",
+      "2026-01-24",
+      "2026-06-11",
+      "2026-07-08"
+    ],
+    "activity_dates": [
+      "2026-01-22",
+      "2026-06-11",
+      "2026-07-08"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__62_.msg"
+    ],
+    "_latest_date": "2026-07-08"
+  },
+  "Service Spring Corp": {
+    "company": "Service Spring Corp",
+    "email_date": "2026-01-20",
+    "activity_date": "2026-01-19",
+    "stage": "Consideration",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://servicespring.com",
+    "web_visits": 4,
+    "signal_count": 6,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/lp/software/finance/demo/explore/hr-pros/",
+        "decoded": "https://www.paylocity.com/lp/software/finance/demo/explore/hr-pros/",
+        "date": "2026-01-12"
+      },
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-20"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-12",
+      "2026-01-20"
+    ],
+    "activity_dates": [
+      "2026-01-11",
+      "2026-01-19"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__65_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg"
+    ],
+    "_latest_date": "2026-01-20"
+  },
+  "Colorvision": {
+    "company": "Colorvision",
+    "email_date": "2026-03-11",
+    "activity_date": "2026-03-10",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://amazingpictures.com",
+    "web_visits": 2,
+    "signal_count": 5,
+    "keywords": [
+      "employee compensation",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "date": "2026-02-15"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-02",
+      "2026-02-09",
+      "2026-02-15",
+      "2026-03-11",
+      "2026-04-29",
+      "2026-05-03"
+    ],
+    "activity_dates": [
+      "2026-02-01",
+      "2026-02-08",
+      "2026-02-14",
+      "2026-03-10",
+      "2026-04-29",
+      "2026-05-03"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__17_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__40_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__53_.msg"
+    ],
+    "_latest_date": "2026-05-03"
+  },
+  "Silver Springs Bottled Water Company": {
+    "company": "Silver Springs Bottled Water Company",
+    "email_date": "2026-03-25",
+    "activity_date": "2026-03-24",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://ssbwc.com",
+    "web_visits": 0,
+    "signal_count": 5,
+    "keywords": [
+      "Expense Software",
+      "expense management software",
+      "time clock software"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-03-25",
+      "2026-03-31"
+    ],
+    "activity_dates": [
+      "2026-03-24",
+      "2026-03-31"
+    ],
+    "source_files": [
+      "",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__3_.msg"
+    ],
+    "_latest_date": "2026-03-31"
+  },
+  "Challenge Enterprises": {
+    "company": "Challenge Enterprises",
+    "email_date": "2026-01-24",
+    "activity_date": null,
+    "stage": "Target",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://challengeenterprises.org",
+    "web_visits": 0,
+    "signal_count": 5,
+    "keywords": [
+      "on boarding process",
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-23",
+      "2026-01-24",
+      "2026-03-29",
+      "2026-04-20"
+    ],
+    "activity_dates": [
+      "2026-01-22",
+      "2026-03-29",
+      "2026-04-20"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__61_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__62_.msg"
+    ],
+    "_latest_date": "2026-04-20"
+  },
+  "Star Island Resort & Club": {
+    "company": "Star Island Resort & Club",
+    "email_date": "2026-02-16",
+    "activity_date": "2026-02-15",
+    "stage": "Target",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://star-island.com",
+    "web_visits": 0,
+    "signal_count": 4,
+    "keywords": [
+      "airbase"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-26",
+      "2026-02-09",
+      "2026-02-16",
+      "2026-07-09"
+    ],
+    "activity_dates": [
+      "2026-01-25",
+      "2026-02-08",
+      "2026-02-15",
+      "2026-07-09"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg"
+    ],
+    "_latest_date": "2026-07-09"
+  },
+  "SMART Financial Operations LLC": {
+    "company": "SMART Financial Operations LLC",
+    "email_date": "2026-01-11",
+    "activity_date": "2026-01-10",
+    "stage": "Consideration",
+    "fit": "Weak",
+    "reach": "Low",
+    "website": "https://smartfinancialent.com",
+    "web_visits": 0,
+    "signal_count": 4,
+    "keywords": [
+      "pay transparency"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-11"
+    ],
+    "activity_dates": [
+      "2026-01-10"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__74_.msg"
+    ],
+    "_latest_date": "2026-01-11"
+  },
+  "Quality Labor Management": {
+    "company": "Quality Labor Management",
+    "website": "https://myqlm.com",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Medium",
+    "signal_count": 4,
+    "web_visits": 0,
+    "keywords": [
+      "airbase",
+      "time clock software"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-06-27",
+      "2026-07-08"
+    ],
+    "activity_dates": [
+      "2026-06-27",
+      "2026-07-08"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-07-08"
+  },
+  "High Life Farms": {
+    "company": "High Life Farms",
+    "email_date": "2026-01-06",
+    "activity_date": "2026-01-05",
+    "stage": "Target",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://highlifefarms.com",
+    "web_visits": 0,
+    "signal_count": 3,
+    "keywords": [
+      "Benefits Software",
+      "Rippling"
+    ],
+    "competitor_keywords": [
+      "Rippling"
+    ],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-06",
+      "2026-06-28",
+      "2026-07-01",
+      "2026-07-12"
+    ],
+    "activity_dates": [
+      "2026-01-05",
+      "2026-06-28",
+      "2026-07-01",
+      "2026-07-12"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__79_.msg"
+    ],
+    "_latest_date": "2026-07-12"
+  },
+  "JST Power Equipment": {
+    "company": "JST Power Equipment",
+    "website": "https://jstpower.com",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "signal_count": 3,
+    "web_visits": 2,
+    "keywords": [
+      "UKG"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/who-we-serve/company-size/small/payroll/",
+        "raw": "https://www.paylocity.com/who-we-serve/company-size/small/payroll/",
+        "date": "2026-07-02"
+      },
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-07-02"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-06-21",
+      "2026-07-02"
+    ],
+    "activity_dates": [
+      "2026-06-21",
+      "2026-07-02"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-07-02"
+  },
+  "National Realty Of Brevard": {
+    "company": "National Realty Of Brevard",
+    "email_date": "2026-03-16",
+    "activity_date": "2026-03-15",
+    "stage": "Target",
+    "fit": "Weak",
+    "reach": "Low",
+    "website": "https://nationalrealtyfla.com",
+    "web_visits": 0,
+    "signal_count": 2,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-09",
+      "2026-02-21",
+      "2026-03-16",
+      "2026-03-29",
+      "2026-04-05",
+      "2026-04-19",
+      "2026-04-26"
+    ],
+    "activity_dates": [
+      "2026-02-08",
+      "2026-02-20",
+      "2026-03-15",
+      "2026-03-29",
+      "2026-04-05",
+      "2026-04-19",
+      "2026-04-26"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__12_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__35_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg"
+    ],
+    "_latest_date": "2026-04-26"
+  },
+  "SDI": {
+    "company": "SDI",
+    "email_date": "2026-03-06",
+    "activity_date": "2026-03-05",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://sdi.com",
+    "web_visits": 0,
+    "signal_count": 2,
+    "keywords": [
+      "ADP"
+    ],
+    "competitor_keywords": [
+      "ADP"
+    ],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-03-06"
+    ],
+    "activity_dates": [
+      "2026-03-05"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__22_.msg"
+    ],
+    "_latest_date": "2026-03-06"
+  },
+  "Jeunesse.Global": {
+    "company": "Jeunesse.Global",
+    "email_date": "2026-02-16",
+    "activity_date": "2026-02-15",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "High",
+    "website": "https://velovita.com",
+    "web_visits": 2,
+    "signal_count": 2,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-01-31"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-31",
+      "2026-02-02",
+      "2026-02-09",
+      "2026-02-16"
+    ],
+    "activity_dates": [
+      "2026-01-30",
+      "2026-02-01",
+      "2026-02-08",
+      "2026-02-15"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__46_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__53_.msg",
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__55_.msg"
+    ],
+    "_latest_date": "2026-02-16"
+  },
+  "Island H2o Live": {
+    "company": "Island H2o Live",
+    "email_date": "2026-02-16",
+    "activity_date": "2026-02-15",
+    "stage": "Consideration",
+    "fit": "Weak",
+    "reach": "Low",
+    "website": "https://islandh2olive.com",
+    "web_visits": 0,
+    "signal_count": 2,
+    "keywords": [
+      "position management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-16"
+    ],
+    "activity_dates": [
+      "2026-02-15"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg"
+    ],
+    "_latest_date": "2026-02-16"
+  },
+  "Direct Insite Corp": {
+    "company": "Direct Insite Corp",
+    "email_date": "2026-02-11",
+    "activity_date": "2026-02-10",
+    "stage": "Awareness",
+    "fit": "Weak",
+    "reach": "Low",
+    "website": "https://leapfamily.com",
+    "web_visits": 2,
+    "signal_count": 2,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/resources/glossary/proximity-bias/",
+        "decoded": "https://www.paylocity.com/resources/glossary/proximity-bias/",
+        "date": "2026-02-11"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-11"
+    ],
+    "activity_dates": [
+      "2026-02-10"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__44_.msg"
+    ],
+    "_latest_date": "2026-02-11"
+  },
+  "WSFL-TV": {
+    "company": "WSFL-TV",
+    "email_date": "2026-02-11",
+    "activity_date": "2026-02-10",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://wsfltv.com",
+    "web_visits": 2,
+    "signal_count": 2,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/",
+        "decoded": "https://www.paylocity.com/",
+        "date": "2026-02-11"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-11"
+    ],
+    "activity_dates": [
+      "2026-02-10"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__44_.msg"
+    ],
+    "_latest_date": "2026-02-11"
+  },
+  "Andor Health": {
+    "company": "Andor Health",
+    "email_date": "2026-01-15",
+    "activity_date": "2026-01-14",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://andorhealth.com",
+    "web_visits": 0,
+    "signal_count": 2,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-15"
+    ],
+    "activity_dates": [
+      "2026-01-14"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__70_.msg"
+    ],
+    "_latest_date": "2026-01-15"
+  },
+  "Conway Lakes Health & Rehabilitation Center": {
+    "company": "Conway Lakes Health & Rehabilitation Center",
+    "email_date": "2026-01-16",
+    "activity_date": "2026-01-15",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://conwaylakesrehab.com",
+    "web_visits": 0,
+    "signal_count": 2,
+    "keywords": [
+      "airbase"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-16"
+    ],
+    "activity_dates": [
+      "2026-01-15"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__69_.msg"
+    ],
+    "_latest_date": "2026-01-16"
+  },
+  "Intego Group": {
+    "company": "Intego Group",
+    "email_date": "2026-01-10",
+    "activity_date": "2026-01-09",
+    "stage": "Target",
+    "fit": "Weak",
+    "reach": "Low",
+    "website": "https://integogroup.com",
+    "web_visits": 0,
+    "signal_count": 2,
+    "keywords": [
+      "Benefits Software"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-10"
+    ],
+    "activity_dates": [
+      "2026-01-09"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__75_.msg"
+    ],
+    "_latest_date": "2026-01-10"
+  },
+  "Aza Health": {
+    "company": "Aza Health",
+    "email_date": "2026-01-09",
+    "activity_date": "2026-01-08",
+    "stage": "Target",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://azahealth.org",
+    "web_visits": 0,
+    "signal_count": 2,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-09"
+    ],
+    "activity_dates": [
+      "2026-01-08"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__76_.msg"
+    ],
+    "_latest_date": "2026-01-09"
+  },
+  "Simform": {
+    "company": "Simform",
+    "email_date": "2026-01-07",
+    "activity_date": "2026-01-06",
+    "stage": "Awareness",
+    "fit": "Weak",
+    "reach": "Low",
+    "website": "https://simform.com",
+    "web_visits": 2,
+    "signal_count": 2,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "raw": "https://www.paylocity.com/lp/software/finance/demo/explore/hr-pros/",
+        "decoded": "https://www.paylocity.com/lp/software/finance/demo/explore/hr-pros/",
+        "date": "2026-01-07"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-07"
+    ],
+    "activity_dates": [
+      "2026-01-06"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__78_.msg"
+    ],
+    "_latest_date": "2026-01-07"
+  },
+  "Joffrey's Coffee & Tea Company": {
+    "company": "Joffrey's Coffee & Tea Company",
+    "email_date": "2026-01-06",
+    "activity_date": "2026-01-05",
+    "stage": "Consideration",
+    "fit": "Moderate",
+    "reach": "Medium",
+    "website": "https://joffreys.com",
+    "web_visits": 0,
+    "signal_count": 2,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-06"
+    ],
+    "activity_dates": [
+      "2026-01-05"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__79_.msg"
+    ],
+    "_latest_date": "2026-01-06"
+  },
+  "Haliczer Pettis & Schwamm": {
+    "company": "Haliczer Pettis & Schwamm",
+    "email_date": "2026-03-20",
+    "activity_date": "2026-03-19",
+    "stage": "Target",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://hpslegal.com",
+    "web_visits": 0,
+    "signal_count": 2,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-03-20"
+    ],
+    "activity_dates": [
+      "2026-03-19"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__8_.msg"
+    ],
+    "_latest_date": "2026-03-20"
+  },
+  "Skymantics": {
+    "company": "Skymantics",
+    "website": "https://skymantics.com",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "Low",
+    "signal_count": 2,
+    "web_visits": 0,
+    "keywords": [
+      "airbase"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-03-28"
+    ],
+    "activity_dates": [
+      "2026-03-28"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-03-28"
+  },
+  "Atlantic Care Services": {
+    "company": "Atlantic Care Services",
+    "website": "https://atlanticcareservices.com",
+    "stage": "Consideration",
+    "fit": "Strong",
+    "reach": "Low",
+    "signal_count": 2,
+    "web_visits": 1,
+    "keywords": [
+      "ADP"
+    ],
+    "competitor_keywords": [
+      "ADP"
+    ],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/learn-more/one/",
+        "raw": "https://www.paylocity.com/learn-more/one/",
+        "date": "2026-05-07"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-04-09",
+      "2026-05-07"
+    ],
+    "activity_dates": [
+      "2026-04-09",
+      "2026-05-07"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-05-07"
+  },
+  "andCo Hospitality, a Certified B Corp": {
+    "company": "andCo Hospitality, a Certified B Corp",
+    "website": "https://andco.earth",
+    "stage": "Awareness",
+    "fit": "Weak",
+    "reach": "Low",
+    "signal_count": 2,
+    "web_visits": 0,
+    "keywords": [
+      "employee engagement",
+      "time clock software"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-04-11",
+      "2026-07-03"
+    ],
+    "activity_dates": [
+      "2026-04-11",
+      "2026-07-03"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-07-03"
+  },
+  "You've Got Maids": {
+    "company": "You've Got Maids",
+    "website": "https://youvegotmaids.com",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "signal_count": 2,
+    "web_visits": 0,
+    "keywords": [
+      "ADP",
+      "talent management"
+    ],
+    "competitor_keywords": [
+      "ADP"
+    ],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-05-03",
+      "2026-05-10",
+      "2026-07-03",
+      "2026-07-04"
+    ],
+    "activity_dates": [
+      "2026-05-03",
+      "2026-05-10",
+      "2026-07-03",
+      "2026-07-04"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-07-04"
+  },
+  "Entertainment Technology Partners": {
+    "company": "Entertainment Technology Partners",
+    "website": "https://etp.net",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "signal_count": 1,
+    "web_visits": 1,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/",
+        "raw": "https://www.paylocity.com/",
+        "date": "2026-04-16"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-04-16"
+    ],
+    "activity_dates": [
+      "2026-04-16"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-04-16"
+  },
+  "Access Residential Management, LLC": {
+    "company": "Access Residential Management, LLC",
+    "website": "https://accessdifference.com",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "signal_count": 1,
+    "web_visits": 0,
+    "keywords": [
+      "talent management"
+    ],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-06-30"
+    ],
+    "activity_dates": [
+      "2026-06-30"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-06-30"
+  },
+  "Kalera": {
+    "company": "Kalera",
+    "website": "https://kalera.com",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "signal_count": 1,
+    "web_visits": 1,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "raw": "https://www.paylocity.com/why-paylocity/case-studies/smart-gym-pioneer-builds-stronger-faster-hr-...",
+        "date": "2026-07-07"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-07-07"
+    ],
+    "activity_dates": [
+      "2026-07-07"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-07-07"
+  },
+  "FMK Hospitality Group": {
+    "company": "FMK Hospitality Group",
+    "website": "https://fmkrestaurants.com",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "Medium",
+    "signal_count": 1,
+    "web_visits": 1,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [
+      {
+        "decoded": "https://www.paylocity.com/lp/software/brand/company-size/small-business/",
+        "raw": "https://www.paylocity.com/lp/software/brand/company-size/small-business/",
+        "date": "2026-07-10"
+      }
+    ],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-07-10"
+    ],
+    "activity_dates": [
+      "2026-07-10"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-07-10"
+  },
+  "Sterile Environment Technologies": {
+    "company": "Sterile Environment Technologies",
+    "email_date": "2026-03-21",
+    "activity_date": "2026-03-20",
+    "stage": "Purchase",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://set3.com",
+    "web_visits": 0,
+    "signal_count": 0,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [
+      {
+        "name": "Natalie Vazquez Account",
+        "title": "Manager",
+        "email": "nvazquez@set3.com"
+      }
+    ],
+    "form_fills": [],
+    "dates": [
+      "2026-03-21"
+    ],
+    "activity_dates": [
+      "2026-03-20"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__7_.msg"
+    ],
+    "_latest_date": "2026-03-21"
+  },
+  "Corbitt": {
+    "company": "Corbitt",
+    "email_date": "2026-02-16",
+    "activity_date": "2026-02-15",
+    "stage": "Target",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://corbittmfg.com",
+    "web_visits": 0,
+    "signal_count": 0,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-02-16"
+    ],
+    "activity_dates": [
+      "2026-02-15"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__39_.msg"
+    ],
+    "_latest_date": "2026-02-16"
+  },
+  "Eckler Industries, Inc.": {
+    "company": "Eckler Industries, Inc.",
+    "email_date": "2026-01-26",
+    "activity_date": "2026-01-25",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "website": "https://ecklers.com",
+    "web_visits": 0,
+    "signal_count": 0,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-26",
+      "2026-06-07",
+      "2026-06-14",
+      "2026-06-21"
+    ],
+    "activity_dates": [
+      "2026-01-25",
+      "2026-06-07",
+      "2026-06-14",
+      "2026-06-21"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__59_.msg"
+    ],
+    "_latest_date": "2026-06-21"
+  },
+  "Complete Care": {
+    "company": "Complete Care",
+    "email_date": "2026-01-12",
+    "activity_date": "2026-01-11",
+    "stage": "Target",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://visitcompletecare.com",
+    "web_visits": 0,
+    "signal_count": 0,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-12",
+      "2026-07-12"
+    ],
+    "activity_dates": [
+      "2026-01-11",
+      "2026-07-12"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__73_.msg"
+    ],
+    "_latest_date": "2026-07-12"
+  },
+  "CREO Group": {
+    "company": "CREO Group",
+    "email_date": "2026-01-05",
+    "activity_date": "2026-01-04",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "Low",
+    "website": "https://creogroup.com",
+    "web_visits": 0,
+    "signal_count": 0,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-01-05"
+    ],
+    "activity_dates": [
+      "2026-01-04"
+    ],
+    "source_files": [
+      "Luke_s_6sense_Hot_Accounts__Email_Alerts__80_.msg"
+    ],
+    "_latest_date": "2026-01-05"
+  },
+  "BUENA VIVA, INC.": {
+    "company": "BUENA VIVA, INC.",
+    "website": "https://oertherfoods.com",
+    "stage": "Target",
+    "fit": "Weak",
+    "reach": "Low",
+    "signal_count": 0,
+    "web_visits": 0,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-04-05",
+      "2026-04-12"
+    ],
+    "activity_dates": [
+      "2026-04-05",
+      "2026-04-12"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-04-12"
+  },
+  "Mid Florida Dermatology": {
+    "company": "Mid Florida Dermatology",
+    "website": "https://midflmed.com",
+    "stage": "Target",
+    "fit": "Moderate",
+    "reach": "Low",
+    "signal_count": 0,
+    "web_visits": 0,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-04-19",
+      "2026-04-26",
+      "2026-05-03",
+      "2026-06-21"
+    ],
+    "activity_dates": [
+      "2026-04-19",
+      "2026-04-26",
+      "2026-05-03",
+      "2026-06-21"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-06-21"
+  },
+  "BlackFish Federal": {
+    "company": "BlackFish Federal",
+    "website": "https://blackfishfederal.com",
+    "stage": "Awareness",
+    "fit": "Moderate",
+    "reach": "Medium",
+    "signal_count": 0,
+    "web_visits": 0,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-04-26"
+    ],
+    "activity_dates": [
+      "2026-04-26"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-04-26"
+  },
+  "Hospice Of Marion County": {
+    "company": "Hospice Of Marion County",
+    "website": "https://hospiceofmarion.com",
+    "stage": "Target",
+    "fit": "Strong",
+    "reach": "Low",
+    "signal_count": 0,
+    "web_visits": 0,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-06-21",
+      "2026-07-05"
+    ],
+    "activity_dates": [
+      "2026-06-21",
+      "2026-07-05"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-07-05"
+  },
+  "Kester": {
+    "company": "Kester",
+    "website": "https://kester.com",
+    "stage": "Awareness",
+    "fit": "Strong",
+    "reach": "Low",
+    "signal_count": 0,
+    "web_visits": 0,
+    "keywords": [],
+    "competitor_keywords": [],
+    "decoded_urls": [],
+    "contacts": [],
+    "form_fills": [],
+    "dates": [
+      "2026-07-12"
+    ],
+    "activity_dates": [
+      "2026-07-12"
+    ],
+    "source_files": [
+      ""
+    ],
+    "_latest_date": "2026-07-12"
+  }
+}
