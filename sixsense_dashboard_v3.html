@@ -452,6 +452,11 @@
 
   .pages-cell { max-width: 250px; }
 
+  .kw-cell {
+    min-width: 220px;
+    max-width: 320px;
+  }
+
   .page-line {
     font-size: 11px;
     white-space: nowrap;
@@ -903,7 +908,7 @@ function renderTable() {
       <td><strong>${acct.signal_count || 0}</strong></td>
       <td><strong>${acct.web_visits || 0}</strong></td>
       <td class="pages-cell">${renderPagesCell(acct)}</td>
-      <td>${(acct.keywords || []).slice(0, 2).map(k => `<span class="kw-tag">${escHtml(k)}</span>`).join('')}${(acct.keywords || []).length > 2 ? `<span class="kw-tag">+${(acct.keywords || []).length - 2}</span>` : ''}</td>
+      <td class="kw-cell">${renderKeywordsCell(acct)}</td>
       <td class="activity-cell"><div>${fmtDate(acct._latest_date)}</div><div class="days-ago">${daysAgo(acct._latest_date)}</div></td>
       <td>${getAction(acct)}</td>
     `;
@@ -916,8 +921,6 @@ function renderTable() {
     expanded.style.display = 'none';
     expanded.innerHTML = `
       <td colspan="9">
-        <span class="section-label">Keywords</span>
-        <div class="content-list">${(acct.keywords || []).map(k => `<span class="kw-tag">${escHtml(k)}</span>`).join('')}${(acct.competitor_keywords || []).length ? `<br/>${(acct.competitor_keywords || []).map(k => `<span class="kw-tag comp">${escHtml(k)}</span>`).join('')}` : ''}</div>
         ${acct.contacts && acct.contacts.length ? `<span class="section-label" style="margin-top:12px;">Contacts</span><div class="content-list"><ul>${acct.contacts.map(c => `<li><span class="kw-tag contact">${escHtml(c.name || '?')}</span> ${escHtml(c.title || '(no title)')}</li>`).join('')}</ul></div>` : ''}
         ${acct.decoded_urls && acct.decoded_urls.length ? `<span class="section-label" style="margin-top:12px;">Links</span><div class="content-list"><ul>${acct.decoded_urls.slice(0, 5).map(u => `<li><a href="${escHtml(u.decoded || u.raw || '#')}" target="_blank" style="color:var(--accent);text-decoration:none;">${escHtml(urlLabel(u))}</a> <span style="color:var(--text-dim);">${fmtDate(u.date)}</span></li>`).join('')}</ul></div>` : ''}
         ${acct.source_files && acct.source_files.length ? `<span class="section-label" style="margin-top:12px;">Source</span><div class="content-list">${acct.source_files.length} email${acct.source_files.length !== 1 ? 's' : ''} parsed</div>` : ''}
@@ -958,6 +961,17 @@ function pagePath(u) {
   } catch (e) {
     return href;
   }
+}
+
+function renderKeywordsCell(acct) {
+  const comp = acct.competitor_keywords || [];
+  const compSet = new Set(comp.map(k => k.toLowerCase()));
+  const kws = (acct.keywords || []).filter(k => !compSet.has(k.toLowerCase()));
+  const chips = [
+    ...comp.map(k => `<span class="kw-tag comp">${escHtml(k)}</span>`),
+    ...kws.map(k => `<span class="kw-tag">${escHtml(k)}</span>`)
+  ];
+  return chips.length ? chips.join('') : '<span style="color:var(--text-dim);">—</span>';
 }
 
 function renderPagesCell(acct) {
