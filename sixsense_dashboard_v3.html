@@ -648,6 +648,7 @@
           <th data-col="stage" onclick="sortBy('stage')" style="cursor:pointer;">Stage</th>
           <th data-col="fit" onclick="sortBy('fit')" style="cursor:pointer;">Fit</th>
           <th data-col="signal_count" onclick="sortBy('signal_count')" style="cursor:pointer;">Signals</th>
+          <th data-col="web_visits" onclick="sortBy('web_visits')" style="cursor:pointer;">Web Visits</th>
           <th>Keywords</th>
           <th data-col="_latest_date" onclick="sortBy('_latest_date')" style="cursor:pointer;">Latest</th>
           <th>Actions</th>
@@ -851,6 +852,7 @@ function renderTable() {
       <td><span class="badge stage-badge">${escHtml(acct.stage || '?')}</span></td>
       <td><span class="badge ${fitBadgeClass(acct.fit)}">${escHtml(acct.fit || '?')}</span></td>
       <td><strong>${acct.signal_count || 0}</strong></td>
+      <td>${acct.web_visits || 0}</td>
       <td>${(acct.keywords || []).slice(0, 2).map(k => `<span class="kw-tag">${escHtml(k)}</span>`).join('')}${(acct.keywords || []).length > 2 ? `<span class="kw-tag">+${(acct.keywords || []).length - 2}</span>` : ''}</td>
       <td>${fmtDate(acct._latest_date)}</td>
       <td>${getAction(acct)}</td>
@@ -863,11 +865,10 @@ function renderTable() {
     expanded.id = expandedId;
     expanded.style.display = 'none';
     expanded.innerHTML = `
-      <td colspan="7">
+      <td colspan="8">
         <span class="section-label">Keywords</span>
         <div class="content-list">${(acct.keywords || []).map(k => `<span class="kw-tag">${escHtml(k)}</span>`).join('')}${(acct.competitor_keywords || []).length ? `<br/>${(acct.competitor_keywords || []).map(k => `<span class="kw-tag comp">${escHtml(k)}</span>`).join('')}` : ''}</div>
         ${acct.contacts && acct.contacts.length ? `<span class="section-label" style="margin-top:12px;">Contacts</span><div class="content-list"><ul>${acct.contacts.map(c => `<li><span class="kw-tag contact">${escHtml(c.name || '?')}</span> ${escHtml(c.title || '(no title)')}</li>`).join('')}</ul></div>` : ''}
-        ${acct.web_visits ? `<span class="section-label" style="margin-top:12px;">Web Visits</span><div class="content-list">${acct.web_visits} visit${acct.web_visits !== 1 ? 's' : ''}</div>` : ''}
         ${acct.decoded_urls && acct.decoded_urls.length ? `<span class="section-label" style="margin-top:12px;">Links</span><div class="content-list"><ul>${acct.decoded_urls.slice(0, 5).map(u => `<li><a href="${escHtml(u.decoded || u.raw || '#')}" target="_blank" style="color:var(--accent);text-decoration:none;">${escHtml(urlLabel(u))}</a> <span style="color:var(--text-dim);">${fmtDate(u.date)}</span></li>`).join('')}</ul></div>` : ''}
         ${acct.source_files && acct.source_files.length ? `<span class="section-label" style="margin-top:12px;">Source</span><div class="content-list">${acct.source_files.length} email${acct.source_files.length !== 1 ? 's' : ''} parsed</div>` : ''}
       </td>
