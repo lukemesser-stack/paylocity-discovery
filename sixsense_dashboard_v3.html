@@ -246,6 +246,21 @@
     color: var(--accent);
   }
 
+  th.sorted::after {
+    content: '▼';
+    font-size: 9px;
+    margin-left: 5px;
+  }
+
+  th.sorted.asc::after { content: '▲'; }
+
+  .activity-cell { white-space: nowrap; }
+
+  .days-ago {
+    color: var(--text-dim);
+    font-size: 11px;
+  }
+
   tbody tr {
     border-bottom: 1px solid var(--border);
     transition: background 0.15s;
@@ -706,7 +721,7 @@
           <th data-col="web_visits" onclick="sortBy('web_visits')" style="cursor:pointer;">Web Visits</th>
           <th>Pages Visited</th>
           <th>Keywords</th>
-          <th data-col="_latest_date" onclick="sortBy('_latest_date')" style="cursor:pointer;">Latest</th>
+          <th data-col="_latest_date" onclick="sortBy('_latest_date')" style="cursor:pointer;">Last Activity</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -805,7 +820,11 @@ function dedupeObjects(list) {
 }
 
 function recomputeLatest(acct) {
-  const all = [...(acct.dates || []), ...(acct.activity_dates || [])].filter(Boolean);
+  const all = [
+    ...(acct.dates || []),
+    ...(acct.activity_dates || []),
+    ...(acct.decoded_urls || []).map(u => u.date)
+  ].filter(Boolean);
   acct._latest_date = all.length ? all.reduce((a, b) => (a > b ? a : b)) : acct.email_date;
 }
 
@@ -885,7 +904,7 @@ function renderTable() {
       <td><strong>${acct.web_visits || 0}</strong></td>
       <td class="pages-cell">${renderPagesCell(acct)}</td>
       <td>${(acct.keywords || []).slice(0, 2).map(k => `<span class="kw-tag">${escHtml(k)}</span>`).join('')}${(acct.keywords || []).length > 2 ? `<span class="kw-tag">+${(acct.keywords || []).length - 2}</span>` : ''}</td>
-      <td>${fmtDate(acct._latest_date)}</td>
+      <td class="activity-cell"><div>${fmtDate(acct._latest_date)}</div><div class="days-ago">${daysAgo(acct._latest_date)}</div></td>
       <td>${getAction(acct)}</td>
     `;
     tbody.appendChild(tr);
@@ -1084,6 +1103,14 @@ function badge(priority, icon, title, why) {
 }
 
 // ── Date ──
+function daysAgo(d) {
+  if (!d) return '';
+  const diff = Math.floor((Date.now() - new Date(d + 'T00:00:00')) / 86400000);
+  if (isNaN(diff)) return '';
+  if (diff <= 0) return 'today';
+  return diff === 1 ? '1 day ago' : diff + ' days ago';
+}
+
 function fmtDate(d) {
   if (!d) return '';
   const parts = d.split('-');
@@ -1251,6 +1278,7 @@ function applySort() {
   });
   document.querySelectorAll('th[data-col]').forEach(th => {
     th.classList.toggle('sorted', th.dataset.col === sortCol);
+    th.classList.toggle('asc', th.dataset.col === sortCol && sortDir === 1);
   });
 }
 
@@ -1417,7 +1445,7 @@ function clearUpload() {
 }
 
 // ── Init ──
-sortCol = 'signal_count';
+sortCol = '_latest_date';
 sortDir = -1;
 loadData();
 </script>
