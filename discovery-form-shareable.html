@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paylocity Discovery Form</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange: #E8501A;
+    --orange-grad: linear-gradient(to right, rgb(241,63,33), rgb(246,91,34), rgb(254,131,28));
+    --orange-light: #FFF4EF;
+    --graphite: #1E2A3A;
+    --graphite-mid: #344054;
+    --graphite-light: #667085;
+    --blue: #0070C9;
+    --gray-50: #F9FAFB;
+    --gray-100: #F2F4F7;
+    --gray-200: #E4E7EC;
+    --gray-400: #98A2B3;
+    --gray-600: #667085;
+    --gray-800: #1D2939;
+    --white: #ffffff;
+    --border: 1px solid #E4E7EC;
+    --radius: 10px;
+    --radius-sm: 5px;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 16px rgba(16,24,40,.07);
+    --shadow-card: 0 1px 3px rgba(16,24,40,.1), 0 1px 2px rgba(16,24,40,.06);
+    --font: 'DM Sans', sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--gray-50);
+    color: var(--graphite-mid);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--graphite);
+    border-bottom: 3px solid;
+    border-image: var(--orange-grad) 1;
+    padding: 10px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(16,24,40,.25);
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-mark { display: flex; align-items: center; }
+  .logo-text { font-weight: 800; font-size: 16px; letter-spacing: -.5px; color: white; }
+  .logo-text span { background: var(--orange-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .btn-print {
+    background: var(--orange-grad);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: .2px;
+    transition: opacity .15s, transform .1s;
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+  }
+  .btn-print:hover { opacity: .88; transform: translateY(-1px); }
+
+  .btn-save {
+    background: var(--blue);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 6px;
+    transition: opacity .15s;
+    letter-spacing: .2px;
+  }
+  .btn-save:hover { opacity: .85; }
+
+  .btn-load {
+    background: rgba(255,255,255,.08);
+    color: rgba(255,255,255,.85);
+    border: 1px solid rgba(255,255,255,.2);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-right: 6px;
+    transition: all .15s;
+    letter-spacing: .2px;
+  }
+  .btn-load:hover { background: rgba(255,255,255,.14); color: white; }
+
+  .btn-clear {
+    background: none;
+    color: rgba(255,255,255,.45);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-right: 4px;
+    transition: color .15s;
+  }
+  .btn-clear:hover { color: rgba(255,255,255,.75); }
+
+  /* ── HERO HEADER ── */
+  .discovery-header { margin-bottom: 20px; }
+  .discovery-hero {
+    background: var(--graphite);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid transparent;
+    border-image: var(--orange-grad) 1;
+    box-shadow: var(--shadow-card);
+  }
+  .discovery-hero-tag {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #FFA05A;
+    margin-bottom: 6px;
+  }
+  .discovery-hero-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .discovery-hero-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,.4);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+  .discovery-hero-right { text-align: right; }
+
+  /* ── LAYOUT ── */
+  .wrapper { max-width: 940px; margin: 0 auto; padding: 24px 24px 70px; }
+
+  /* ── SECTION HEADERS ── */
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--graphite-light);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin: 28px 0 8px;
+    padding-left: 10px;
+    border-left: 3px solid var(--orange);
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--white);
+    border: var(--border);
+    border-top: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow .2s;
+  }
+  .card:focus-within {
+    border-top-color: var(--orange);
+    box-shadow: 0 1px 3px rgba(16,24,40,.1), 0 4px 20px rgba(232,80,26,.08);
+  }
+
+  /* ── INFO GRID ── */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: var(--border); }
+  .info-cell { padding: 0; border-right: var(--border); border-bottom: var(--border); }
+  .info-cell:nth-child(2n) { border-right: none; }
+  .info-cell:last-child, .info-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+  .info-cell label {
+    display: block; padding: 5px 12px 3px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--gray-400);
+    background: var(--gray-50); border-bottom: var(--border);
+  }
+  .info-cell input[type="text"] {
+    width: 100%; border: none; padding: 9px 12px;
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    background: transparent; outline: none; transition: background .15s;
+  }
+  .info-cell input[type="text"]:focus { background: var(--orange-light); }
+
+  .check-freq { display: flex; gap: 14px; align-items: center; padding: 9px 12px; }
+  .check-freq label { background: none; border: none; padding: 0; font-size: 12px; color: var(--gray-600); font-weight: 500; text-transform: none; letter-spacing: 0; display: flex; align-items: center; gap: 6px; }
+  .check-freq input[type="checkbox"] { accent-color: var(--orange); width: 14px; height: 14px; cursor: pointer; }
+
+  /* ── MODULE GRID ── */
+  .module-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+  .module-cell { border-right: var(--border); border-bottom: var(--border); padding: 10px 12px; transition: background .15s; }
+  .module-cell:nth-child(3n) { border-right: none; }
+  .module-cell:nth-last-child(-n+3) { border-bottom: none; }
+  .module-cell:focus-within { background: var(--orange-light); }
+  .module-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px;
+    color: var(--graphite-light); background: var(--gray-100);
+    margin: -10px -12px 8px; padding: 5px 12px;
+    border-bottom: var(--border); text-align: center;
+  }
+  .module-cell textarea { display: none; }
+  .module-cell textarea.module-ta {
+    display: block;
+    width: 100%;
+    border: none;
+    background: none;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--orange) !important;
+    outline: none;
+    padding: 4px 0;
+    text-align: center;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.5;
+    min-height: 24px;
+    box-sizing: border-box;
+  }
+  .module-cell textarea.module-ta::placeholder { color: var(--gray-400) !important; font-weight: 400; }
+  .module-cell input[type="text"] {
+    width: 100%; border: none; background: none;
+    font-family: var(--font); font-size: 12px; font-weight: 600;
+    color: var(--orange); outline: none; padding: 4px 0; text-align: center;
+  }
+
+  /* ── NOTE ROWS ── */
+  .note-row { border-bottom: var(--border); display: flex; align-items: center; }
+  .note-row:last-child { border-bottom: none; }
+  .note-row input[type="text"] {
+    width: 100%; border: none; padding: 7px 14px;
+    font-family: var(--font); font-size: 12px; font-weight: 500;
+    background: transparent; outline: none; transition: background .15s;
+  }
+  .note-row input[type="text"]:focus { background: var(--orange-light); }
+
+  /* ── CHECKLIST ── */
+  .checklist-grid { display: grid; grid-template-columns: 1fr 1fr; }
+  .checklist-col { padding: 14px 16px; border-right: var(--border); }
+  .checklist-col:last-child { border-right: none; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+  .checklist-item:last-child { margin-bottom: 0; }
+  .checklist-item input[type="checkbox"] { accent-color: var(--orange); width: 14px; height: 14px; margin-top: 1px; flex-shrink: 0; cursor: pointer; }
+  .checklist-item label { font-size: 12px; color: var(--graphite-mid); cursor: pointer; line-height: 1.45; font-weight: 400; }
+
+  /* ── SUBSECTION BAR ── */
+  .subsection {
+    background: var(--orange-grad);
+    color: white;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    padding: 7px 14px;
+    border-bottom: var(--border);
+  }
+
+  /* ── DETAIL GRID ── */
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; }
+  .detail-col { padding: 12px 14px; border-right: var(--border); }
+  .detail-col:last-child { border-right: none; }
+  .detail-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--gray-100); }
+  .detail-item:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+  .detail-item input[type="checkbox"] { accent-color: var(--orange); width: 14px; height: 14px; margin-top: 2px; flex-shrink: 0; cursor: pointer; }
+  .detail-item-body { flex: 1; }
+  .detail-item-body label { display: block; font-size: 12px; font-weight: 500; color: var(--graphite-mid); cursor: pointer; margin-bottom: 3px; }
+  .detail-item-body input[type="text"] {
+    width: 100%; border: none; border-bottom: 1px solid var(--gray-200);
+    padding: 3px 0; font-family: var(--font); font-size: 11px; font-weight: 500;
+    background: transparent; outline: none; transition: border-color .15s;
+  }
+  .detail-item-body input[type="text"]:focus { border-bottom-color: var(--orange); }
+  .detail-item-body input[type="text"]::placeholder { color: var(--gray-400); font-weight: 400; }
+
+  /* ── DATE FIELD ── */
+  .date-wrap { padding: 10px 14px; display: flex; align-items: center; gap: 10px; border-bottom: var(--border); }
+  .date-wrap label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--gray-400); }
+  .date-wrap input[type="date"] { border: var(--border); padding: 5px 10px; border-radius: var(--radius-sm); font-family: var(--font); font-size: 12px; color: var(--graphite); outline: none; transition: border-color .15s; background: var(--gray-50); }
+  .date-wrap input[type="date"]:focus { border-color: var(--orange); }
+
+  /* ── TYPED INPUT COLOR ── */
+  input[type="text"], input[type="date"], textarea { color: var(--orange) !important; font-weight: 500; }
+  input[type="text"]::placeholder, textarea::placeholder { color: var(--gray-400) !important; font-weight: 400; }
+
+  /* ── BAR SOLUTION ── */
+  .bar-solution { font-style: normal; font-weight: 700; color: #000; margin-left: 8px; letter-spacing: 0; text-transform: none; font-size: 11px; }
+
+  /* ── FLAT MODULE ROWS ── */
+  .module-flat-grid { }
+  .module-flat-row { display: flex; align-items: center; border-bottom: var(--border); }
+  .module-flat-row.mfl-last { border-bottom: none; }
+  .mfl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--graphite-light); background: var(--gray-50); padding: 5px 10px; min-width: 200px; border-right: var(--border); white-space: nowrap; }
+  .module-flat-row input[type="text"] { flex: 1; border: none; padding: 5px 10px; font-family: var(--font); font-size: 12px; background: transparent; outline: none; }
+  .module-flat-row input[type="text"]:focus { background: var(--orange-light); }
+
+  body {
+    font-family: var(--font);
+    background: var(--gray-50);
+    color: var(--gray-800);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--graphite);
+    border-bottom: none;
+    padding: 12px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(45,55,72,.2);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--orange-grad);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-mark svg { width: 18px; height: 18px; fill: white; }
+  .logo-text { font-weight: 700; font-size: 15px; letter-spacing: -.3px; color: white; }
+  .logo-text span { color: #FFA05A; }
+
+  .btn-print {
+    background: var(--orange-grad);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: .3px;
+    transition: opacity .15s, transform .1s;
+    box-shadow: 0 2px 8px rgba(232,80,26,.3);
+  }
+  .btn-print:hover { opacity: .88; transform: translateY(-1px); }
+
+  .btn-save {
+    background: var(--blue);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 6px;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn-save:hover { opacity: .8; transform: translateY(-1px); }
+
+  .btn-load {
+    background: none;
+    color: rgba(255,255,255,.75);
+    border: 1px solid rgba(255,255,255,.3);
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-right: 6px;
+    transition: all .15s;
+  }
+  .btn-load:hover { border-color: white; color: white; }
+
+  .btn-clear {
+    background: none;
+    color: rgba(255,255,255,.6);
+    border: 1px solid rgba(255,255,255,.2);
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-right: 8px;
+    transition: all .15s;
+  }
+  .btn-clear:hover { border-color: rgba(255,255,255,.5); color: white; }
+
+  /* ── LAYOUT ── */
+  .wrapper { max-width: 920px; margin: 0 auto; padding: 28px 24px 70px; }
+
+  /* ── SECTION HEADERS ── */
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--graphite);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 32px 0 10px;
+    padding-left: 10px;
+    border-left: 3px solid var(--orange);
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--white);
+    border: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  /* ── INFO GRID (top metadata) ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: var(--border);
+  }
+  .info-cell {
+    padding: 0;
+    border-right: var(--border);
+    border-bottom: var(--border);
+  }
+  .info-cell:nth-child(2n) { border-right: none; }
+  .info-cell:last-child, .info-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+  .info-cell label {
+    display: block;
+    padding: 5px 12px 3px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--graphite-light);
+    background: var(--gray-50);
+    border-bottom: var(--border);
+  }
+  .info-cell input[type="text"] {
+    width: 100%;
+    border: none;
+    padding: 8px 12px;
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--gray-800);
+    background: transparent;
+    outline: none;
+    transition: background .15s;
+  }
+  .info-cell input[type="text"]:focus { background: var(--orange-light); }
+
+  .check-freq {
+    display: flex; gap: 12px; align-items: center;
+    padding: 8px 12px;
+  }
+  .check-freq label { background: none; border: none; padding: 0; font-size: 12px; color: var(--gray-600); font-weight: 500; text-transform: none; letter-spacing: 0; display: flex; align-items: center; gap: 5px; }
+  .check-freq input[type="checkbox"] { accent-color: var(--orange); width: 14px; height: 14px; cursor: pointer; }
+
+  /* ── MODULE GRID (3-col feature matrix) ── */
+  .module-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .module-cell {
+    border-right: var(--border);
+    border-bottom: var(--border);
+    padding: 10px 12px;
+    transition: background .15s;
+  }
+  .module-cell:nth-child(3n) { border-right: none; }
+  .module-cell:nth-last-child(-n+3) { border-bottom: none; }
+  .module-cell:hover { background: var(--orange-light); }
+  .module-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--gray-600);
+    background: var(--gray-50);
+    margin: -10px -12px 8px;
+    padding: 5px 12px;
+    border-bottom: var(--border);
+    text-align: center;
+  }
+  .module-cell textarea { display: none; }
+  .module-cell textarea.module-ta {
+    display: block;
+    width: 100%;
+    border: none;
+    background: none;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--orange) !important;
+    outline: none;
+    padding: 4px 0;
+    text-align: center;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.5;
+    min-height: 24px;
+    box-sizing: border-box;
+  }
+  .module-cell textarea.module-ta::placeholder { color: var(--gray-400) !important; font-weight: 400; }
+  .module-cell input[type="text"] {
+    width: 100%;
+    border: none;
+    background: none;
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--orange);
+    outline: none;
+    padding: 4px 0;
+    text-align: center;
+    font-weight: 500;
+  }
+  .module-cell textarea::placeholder { color: var(--gray-400); }
+
+  .note-row {
+    border-bottom: var(--border);
+    display: flex;
+    align-items: stretch;
+  }
+  .note-row:last-child { border-bottom: none; }
+  .note-row textarea {
+    width: 100%;
+    border: none;
+    padding: 7px 14px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--orange) !important;
+    background: transparent;
+    outline: none;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.6;
+    min-height: 34px;
+    transition: background .15s;
+    box-sizing: border-box;
+    display: block;
+  }
+  .note-row textarea:focus { background: var(--orange-light); }
+  .note-row textarea::placeholder { color: var(--gray-400) !important; font-weight: 400; }
+
+  /* ── CHECKLIST SECTION ── */
+  .checklist-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .checklist-col { padding: 14px 16px; border-right: var(--border); }
+  .checklist-col:last-child { border-right: none; }
+  .checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .checklist-item:last-child { margin-bottom: 0; }
+  .checklist-item input[type="checkbox"] {
+    accent-color: var(--orange);
+    width: 14px; height: 14px;
+    margin-top: 1px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .checklist-item label {
+    font-size: 12px;
+    color: var(--graphite-mid);
+    cursor: pointer;
+    line-height: 1.45;
+    font-weight: 400;
+  }
+
+  /* ── SUBSECTION TITLE ── */
+  .subsection {
+    background: linear-gradient(to right, rgb(241,63,33), rgb(246,91,34), rgb(254,131,28));
+    color: white;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 7px 14px;
+    border-bottom: var(--border);
+  }
+
+  /* ── DETAIL LIST SECTION ── */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .detail-col {
+    padding: 12px 14px;
+    border-right: var(--border);
+  }
+  .detail-col:last-child { border-right: none; }
+  .detail-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .detail-item:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+  .detail-item input[type="checkbox"] {
+    accent-color: var(--orange);
+    width: 14px; height: 14px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .detail-item-body { flex: 1; }
+  .detail-item-body label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--graphite-mid);
+    cursor: pointer;
+    margin-bottom: 3px;
+  }
+  .detail-item-body input[type="text"] {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 3px 0;
+    font-family: var(--font);
+    font-size: 11px;
+    color: var(--gray-600);
+    background: transparent;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .detail-item-body input[type="text"]:focus { border-bottom-color: var(--orange); }
+  .detail-item-body input[type="text"]::placeholder { color: var(--gray-400); }
+
+  /* Date field */
+  .date-wrap { padding: 10px 14px; display: flex; align-items: center; gap: 10px; border-bottom: var(--border); }
+  .date-wrap label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--gray-400); }
+  .date-wrap input[type="date"] {
+    border: var(--border);
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--gray-800);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .date-wrap input[type="date"]:focus { border-color: var(--orange); }
+
+  /* ── TYPED INPUT COLOR ── */
+  input[type="text"], input[type="date"], textarea {
+    color: var(--orange) !important;
+    font-weight: 500;
+  }
+  input[type="text"]::placeholder, textarea::placeholder {
+    color: var(--gray-400) !important;
+    font-weight: 400;
+  }
+
+  /* ── BAR SOLUTION DISPLAY ── */
+  .bar-solution {
+    font-style: normal;
+    font-weight: 700;
+    color: #000000;
+    opacity: 1;
+    margin-left: 8px;
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 11px;
+  }
+
+  /* ── MANAGED SERVICES ── */
+  .ms-group {
+    border-bottom: var(--border);
+  }
+  .ms-group-last { border-bottom: none; }
+  .ms-group-header {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--graphite-light);
+    background: var(--gray-100);
+    padding: 6px 14px;
+    border-bottom: var(--border);
+  }
+  .ms-col {
+    padding: 8px 14px;
+    border-right: none !important;
+    width: 100%;
+  }
+  .ms-col .detail-item {
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+  }
+  .ms-col .detail-item-body label {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--graphite-mid);
+    line-height: 1.5;
+  }
+
+  /* Print managed services */
+  @media print {
+    .ms-group-header { font-size: 8px; padding: 4px 10px; }
+    .ms-col { padding: 5px 10px; }
+    .ms-col .detail-item-body label { font-size: 9px; }
+  }
+
+  .detail-item-body textarea.detail-note-ta {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 3px 0;
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--orange) !important;
+    background: transparent;
+    outline: none;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.5;
+    min-height: 20px;
+    transition: border-color .15s;
+    box-sizing: border-box;
+    display: block;
+  }
+  .detail-item-body textarea.detail-note-ta:focus { border-bottom-color: var(--orange); }
+  .detail-item-body textarea.detail-note-ta::placeholder { color: var(--gray-400) !important; font-weight: 400; }
+
+  /* ── MEDDPICC ── */
+  .meddpicc-grid { }
+  .meddpicc-row { display: flex; align-items: stretch; border-bottom: var(--border); }
+  .meddpicc-last { border-bottom: none; }
+  .meddpicc-letter {
+    width: 44px; min-width: 44px;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding-top: 12px;
+    font-size: 18px; font-weight: 800;
+    background: var(--orange-grad); color: white;
+    letter-spacing: -1px; flex-shrink: 0;
+  }
+  .meddpicc-label {
+    width: 150px; min-width: 150px;
+    display: flex; align-items: flex-start;
+    padding: 12px 12px 8px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--graphite); background: var(--gray-50);
+    border-right: var(--border); border-left: var(--border); flex-shrink: 0;
+  }
+  .meddpicc-content { flex: 1; display: flex; align-items: stretch; }
+  .meddpicc-input {
+    width: 100%;
+    min-height: 44px;
+    border: none;
+    padding: 10px 14px;
+    font-family: var(--font); font-size: 12px; font-weight: 500;
+    color: var(--orange) !important;
+    background: transparent; outline: none;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.6;
+    transition: background .15s;
+    box-sizing: border-box;
+    display: block;
+  }
+  .meddpicc-input:focus { background: var(--orange-light); }
+  .meddpicc-input::placeholder { color: var(--gray-400) !important; font-weight: 400; }
+
+  /* ── FLAT MODULE ROWS ── */
+  .mfl {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--gray-600);
+    background: var(--gray-50);
+    padding: 5px 10px;
+    min-width: 200px;
+    border-right: var(--border);
+    white-space: nowrap;
+  }
+  .module-flat-row input[type="text"] {
+    flex: 1;
+    border: none;
+    padding: 5px 10px;
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--gray-800);
+    background: transparent;
+    outline: none;
+  }
+  .module-flat-row input[type="text"]:focus { background: var(--orange-light); }
+
+  /* ── PRINT ── */
+  @media print {
+    @page {
+      size: letter;
+      margin: 0.4in 0.45in 0.5in 0.45in;
+    }
+
+    /* Footer on every page */
+    @page { @bottom-center { content: "Paylocity · Confidential · Internal Use Only"; font-size: 8px; color: #98A2B3; font-family: 'DM Sans', sans-serif; letter-spacing: 1px; } }
+
+    .topbar { display: none; }
+    body { background: white; font-size: 10px; line-height: 1.35; }
+    .wrapper { padding: 0; max-width: 100%; }
+
+    /* Hero header in print */
+    .discovery-hero {
+      background: #1E2A3A !important;
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      border-bottom: 3px solid #E8501A;
+    }
+    .discovery-hero-tag { font-size: 8px; }
+    .discovery-hero-title { font-size: 20px; }
+    .discovery-hero-sub { font-size: 8px; margin-top: 4px; }
+
+    /* Cards */
+    .card { box-shadow: none; margin-bottom: 5px; border-radius: 5px; border-top-width: 2px; }
+    .card:focus-within { border-top-color: var(--gray-200); box-shadow: none; }
+
+    /* Section labels */
+    .section-title { font-size: 9px; margin: 8px 0 4px; padding-left: 6px; }
+
+    /* Gradient bars */
+    .subsection { padding: 4px 10px; font-size: 8px; letter-spacing: .8px; }
+
+    /* Module grid */
+    .module-label { font-size: 8px; padding: 3px 6px; margin: -10px -12px 4px; }
+    .module-cell { padding: 5px 8px; }
+    .module-cell input[type="text"] { font-size: 10px; padding: 2px 0; }
+
+    /* Detail items */
+    .detail-col { padding: 5px 8px; }
+    .detail-item { margin-bottom: 3px; padding-bottom: 3px; }
+    .detail-item-body label { font-size: 9px; margin-bottom: 1px; }
+    .detail-item-body input[type="text"] { font-size: 9px; padding: 1px 0; }
+    .detail-item-body textarea.detail-note-ta { font-size: 9px; padding: 1px 0; min-height: 0; line-height: 1.4; }
+
+    /* Checklists */
+    .checklist-col { padding: 6px 10px; }
+    .checklist-item { margin-bottom: 3px; gap: 5px; }
+    .checklist-item label { font-size: 9px; }
+    .checklist-item input[type="checkbox"] { width: 11px; height: 11px; }
+
+    /* Note rows */
+    .note-row textarea { font-size: 9px; padding: 2px 8px; min-height: 0; line-height: 1.5; }
+
+    /* Info cells */
+    .info-cell input[type="text"] { padding: 4px 8px; font-size: 10px; }
+    .info-cell label { padding: 2px 8px; font-size: 8px; }
+    .date-wrap { padding: 4px 10px; font-size: 9px; }
+
+    /* Color preservation */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    /* MEDDPICC */
+    .meddpicc-letter { font-size: 12px; width: 28px; min-width: 28px; padding-top: 8px; }
+    .meddpicc-label { font-size: 8px; width: 90px; min-width: 90px; padding: 6px 8px; }
+    .meddpicc-input { font-size: 8.5px; padding: 4px 8px; line-height: 1.5; color: #344054 !important; }
+    .meddpicc-row { border-bottom: 1px solid #E4E7EC; }
+
+    /* Never break inside a card */
+    .card { break-inside: avoid; }
+    .section-title { break-after: avoid; }
+
+    /* Page groups */
+    .page-group-1 { break-after: page; }
+    .page-group-2 { break-after: page; }
+    .page-group-3 { break-after: page; }
+    .page-group-4 { break-after: page; }
+    .page-group-5 { break-after: page; }
+    .page-group-6 { break-after: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">
+      <!-- Paylocity swoosh mark -->
+      <svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sw" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#F13F21"/>
+            <stop offset="100%" style="stop-color:#FE831C"/>
+          </linearGradient>
+        </defs>
+        <path d="M20 4 C10 4 4 10 4 20 C4 30 10 36 20 36 C30 36 36 30 36 20" stroke="url(#sw)" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M20 36 C30 36 36 30 36 20 C36 14 32 9 26 6" stroke="url(#sw)" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <line x1="17" y1="20" x2="23" y2="20" stroke="url(#sw)" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text"><span>paylocity</span></div>
+      <div style="font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;">Discovery Form</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span id="autosave-status" style="font-size:10px;color:rgba(255,255,255,.55);letter-spacing:.3px;margin-right:4px;white-space:nowrap;" title="Your entries are automatically kept in this browser. Use Save Session to download a copy you can back up or move to another computer."></span>
+    <button class="btn-clear" onclick="clearForm()">Clear</button>
+    <button class="btn-load" onclick="document.getElementById('load-input').click()">Load Session</button>
+    <input type="file" id="load-input" accept=".json" style="display:none" onchange="loadSession(event)">
+    <button class="btn-save" onclick="saveSession()">Save Session</button>
+    <button class="btn-print" onclick="window.print()">Print / PDF</button>
+  </div>
+</div>
+
+
+<div class="wrapper">
+
+  <div class="page-group-1">
+  <!-- ══ ACCOUNT INFO ══ -->
+  <div class="discovery-header">
+    <div class="discovery-hero">
+      <div class="discovery-hero-left">
+        <div class="discovery-hero-tag">CLIENT DISCOVERY</div>
+        <div class="discovery-hero-title">Sales Discovery</div>
+        <div class="discovery-hero-sub">Paylocity &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; Internal Use Only</div>
+      </div>
+      <div class="discovery-hero-right">
+        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Forward Together.</div>
+        <div style="width:48px;height:2px;background:var(--orange-grad);border-radius:2px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="date-wrap">
+      <label>Date</label>
+      <input type="date" id="disc-date">
+    </div>
+    <div class="info-grid">
+      <div class="info-cell"><label>Company</label><input type="text" placeholder="Company name"></div>
+      <div class="info-cell">
+        <label>Contacts</label>
+        <div style="display:flex;align-items:center;border-bottom:var(--border);padding:5px 10px;gap:8px;"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--orange);min-width:48px;">C-Suite</span><input type="text" placeholder="Name / title / email" style="flex:1;border:none;padding:2px 0;font-family:var(--font);font-size:12px;outline:none;background:none;"></div>
+        <div style="display:flex;align-items:center;border-bottom:var(--border);padding:5px 10px;gap:8px;"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--orange);min-width:48px;">HR</span><input type="text" placeholder="Name / title / email" style="flex:1;border:none;padding:2px 0;font-family:var(--font);font-size:12px;outline:none;background:none;"></div>
+        <div style="display:flex;align-items:center;border-bottom:var(--border);padding:5px 10px;gap:8px;"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--orange);min-width:48px;">Finance</span><input type="text" placeholder="Name / title / email" style="flex:1;border:none;padding:2px 0;font-family:var(--font);font-size:12px;outline:none;background:none;"></div>
+        <div style="display:flex;align-items:center;border-bottom:var(--border);padding:5px 10px;gap:8px;"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--orange);min-width:48px;">IT</span><input type="text" placeholder="Name / title / email" style="flex:1;border:none;padding:2px 0;font-family:var(--font);font-size:12px;outline:none;background:none;"></div>
+        <div style="display:flex;align-items:center;padding:5px 10px;gap:8px;"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--orange);min-width:48px;">Other</span><input type="text" placeholder="Name / title / email" style="flex:1;border:none;padding:2px 0;font-family:var(--font);font-size:12px;outline:none;background:none;"></div>
+      </div>
+      <div class="info-cell"><label>EIN / Controls</label><input type="text" placeholder="# of EINs, structure"></div>
+      <div class="info-cell"><label>States</label><input type="text" placeholder="Operating states"></div>
+      <div class="info-cell"><label>Employees</label><input type="text" placeholder="Total headcount"></div>
+      <div class="info-cell">
+        <label>Check Date</label>
+        <div class="check-freq">
+          <label><input type="checkbox"> 12</label>
+          <label><input type="checkbox"> 24</label>
+          <label><input type="checkbox"> 26</label>
+          <label><input type="checkbox"> 52</label>
+          <input type="text" placeholder="Other" style="width:80px;border-bottom:1px solid #e0deda;padding:0 4px;outline:none;font-size:12px;background:none;border-top:none;border-left:none;border-right:none;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LEAD AND OPPORTUNITY DETAILS ══ -->
+  <div class="card">
+    <div class="subsection">Lead &amp; Opportunity Details</div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="lo1"><div class="detail-item-body"><label for="lo1">Contract Renewal / Expiration Date</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="lo2"><div class="detail-item-body"><label for="lo2">Decision Maker(s)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="lo3"><div class="detail-item-body"><label for="lo3">Budget / Timeline</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="lo4"><div class="detail-item-body"><label for="lo4">Reason for Exploring / Trigger Event</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ MODULE COVERAGE ══ -->
+  <div class="card">
+    <div class="subsection">Current Workforce Solutions</div>
+    <div class="module-grid">
+      <div class="module-cell"><div class="module-label">Headcount Planning</div><textarea placeholder="Notes..." data-module="headcount-planning" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Recruiting</div><textarea placeholder="Notes..." data-module="recruiting" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Background Screening</div><textarea placeholder="Notes..." data-module="background-screening" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Onboarding</div><textarea placeholder="Notes..." data-module="onboarding" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Employee Record</div><textarea placeholder="Notes..." data-module="employee-record" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Time &amp; Labor</div><textarea placeholder="Notes..." data-module="time-labor" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">PTO</div><textarea placeholder="Notes..." data-module="pto" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Payroll</div><textarea placeholder="Notes..." data-module="payroll" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Performance</div><textarea placeholder="Notes..." data-module="performance" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Benefits</div><textarea placeholder="Notes..." data-module="benefits" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">TPA</div><textarea placeholder="Notes..." data-module="tpa" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Compensation</div><textarea placeholder="Notes..." data-module="compensation" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Mobile</div><textarea placeholder="Notes..." data-module="mobile" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Surveys</div><textarea placeholder="Notes..." data-module="surveys" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">LMS</div><textarea placeholder="Notes..." data-module="lms" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Market Pay</div><textarea placeholder="Notes..." data-module="market-pay" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">AI</div><textarea placeholder="Notes..." data-module="ai" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Rewards &amp; Recognition</div><textarea placeholder="Notes..." data-module="rewards-recognition" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Communication</div><textarea placeholder="Notes..." data-module="communication" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Accounting</div><textarea placeholder="Notes..." data-module="accounting" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">401(k)</div><textarea placeholder="Notes..." data-module="401k" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">IT (Access &amp; Asset Mgmt.)</div><textarea placeholder="Notes..." data-module="it-access" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Global</div><textarea placeholder="Notes..." data-module="global" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">API</div><textarea placeholder="Notes..." data-module="api" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Expense Mgmt. &amp; Corp. Card</div><textarea placeholder="Notes..." data-module="expense" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">AP Automation</div><textarea placeholder="Notes..." data-module="ap-automation" rows="1" class="module-ta"></textarea></div>
+      <div class="module-cell"><div class="module-label">Procurement</div><textarea placeholder="Notes..." data-module="procurement" rows="1" class="module-ta"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ SERVICE & IMPLEMENTATION ══ -->
+  <div class="card">
+    <div class="subsection">Service &amp; Implementation</div>
+    <div class="checklist-grid">
+      <div class="checklist-col">
+        <div class="checklist-item"><input type="checkbox" id="si1"><label for="si1">Last service call reason / Resolution time</label></div>
+        <div class="checklist-item"><input type="checkbox" id="si2"><label for="si2">Service model (1:1)</label></div>
+        <div class="checklist-item"><input type="checkbox" id="si3"><label for="si3">How long with current vendor</label></div>
+        <div class="checklist-item"><input type="checkbox" id="si4"><label for="si4">Implementation process / Previous Provider</label></div>
+      </div>
+      <div class="checklist-col">
+        <div class="checklist-item"><input type="checkbox" id="si5"><label for="si5">Local Service / US Based</label></div>
+        <div class="checklist-item"><input type="checkbox" id="si6"><label for="si6">Service Ticket Visibility</label></div>
+        <div class="checklist-item"><input type="checkbox" id="si7"><label for="si7">Permissions / Access</label></div>
+        <div class="checklist-item"><input type="checkbox" id="si8"><label for="si8">Training</label></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ HEADCOUNT PLANNING ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="headcount-planning">Headcount Planning<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="hp1"><div class="detail-item-body"><label for="hp1">Filtering Positions</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="hp2"><div class="detail-item-body"><label for="hp2">Reporting (Budget vs. Forecast)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="hp3"><div class="detail-item-body"><label for="hp3">Track Advanced Compensation (Stock, Vesting Schedules)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="hp4"><div class="detail-item-body"><label for="hp4">Visualize Talent Teams (Fit within Org-Chart)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="hp5"><div class="detail-item-body"><label for="hp5">Annual Budget Planning Process</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="hp6"><div class="detail-item-body"><label for="hp6">Headcount Planning Spreadsheets (Data Reconciliation)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="hp7"><div class="detail-item-body"><label for="hp7">Approval Process — Headcount changes (Term, Backfill, New Hire)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="hp8"><div class="detail-item-body"><label for="hp8">How do you make updates to other systems once plans change?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ RECRUITING ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="recruiting">Recruiting<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="r1"><div class="detail-item-body"><label for="r1">AI Job Descriptions</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="r2"><div class="detail-item-body"><label for="r2">Interview Calendar Mgmt. / Scheduling Integration</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="r3"><div class="detail-item-body"><label for="r3">Offer Letter</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="r4"><div class="detail-item-body"><label for="r4">Video</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="r5"><div class="detail-item-body"><label for="r5">Manual / Digital</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="r6"><div class="detail-item-body"><label for="r6">Job Boards / Application / Mobile Apply (QR Code)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="r7"><div class="detail-item-body"><label for="r7">Scoring / Grading / Assessment</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="r8"><div class="detail-item-body"><label for="r8">Salary Benchmarking</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="r9"><div class="detail-item-body"><label for="r9">Background Screens</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="r10"><div class="detail-item-body"><label for="r10">Text to Communicate</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ ONBOARDING ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="onboarding">Onboarding<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="ob1"><div class="detail-item-body"><label for="ob1">W4 (Tax Mgmt. / Geolocation)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob2"><div class="detail-item-body"><label for="ob2">Notification of New Hire (e.g. IT)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob3"><div class="detail-item-body"><label for="ob3">Equipment Distribution</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob4"><div class="detail-item-body"><label for="ob4">Collect Info (Uniform Size)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob5"><div class="detail-item-body"><label for="ob5">WOTC</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob6"><div class="detail-item-body"><label for="ob6">SSO</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob7"><div class="detail-item-body"><label for="ob7">Assign Training</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="ob8"><div class="detail-item-body"><label for="ob8">Paper / Digital</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob9"><div class="detail-item-body"><label for="ob9">E-Verify</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob10"><div class="detail-item-body"><label for="ob10">Record Storage</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob11"><div class="detail-item-body"><label for="ob11">Manager Process</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob12"><div class="detail-item-body"><label for="ob12">Forms / Signatures</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob13"><div class="detail-item-body"><label for="ob13">I-9</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ob14"><div class="detail-item-body"><label for="ob14">Pulse — 30/60/90 Day</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+
+  </div><!-- /page-group-1 -->
+
+  <div class="page-group-2">
+  <!-- ══ EMPLOYEE RECORD ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="employee-record">Employee Record<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="er1"><div class="detail-item-body"><label for="er1">ESS / APP</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="er2"><div class="detail-item-body"><label for="er2">Skills / Events</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="er3"><div class="detail-item-body"><label for="er3">HR Edge</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="er4"><div class="detail-item-body"><label for="er4">Workflows (Promotion, Termination, Documentation)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="er5"><div class="detail-item-body"><label for="er5">Skills / Events / Docs.</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="er6"><div class="detail-item-body"><label for="er6">Org Chart</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="er7"><div class="detail-item-body"><label for="er7">Track Company Property</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="er8"><div class="detail-item-body"><label for="er8">Temp Tracking</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ TIME & LABOR ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="time-labor">Time &amp; Labor<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="tl1"><div class="detail-item-body"><label for="tl1">Timeclocks (type / quantity)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl2"><div class="detail-item-body"><label for="tl2">Kiosk</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl3"><div class="detail-item-body"><label for="tl3">Mobile (Geofencing)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl4"><div class="detail-item-body"><label for="tl4">Other / POS</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl5"><div class="detail-item-body"><label for="tl5">Labor Allocation</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl6"><div class="detail-item-body"><label for="tl6">Timecard Approval / Edit</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl7"><div class="detail-item-body"><label for="tl7">Work in Multiple Locations / EINs</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="tl8"><div class="detail-item-body"><label for="tl8">AI Scheduling / Self Schedule / Shift Swap</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl9"><div class="detail-item-body"><label for="tl9">Attendance Points</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl10"><div class="detail-item-body"><label for="tl10">Department Transfers</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl11"><div class="detail-item-body"><label for="tl11">Shift Differentials</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl12"><div class="detail-item-body"><label for="tl12">Field Employees</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="tl13"><div class="detail-item-body"><label for="tl13">Monitor Overtime</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ PTO MANAGEMENT ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="pto">PTO Management<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="pto1"><div class="detail-item-body"><label for="pto1">PTO Request Process</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pto2"><div class="detail-item-body"><label for="pto2">PTO Approvals</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pto3"><div class="detail-item-body"><label for="pto3">Black Out Dates</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pto4"><div class="detail-item-body"><label for="pto4">PTO Future Accrual</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="pto5"><div class="detail-item-body"><label for="pto5">Types of Leave (FMLA)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pto6"><div class="detail-item-body"><label for="pto6">Accrual Process</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pto7"><div class="detail-item-body"><label for="pto7">Track Outside of System / Excel</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pto8"><div class="detail-item-body"><label for="pto8">PTO Calendar View</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+
+  <!-- ══ PAYROLL ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="payroll">Payroll<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="py1"><div class="detail-item-body"><label for="py1">Unique Wages / Custom Calc</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="py2"><div class="detail-item-body"><label for="py2">Manual Entry</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="py3"><div class="detail-item-body"><label for="py3">Any Union / Certified Payroll</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="py4"><div class="detail-item-body"><label for="py4">Garnishments</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="py5"><div class="detail-item-body"><label for="py5">Effective Dating</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="py6"><div class="detail-item-body"><label for="py6">On Demand Pay</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="py7"><div class="detail-item-body"><label for="py7">Global Payroll</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="py8"><div class="detail-item-body"><label for="py8">Work Comp — Pay Go</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="py9"><div class="detail-item-body"><label for="py9">GL / Journal Entry Process</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="py10"><div class="detail-item-body"><label for="py10">Integrations</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="py11"><div class="detail-item-body"><label for="py11">PC / Paper</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="py12"><div class="detail-item-body"><label for="py12">Hourly / Salary / Temp / 1099</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  </div><!-- /page-group-2 -->
+
+  <div class="page-group-3">
+  <!-- ══ BENEFITS MANAGEMENT ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="benefits">Carrier / Coverage Types<span class="bar-solution"></span></div>
+    <div class="checklist-grid" style="padding:10px 12px;gap:8px;display:flex;flex-wrap:wrap;">
+      <div class="checklist-item"><input type="checkbox" id="b1"><label for="b1">Health</label></div>
+      <div class="checklist-item"><input type="checkbox" id="b2"><label for="b2">HSA / FSA</label></div>
+      <div class="checklist-item"><input type="checkbox" id="b3"><label for="b3">Dental</label></div>
+      <div class="checklist-item"><input type="checkbox" id="b4"><label for="b4">Vision</label></div>
+      <div class="checklist-item"><input type="checkbox" id="b5"><label for="b5">STD / LTD</label></div>
+      <div class="checklist-item"><input type="checkbox" id="b6"><label for="b6">COBRA</label></div>
+      <div class="checklist-item"><input type="checkbox" id="b7"><label for="b7">Work Comp</label></div>
+      <div class="checklist-item"><input type="checkbox" id="b8"><label for="b8">Retirement</label></div>
+    </div>
+    <div style="border-top:var(--border)">
+      <div class="detail-grid">
+        <div class="detail-col">
+          <div class="detail-item"><input type="checkbox" id="bm1"><div class="detail-item-body"><label for="bm1">Tier Based / Composite or Community-Based / Age Rate</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+          <div class="detail-item"><input type="checkbox" id="bm2"><div class="detail-item-body"><label for="bm2">Multiple Plan Years due to Acquisitions</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+          <div class="detail-item"><input type="checkbox" id="bm3"><div class="detail-item-body"><label for="bm3">Benefits Education / Partner Portal</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+          <div class="detail-item"><input type="checkbox" id="bm4"><div class="detail-item-body"><label for="bm4">Multi EIN (Same benefits)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+          <div class="detail-item"><input type="checkbox" id="bm5"><div class="detail-item-body"><label for="bm5">Total Compensation Report</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        </div>
+        <div class="detail-col">
+          <div class="detail-item"><input type="checkbox" id="bm6"><div class="detail-item-body"><label for="bm6">Digital / Mobile App / Paper</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+          <div class="detail-item"><input type="checkbox" id="bm7"><div class="detail-item-body"><label for="bm7">AI Decision Support (Education)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+          <div class="detail-item"><input type="checkbox" id="bm8"><div class="detail-item-body"><label for="bm8">Open Enrollment Start Date</label><textarea placeholder="Date..." rows="1" class="detail-note-ta"></textarea></div></div>
+          <div class="detail-item"><input type="checkbox" id="bm9"><div class="detail-item-body"><label for="bm9">Benefits Q&amp;A Communication</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+          <div class="detail-item"><input type="checkbox" id="bm10"><div class="detail-item-body"><label for="bm10">Multiple Employee Transfers within EIN</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:var(--border);padding:8px 12px;">
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:6px;">Broker / Advisor / Carrier EDI</div>
+      <input type="text" style="width:100%;border:none;border-bottom:var(--border);padding:4px 0;font-family:var(--font);font-size:12px;outline:none;background:none;" placeholder="Notes on broker, advisor, EDI connections...">
+    </div>
+    <div class="subsection">Benefit Plans</div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="bp1"><div class="detail-item-body"><label for="bp1">FSA (Flexible Spending Account)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="bp2"><div class="detail-item-body"><label for="bp2">HSA (Health Savings Account)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="bp3"><div class="detail-item-body"><label for="bp3">HRA (Health Reimbursement Arrangement)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="bp4"><div class="detail-item-body"><label for="bp4">TMA (Transportation Management Account)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="bp5"><div class="detail-item-body"><label for="bp5">POP (Premium Only Plan)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="bp6"><div class="detail-item-body"><label for="bp6">COBRA</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+
+  <!-- ══ TALENT DEVELOPMENT ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="performance">Talent Development / Performance<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="td1"><div class="detail-item-body"><label for="td1">Formal Compensation Process</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td2"><div class="detail-item-body"><label for="td2">Paper / Electronic</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td3"><div class="detail-item-body"><label for="td3">Pay Increases Tied to Performance Review</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td4"><div class="detail-item-body"><label for="td4">Merit Increases Annual / Anniversary</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td5"><div class="detail-item-body"><label for="td5">Budget Based</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td6"><div class="detail-item-body"><label for="td6">Total Rewards</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td7"><div class="detail-item-body"><label for="td7">Process for Raise / Promotion / Documentation</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="td8"><div class="detail-item-body"><label for="td8">Process for Demotion</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td9"><div class="detail-item-body"><label for="td9">Schedule — 30, 60, 90 — Annual / Anniversary</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td10"><div class="detail-item-body"><label for="td10">Conduct, Coaching &amp; Discipline Events</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td11"><div class="detail-item-body"><label for="td11">Goals</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td12"><div class="detail-item-body"><label for="td12">Journals</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td13"><div class="detail-item-body"><label for="td13">Succession Planning (9 Box Grid)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td14"><div class="detail-item-body"><label for="td14">360 / Self Assessment</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="td15"><div class="detail-item-body"><label for="td15">Exit Interview &amp; Termination Reasons / Offboarding</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ LEARNING MANAGEMENT ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="lms">Learning Management<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="lm1"><div class="detail-item-body"><label for="lm1">Skill Development</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="lm2"><div class="detail-item-body"><label for="lm2">Certificate of Completion</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="lm3"><div class="detail-item-body"><label for="lm3">Training Catalog</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="lm4"><div class="detail-item-body"><label for="lm4">Compliance Training</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="lm5"><div class="detail-item-body"><label for="lm5">Product Training</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="lm6"><div class="detail-item-body"><label for="lm6">Mobile App</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="lm7"><div class="detail-item-body"><label for="lm7">30 / 60 / 90 Day Training</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="lm8"><div class="detail-item-body"><label for="lm8">Safety Training</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="lm9"><div class="detail-item-body"><label for="lm9">Testing / Quiz</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="lm10"><div class="detail-item-body"><label for="lm10">Proprietary Content / Subscribed</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  </div><!-- /page-group-3 -->
+
+  <div class="page-group-4">
+  <!-- ══ COMPLIANCE ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="compliance">Compliance<span class="bar-solution"></span></div>
+    <div class="checklist-grid">
+      <div class="checklist-col">
+        <div class="checklist-item"><input type="checkbox" id="co1"><label for="co1">ACA</label></div>
+        <div class="checklist-item"><input type="checkbox" id="co2"><label for="co2">FMLA Management</label></div>
+        <div class="checklist-item"><input type="checkbox" id="co3"><label for="co3">CPA</label></div>
+      </div>
+      <div class="checklist-col">
+        <div class="checklist-item"><input type="checkbox" id="co4"><label for="co4">FMLA / EEO &amp; EEO2</label></div>
+        <div class="checklist-item"><input type="checkbox" id="co5"><label for="co5">I-9, E-Verify, DOL / OSHA 300</label></div>
+        <div class="checklist-item"><input type="checkbox" id="co6"><label for="co6">Managed HR</label></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ ENGAGEMENT & COMMUNICATION ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="communication">Engagement &amp; Communication<span class="bar-solution"></span></div>
+    <div class="checklist-grid">
+      <div class="checklist-col">
+        <div class="checklist-item"><input type="checkbox" id="ec1"><label for="ec1">On Demand Pay</label></div>
+        <div class="checklist-item"><input type="checkbox" id="ec2"><label for="ec2">Surveys / Off Boarding</label></div>
+        <div class="checklist-item"><input type="checkbox" id="ec3"><label for="ec3">Modern Workforce Index</label></div>
+      </div>
+      <div class="checklist-col">
+        <div class="checklist-item"><input type="checkbox" id="ec4"><label for="ec4">Video</label></div>
+        <div class="checklist-item"><input type="checkbox" id="ec5"><label for="ec5">Communication / Chat</label></div>
+        <div class="checklist-item"><input type="checkbox" id="ec6"><label for="ec6">Peer Recognition / Rewards</label></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ REPORTING & ANALYTICS ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="reporting">Reporting &amp; Analytics<span class="bar-solution"></span></div>
+    <div class="checklist-grid">
+      <div class="checklist-col">
+        <div class="checklist-item"><input type="checkbox" id="ra1"><label for="ra1">Share Reports with Partners</label></div>
+        <div class="checklist-item"><input type="checkbox" id="ra2"><label for="ra2">Analytics</label></div>
+        <div class="checklist-item"><input type="checkbox" id="ra3"><label for="ra3">Custom Dashboards</label></div>
+      </div>
+      <div class="checklist-col">
+        <div class="checklist-item"><input type="checkbox" id="ra4"><label for="ra4">Custom Reports</label></div>
+        <div class="checklist-item"><input type="checkbox" id="ra5"><label for="ra5">Scheduled Reports</label></div>
+        <div class="checklist-item"><input type="checkbox" id="ra6"><label for="ra6">Leadership Reports</label></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ IT MANAGEMENT ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="it-access">IT Management<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="it1"><div class="detail-item-body"><label for="it1">Active Directory</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="it2"><div class="detail-item-body"><label for="it2">SSO / MFA (Multi Factor)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="it3"><div class="detail-item-body"><label for="it3">Custom Dashboards</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="it4"><div class="detail-item-body"><label for="it4">Employee Changes (Roles, Positions, Locations)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="it5"><div class="detail-item-body"><label for="it5">Offboarding Asset Retrieval Tickets / Return Instructions</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="it6"><div class="detail-item-body"><label for="it6">Asset Management (Onboarding, Warranty, Inventory)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="it7"><div class="detail-item-body"><label for="it7">Access Management / Identity &amp; Access Management</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="it8"><div class="detail-item-body"><label for="it8">Storefront Cart (CDW) / Restock</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="it9"><div class="detail-item-body"><label for="it9">App Provisioning</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  </div><!-- /page-group-4 -->
+
+  <div class="page-group-5">
+  <!-- ══ EXPENSE MANAGEMENT ══ -->
+  <div class="card">
+    <div class="subsection" data-bar="expense">Expense Management<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="em1"><div class="detail-item-body"><label for="em1">Track Mileage</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="em2"><div class="detail-item-body"><label for="em2">Expense Project / Job Allocation</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="em3"><div class="detail-item-body"><label for="em3">Software Enabled Corporate Credit Cards</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="em4"><div class="detail-item-body"><label for="em4">Scan Receipt with OCR &amp; AI Data Extraction</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="em5"><div class="detail-item-body"><label for="em5">Spend Control with Rules</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="em6"><div class="detail-item-body"><label for="em6">Credit Card Integration — Ex. Amex</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="subsection" data-bar="ap-automation" style="border-top:var(--border)">AP Automation<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="ap1"><div class="detail-item-body"><label for="ap1">Machine Learning &amp; Generative AI</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ap2"><div class="detail-item-body"><label for="ap2">PO Matching</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ap3"><div class="detail-item-body"><label for="ap3">Bill Pay Approval Process (Rules, Workflows)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="ap4"><div class="detail-item-body"><label for="ap4">Manual Data Entry</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ap5"><div class="detail-item-body"><label for="ap5">New Vendor Onboarding (Contact, Tax, Banking)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ap6"><div class="detail-item-body"><label for="ap6">OCR Invoice Reading</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="subsection" data-bar="procurement" style="border-top:var(--border)">Procurement<span class="bar-solution"></span></div>
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="pr1"><div class="detail-item-body"><label for="pr1">Machine Learning &amp; Generative AI</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pr2"><div class="detail-item-body"><label for="pr2">PO Matching</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pr3"><div class="detail-item-body"><label for="pr3">Bill Pay Approval Process (Rules, Workflows)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pr4"><div class="detail-item-body"><label for="pr4">Spend Analytics</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-item"><input type="checkbox" id="pr5"><div class="detail-item-body"><label for="pr5">Manual Data Entry</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pr6"><div class="detail-item-body"><label for="pr6">New Vendor Onboarding (Contact, Tax, Banking)</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pr7"><div class="detail-item-body"><label for="pr7">OCR Invoice Reading</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="pr8"><div class="detail-item-body"><label for="pr8">Monitor SLAs, Requestors and Vendors</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+    <div class="subsection" style="border-top:var(--border)">Managed Services</div>
+
+    <div class="ms-group">
+      <div class="ms-group-header">Company Size &amp; Structure / How Payroll Is Handled</div>
+      <div class="detail-col ms-col">
+        <div class="detail-item"><input type="checkbox" id="ms1"><div class="detail-item-body"><label for="ms1">How is payroll processed today, who handles it, and what is the timeline?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ms2"><div class="detail-item-body"><label for="ms2">How many employees do you currently have, and are they hourly, salary, or a mix?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ms3"><div class="detail-item-body"><label for="ms3">What's prompting you to explore changes to your current payroll process now?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+
+    <div class="ms-group">
+      <div class="ms-group-header">Inefficiencies &amp; Frustrations with Existing Payroll Processes</div>
+      <div class="detail-col ms-col">
+        <div class="detail-item"><input type="checkbox" id="ms4"><div class="detail-item-body"><label for="ms4">What are your biggest challenges when it comes to running payroll?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ms5"><div class="detail-item-body"><label for="ms5">How much time does your team spend on payroll each pay period?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ms6"><div class="detail-item-body"><label for="ms6">Have you experienced payroll errors or delays that impacted employees?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+
+    <div class="ms-group">
+      <div class="ms-group-header">Capacity Challenges Within HR</div>
+      <div class="detail-col ms-col">
+        <div class="detail-item"><input type="checkbox" id="ms7"><div class="detail-item-body"><label for="ms7">Who currently manages payroll and HR tasks, and is that person wearing multiple hats?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ms8"><div class="detail-item-body"><label for="ms8">How large is your HR / payroll team?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ms9"><div class="detail-item-body"><label for="ms9">If someone on your payroll team left, how would that impact your payroll operations?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+
+    <div class="ms-group">
+      <div class="ms-group-header">Growth Plans &amp; Organizational Changes</div>
+      <div class="detail-col ms-col">
+        <div class="detail-item"><input type="checkbox" id="ms10"><div class="detail-item-body"><label for="ms10">Are you planning to grow headcount, open new locations, or expand into new states?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ms11"><div class="detail-item-body"><label for="ms11">Do you foresee any organizational changes in the next 12–18 months?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ms12"><div class="detail-item-body"><label for="ms12">Have you recently experienced any change in leadership or management?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+
+    <div class="ms-group ms-group-last">
+      <div class="ms-group-header">Additional Questions</div>
+      <div class="detail-col ms-col">
+        <div class="detail-item"><input type="checkbox" id="ms13"><div class="detail-item-body"><label for="ms13">Do you offer benefits, and if so, what kind? Do you offer retirement benefits?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+        <div class="detail-item"><input type="checkbox" id="ms14"><div class="detail-item-body"><label for="ms14">How are you handling compliance reporting like ACA?</label><textarea placeholder="Notes..." rows="1" class="detail-note-ta"></textarea></div></div>
+      </div>
+    </div>
+
+    <div class="notes-rows" style="border-top:var(--border)">
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Notes..." rows="1"></textarea></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="subsection">Notes</div>
+    <div class="notes-rows">
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+      <div class="note-row"><textarea placeholder="Note..." rows="1"></textarea></div>
+    </div>
+  </div>
+
+  <!-- ══ MEDDPICC ══ -->
+  <div class="card meddpicc-card">
+    <div class="subsection">MEDDPICC Analysis</div>
+    <div class="meddpicc-grid">
+
+      <div class="meddpicc-row">
+        <div class="meddpicc-letter">M</div>
+        <div class="meddpicc-label">Metrics</div>
+        <div class="meddpicc-content">
+          <textarea id="meddpicc-m" placeholder="Quantifiable value / ROI this deal delivers..." class="meddpicc-input" rows="1"></textarea>
+        </div>
+      </div>
+
+      <div class="meddpicc-row">
+        <div class="meddpicc-letter">E</div>
+        <div class="meddpicc-label">Economic Buyer</div>
+        <div class="meddpicc-content">
+          <textarea id="meddpicc-e" placeholder="Who controls the budget and has final say..." class="meddpicc-input" rows="1"></textarea>
+        </div>
+      </div>
+
+      <div class="meddpicc-row">
+        <div class="meddpicc-letter">D</div>
+        <div class="meddpicc-label">Decision Criteria</div>
+        <div class="meddpicc-content">
+          <textarea id="meddpicc-d" placeholder="What factors will drive their vendor decision..." class="meddpicc-input" rows="1"></textarea>
+        </div>
+      </div>
+
+      <div class="meddpicc-row">
+        <div class="meddpicc-letter">D</div>
+        <div class="meddpicc-label">Decision Process</div>
+        <div class="meddpicc-content">
+          <textarea id="meddpicc-d2" placeholder="Steps, stakeholders, and timeline to make a decision..." class="meddpicc-input" rows="1"></textarea>
+        </div>
+      </div>
+
+      <div class="meddpicc-row">
+        <div class="meddpicc-letter">P</div>
+        <div class="meddpicc-label">Paper Process</div>
+        <div class="meddpicc-content">
+          <textarea id="meddpicc-p" placeholder="Legal, procurement, contracting process..." class="meddpicc-input" rows="1"></textarea>
+        </div>
+      </div>
+
+      <div class="meddpicc-row">
+        <div class="meddpicc-letter">I</div>
+        <div class="meddpicc-label">Identify Pain</div>
+        <div class="meddpicc-content">
+          <textarea id="meddpicc-i" placeholder="Core business pain driving urgency to change..." class="meddpicc-input" rows="1"></textarea>
+        </div>
+      </div>
+
+      <div class="meddpicc-row">
+        <div class="meddpicc-letter">C</div>
+        <div class="meddpicc-label">Champion</div>
+        <div class="meddpicc-content">
+          <textarea id="meddpicc-c" placeholder="Internal advocate who will sell for you when you're not in the room..." class="meddpicc-input" rows="1"></textarea>
+        </div>
+      </div>
+
+      <div class="meddpicc-row meddpicc-last">
+        <div class="meddpicc-letter">C</div>
+        <div class="meddpicc-label">Competition</div>
+        <div class="meddpicc-content">
+          <textarea id="meddpicc-c2" placeholder="Current vendor, other vendors being evaluated..." class="meddpicc-input" rows="1"></textarea>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  </div><!-- /page-group-5 -->
+
+</div><!-- /wrapper -->
+
+<script>
+  // Auto-expand textareas
+  document.querySelectorAll('textarea').forEach(function(ta) {
+    ta.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = this.scrollHeight + 'px';
+    });
+  });
+
+  // ── SAVE SESSION ──
+  function saveSession() {
+    var data = { inputs: {}, checkboxes: {} };
+
+    // Save all text inputs, date inputs, and textareas
+    document.querySelectorAll('input[type="text"], input[type="date"], textarea').forEach(function(el, i) {
+      var key = el.id || el.getAttribute('data-module') || ('input_' + i);
+      var idx = 0;
+      var baseKey = key;
+      while (data.inputs[key] !== undefined) { key = baseKey + '_' + (++idx); }
+      el.setAttribute('data-save-key', key);
+      data.inputs[key] = el.value;
+    });
+
+    // Save all checkboxes
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+      if (el.id) data.checkboxes[el.id] = el.checked;
+    });
+
+    // Build filename: CompanyName - Discovery - MM-DD-YY
+    var companyInput = document.querySelector('.info-cell input[type="text"]');
+    var company = (companyInput && companyInput.value.trim()) ? companyInput.value.trim() : 'Unknown Company';
+
+    var dateInput = document.getElementById('disc-date');
+    var dateStr = '';
+    if (dateInput && dateInput.value) {
+      var parts = dateInput.value.split('-'); // YYYY-MM-DD
+      if (parts.length === 3) {
+        var yy = parts[0].slice(-2);
+        dateStr = parts[1] + '-' + parts[2] + '-' + yy; // MM-DD-YY
+      }
+    }
+    if (!dateStr) {
+      var today = new Date();
+      var mm = String(today.getMonth() + 1).padStart(2, '0');
+      var dd = String(today.getDate()).padStart(2, '0');
+      var yy = String(today.getFullYear()).slice(-2);
+      dateStr = mm + '-' + dd + '-' + yy;
+    }
+
+    var filename = company + ' - Discovery - ' + dateStr + '.json';
+
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // ── LOAD SESSION ──
+  function loadSession(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = JSON.parse(e.target.result);
+
+        // Restore text / date inputs and textareas
+        document.querySelectorAll('input[type="text"], input[type="date"], textarea').forEach(function(el, i) {
+          var key = el.getAttribute('data-save-key') || el.id || el.getAttribute('data-module') || ('input_' + i);
+          if (data.inputs && data.inputs[key] !== undefined) {
+            el.value = data.inputs[key];
+            if (el.tagName === 'TEXTAREA') autoExpand(el);
+          }
+        });
+
+        // Restore checkboxes
+        document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+          if (el.id && data.checkboxes && data.checkboxes[el.id] !== undefined) {
+            el.checked = data.checkboxes[el.id];
+          }
+        });
+
+        // Explicitly restore MEDDPICC fields by ID (in case index-based lookup missed them)
+        ['m','e','d','d2','p','i','c','c2'].forEach(function(key) {
+          var el = document.getElementById('meddpicc-' + key);
+          if (el && data.inputs && data.inputs['meddpicc-' + key] !== undefined) {
+            el.value = data.inputs['meddpicc-' + key];
+            autoExpand(el);
+          }
+        });
+
+        syncBars();
+        alert('Session loaded successfully!');
+      } catch(err) {
+        alert('Error loading file. Please make sure it\'s a valid Discovery save file.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset file input so same file can be reloaded
+    event.target.value = '';
+  }
+
+
+  // ── AUTO-EXPAND TEXTAREAS ──
+  function autoExpand(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+  document.addEventListener('input', function(e) {
+    if (e.target && (e.target.classList.contains('meddpicc-input') || e.target.closest('.note-row') || e.target.classList.contains('detail-note-ta') || e.target.classList.contains('module-ta'))) {
+      autoExpand(e.target);
+    }
+  });
+  // Expand all on load
+  document.querySelectorAll('.meddpicc-input, .note-row textarea, .detail-note-ta, .module-ta').forEach(function(el) {
+    autoExpand(el);
+  });
+
+  // ── SYNC BARS ──
+  function syncBars() {
+    document.querySelectorAll('[data-module]').forEach(function(input) {
+      var key = input.getAttribute('data-module');
+      var bars = document.querySelectorAll('[data-bar="' + key + '"] .bar-solution');
+      bars.forEach(function(bar) {
+        bar.textContent = input.value ? ': ' + input.value : '';
+      });
+    });
+  }
+  document.querySelectorAll('input[data-module]').forEach(function(input) {
+    input.addEventListener('input', syncBars);
+  });
+  syncBars();
+
+  // Clear all form fields
+  function clearForm() {
+    if (!confirm('Clear all fields? This cannot be undone.')) return;
+    document.querySelectorAll('input[type="text"], input[type="date"], textarea').forEach(function(el) {
+      el.value = '';
+      if (el.tagName === 'TEXTAREA') autoExpand(el);
+    });
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(el) { el.checked = false; });
+    document.querySelectorAll('textarea').forEach(function(el) { el.style.height = 'auto'; });
+    syncBars();
+    if (window.__clearAutosave) window.__clearAutosave();
+  }
+
+  // ── AUTOSAVE (keeps your progress in this browser, no AI or internet needed) ──
+  (function() {
+    var LS_KEY = 'paylocity_discovery_autosave';
+    var saveTimer = null;
+    var statusEl = document.getElementById('autosave-status');
+
+    function collect() {
+      var data = { inputs: {}, checkboxes: {} };
+      document.querySelectorAll('input[type="text"], input[type="date"], textarea').forEach(function(el, i) {
+        var key = el.id || el.getAttribute('data-module') || ('input_' + i);
+        var idx = 0, baseKey = key;
+        while (data.inputs[key] !== undefined) { key = baseKey + '_' + (++idx); }
+        el.setAttribute('data-save-key', key);
+        data.inputs[key] = el.value;
+      });
+      document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+        if (el.id) data.checkboxes[el.id] = el.checked;
+      });
+      return data;
+    }
+
+    function apply(data) {
+      document.querySelectorAll('input[type="text"], input[type="date"], textarea').forEach(function(el, i) {
+        var key = el.getAttribute('data-save-key') || el.id || el.getAttribute('data-module') || ('input_' + i);
+        if (data.inputs && data.inputs[key] !== undefined) {
+          el.value = data.inputs[key];
+          if (el.tagName === 'TEXTAREA') autoExpand(el);
+        }
+      });
+      document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+        if (el.id && data.checkboxes && data.checkboxes[el.id] !== undefined) el.checked = data.checkboxes[el.id];
+      });
+      syncBars();
+    }
+
+    function setStatus(text) { if (statusEl) statusEl.textContent = text; }
+
+    window.__autosaveNow = function() {
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify(collect()));
+        var t = new Date();
+        setStatus('Saved in this browser · ' + t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      } catch (e) { /* private mode / file restrictions — Save Session still works */ }
+    };
+
+    window.__clearAutosave = function() {
+      try { localStorage.removeItem(LS_KEY); } catch (e) {}
+      setStatus('');
+    };
+
+    // Restore any progress saved earlier in this browser
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        apply(JSON.parse(raw));
+        setStatus('Restored your saved progress');
+      }
+    } catch (e) {}
+
+    // Autosave shortly after any edit
+    function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(window.__autosaveNow, 600); }
+    document.addEventListener('input', queueSave);
+    document.addEventListener('change', queueSave);
+  })();
+</script>
+
+</body>
+</html>
