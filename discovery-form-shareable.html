@@ -833,6 +833,7 @@
     @page { @bottom-center { content: "Paylocity · Confidential · Internal Use Only"; font-size: 8px; color: #98A2B3; font-family: 'DM Sans', sans-serif; letter-spacing: 1px; } }
 
     .topbar { display: none; }
+    #share-banner { display: none !important; }
     body { background: white; font-size: 10px; line-height: 1.35; }
     .wrapper { padding: 0; max-width: 100%; }
 
@@ -940,6 +941,12 @@
   </div>
 </div>
 
+<!-- ── INSTRUCTION BANNER ── -->
+<div id="share-banner" style="display:flex;align-items:center;gap:12px;background:var(--orange-light);border-bottom:1px solid #F3D6C7;padding:9px 28px;font-size:12px;color:var(--graphite-mid);">
+  <span style="font-size:15px;line-height:1;">📝</span>
+  <span style="flex:1;line-height:1.5;">Fill this out at your own pace — your entries save automatically in this browser. Click <strong>Save Session</strong> to download a copy you can keep or send, and <strong>Load Session</strong> to reopen it later. Use <strong>Print / PDF</strong> when you're done. No account or internet required.</span>
+  <button onclick="document.getElementById('share-banner').style.display='none';try{localStorage.setItem('paylocity_banner_dismissed','1')}catch(e){}" title="Dismiss" style="border:none;background:transparent;color:var(--graphite-light);font-size:16px;line-height:1;cursor:pointer;padding:2px 6px;">&times;</button>
+</div>
 
 <div class="wrapper">
 
@@ -1876,6 +1883,14 @@
     function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(window.__autosaveNow, 600); }
     document.addEventListener('input', queueSave);
     document.addEventListener('change', queueSave);
+
+    // Keep the instruction banner dismissed once the user closes it
+    try {
+      if (localStorage.getItem('paylocity_banner_dismissed') === '1') {
+        var b = document.getElementById('share-banner');
+        if (b) b.style.display = 'none';
+      }
+    } catch (e) {}
   })();
 </script>
 
