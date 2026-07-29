@@ -986,10 +986,10 @@
       <div class="info-cell">
         <label>Check Date</label>
         <div class="check-freq">
-          <label><input type="checkbox"> 12</label>
-          <label><input type="checkbox"> 24</label>
-          <label><input type="checkbox"> 26</label>
-          <label><input type="checkbox"> 52</label>
+          <label><input type="checkbox" id="freq-12"> 12</label>
+          <label><input type="checkbox" id="freq-24"> 24</label>
+          <label><input type="checkbox" id="freq-26"> 26</label>
+          <label><input type="checkbox" id="freq-52"> 52</label>
           <input type="text" placeholder="Other" style="width:80px;border-bottom:1px solid #e0deda;padding:0 4px;outline:none;font-size:12px;background:none;border-top:none;border-left:none;border-right:none;">
         </div>
       </div>
@@ -1721,14 +1721,24 @@
       dateStr = mm + '-' + dd + '-' + yy;
     }
 
-    var filename = company + ' - Discovery - ' + dateStr + '.json';
+    // Strip characters that are invalid in file names on Windows/macOS
+    var safeCompany = company.replace(/[\\/:*?"<>|]/g, '-').trim();
+    var filename = safeCompany + ' - Discovery - ' + dateStr + '.json';
 
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
+    a.href = url;
     a.download = filename;
+    a.rel = 'noopener';
+    // Anchor must be in the DOM for the download to fire in some browsers (e.g. Firefox)
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(a.href);
+    // Defer cleanup so the browser has time to start the download before the URL is revoked
+    setTimeout(function() {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
   }
 
   // ── LOAD SESSION ──
