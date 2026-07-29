@@ -834,7 +834,6 @@
 
     .topbar { display: none; }
     #share-banner { display: none !important; }
-    #save-modal { display: none !important; }
     body { background: white; font-size: 10px; line-height: 1.35; }
     .wrapper { padding: 0; max-width: 100%; }
 
@@ -947,22 +946,6 @@
   <span style="font-size:15px;line-height:1;">📝</span>
   <span style="flex:1;line-height:1.5;">Fill this out at your own pace — your entries save automatically in this browser. Click <strong>Save Session</strong> to download a copy you can keep or send, and <strong>Load Session</strong> to reopen it later. Use <strong>Print / PDF</strong> when you're done. No account or internet required.</span>
   <button onclick="document.getElementById('share-banner').style.display='none';try{localStorage.setItem('paylocity_banner_dismissed','1')}catch(e){}" title="Dismiss" style="border:none;background:transparent;color:var(--graphite-light);font-size:16px;line-height:1;cursor:pointer;padding:2px 6px;">&times;</button>
-</div>
-
-<!-- ── SAVE MODAL (confirmation + manual-copy fallback for locked-down browsers) ── -->
-<div id="save-modal" style="display:none;position:fixed;inset:0;background:rgba(16,24,40,.85);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;">
-  <div style="background:white;border-radius:16px;padding:32px 34px;max-width:560px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.3);">
-    <div style="font-size:20px;font-weight:800;color:#1E2A3A;margin-bottom:6px;">✅ Your discovery is ready to save</div>
-    <div style="font-size:13px;color:#344054;line-height:1.6;margin-bottom:16px;">A file named <strong id="save-filename" style="color:#E8501A;"></strong> should be downloading to your <strong>Downloads</strong> folder.</div>
-    <div style="background:#FFF4EF;border:1px solid #F3D6C7;border-radius:10px;padding:12px 14px;font-size:12px;color:#344054;line-height:1.6;margin-bottom:14px;">
-      <strong>Didn't see a download?</strong> Some work computers block them. Copy the text below, open <strong>Notepad</strong>, paste it in, and use <strong>File &rsaquo; Save As</strong> with the file name shown above (keep the <strong>.json</strong> ending).
-    </div>
-    <textarea id="save-data" readonly style="width:100%;height:150px;font-family:monospace;font-size:11px;line-height:1.4;color:#1D2939;background:#F9FAFB;border:1px solid #E4E7EC;border-radius:8px;padding:10px 12px;resize:vertical;outline:none;white-space:pre;overflow:auto;"></textarea>
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-      <button id="save-copy-btn" onclick="copySaveData()" style="padding:9px 20px;border-radius:6px;border:none;background:linear-gradient(to right,rgb(241,63,33),rgb(254,131,28));color:white;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(232,80,26,.3);">Copy to clipboard</button>
-      <button onclick="document.getElementById('save-modal').style.display='none'" style="padding:9px 20px;border-radius:6px;border:1px solid #DDE1E7;background:white;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;color:#344054;">Done</button>
-    </div>
-  </div>
 </div>
 
 <div class="wrapper">
@@ -1743,58 +1726,48 @@
     var filename = safeCompany + ' - Discovery - ' + dateStr + '.json';
 
     var json = JSON.stringify(data, null, 2);
-    var blob = new Blob([json], { type: 'application/json' });
 
-    // Try to trigger a real download across browsers (may be blocked in
-    // sandboxed previews or by corporate policy — the modal below is the fallback).
-    try {
-      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        // Legacy Edge / IE
-        window.navigator.msSaveOrOpenBlob(blob, filename);
-      } else {
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.rel = 'noopener';
-        // Anchor must be in the DOM for the download to fire in some browsers (e.g. Firefox)
-        document.body.appendChild(a);
-        a.click();
-        // Defer cleanup so the browser has time to start the download before the URL is revoked
-        setTimeout(function() {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 1500);
-      }
-    } catch (e) { /* fall through to the manual-copy modal */ }
-
-    // Always show the confirmation + manual-copy fallback so saving works even
-    // when the browser blocks the download outright.
-    document.getElementById('save-filename').textContent = filename;
-    var ta = document.getElementById('save-data');
-    ta.value = json;
-    document.getElementById('save-copy-btn').textContent = 'Copy to clipboard';
-    document.getElementById('save-modal').style.display = 'flex';
-  }
-
-  // Copy the save data to the clipboard (fallback for blocked downloads)
-  function copySaveData() {
-    var ta = document.getElementById('save-data');
-    var btn = document.getElementById('save-copy-btn');
-    ta.focus();
-    ta.select();
-    ta.setSelectionRange(0, ta.value.length);
-    var ok = false;
-    try { ok = document.execCommand('copy'); } catch (e) {}
-    if (!ok && navigator.clipboard) {
-      navigator.clipboard.writeText(ta.value).then(function() {
-        btn.textContent = 'Copied ✓';
-      }, function() {
-        btn.textContent = 'Press Ctrl+C to copy';
+    // Preferred: native "Save As" dialog (Chrome/Edge on Windows) — the user
+    // picks any folder in Windows Explorer, just like saving from any app.
+    if (window.showSaveFilePicker) {
+      window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: 'Discovery save file', accept: { 'application/json': ['.json'] } }]
+      }).then(function(handle) {
+        return handle.createWritable().then(function(writable) {
+          return writable.write(json).then(function() { return writable.close(); });
+        });
+      }).catch(function(err) {
+        // User pressed Cancel — do nothing. Any other error → fall back to a download.
+        if (err && err.name === 'AbortError') return;
+        downloadJson(json, filename);
       });
       return;
     }
-    btn.textContent = ok ? 'Copied ✓' : 'Press Ctrl+C to copy';
+
+    // Fallback for browsers without the native picker (Firefox/Safari): download
+    // to the Downloads folder.
+    downloadJson(json, filename);
+  }
+
+  // Fallback download used when the native "Save As" picker isn't available.
+  function downloadJson(json, filename) {
+    var blob = new Blob([json], { type: 'application/json' });
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveOrOpenBlob(blob, filename); // legacy Edge / IE
+      return;
+    }
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1500);
   }
 
   // ── LOAD SESSION ──
