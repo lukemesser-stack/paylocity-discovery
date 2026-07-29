@@ -928,7 +928,7 @@
     </div>
     <div>
       <div class="logo-text"><span>paylocity</span></div>
-      <div style="font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;">Discovery Form</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;">Discovery Form · v6</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
@@ -944,7 +944,7 @@
 <!-- ── INSTRUCTION BANNER ── -->
 <div id="share-banner" style="display:flex;align-items:center;gap:12px;background:var(--orange-light);border-bottom:1px solid #F3D6C7;padding:9px 28px;font-size:12px;color:var(--graphite-mid);">
   <span style="font-size:15px;line-height:1;">📝</span>
-  <span style="flex:1;line-height:1.5;">Fill this out at your own pace — your entries save automatically in this browser. Click <strong>Save Session</strong> to download a copy you can keep or send, and <strong>Load Session</strong> to reopen it later. Use <strong>Print / PDF</strong> when you're done. No account or internet required.</span>
+  <span style="flex:1;line-height:1.5;">Fill this out at your own pace — your answers are saved automatically in this browser. Click <strong>Save Session</strong> to save a copy (a file you can <strong>double-click to reopen it later</strong>, already filled in, or email to someone). Use <strong>Print / PDF</strong> when you're done. No account or internet required.</span>
   <button onclick="document.getElementById('share-banner').style.display='none';try{localStorage.setItem('paylocity_banner_dismissed','1')}catch(e){}" title="Dismiss" style="border:none;background:transparent;color:var(--graphite-light);font-size:16px;line-height:1;cursor:pointer;padding:2px 6px;">&times;</button>
 </div>
 
@@ -1683,23 +1683,6 @@
 
   // ── SAVE SESSION ──
   function saveSession() {
-    var data = { inputs: {}, checkboxes: {} };
-
-    // Save all text inputs, date inputs, and textareas
-    document.querySelectorAll('input[type="text"], input[type="date"], textarea').forEach(function(el, i) {
-      var key = el.id || el.getAttribute('data-module') || ('input_' + i);
-      var idx = 0;
-      var baseKey = key;
-      while (data.inputs[key] !== undefined) { key = baseKey + '_' + (++idx); }
-      el.setAttribute('data-save-key', key);
-      data.inputs[key] = el.value;
-    });
-
-    // Save all checkboxes
-    document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
-      if (el.id) data.checkboxes[el.id] = el.checked;
-    });
-
     // Build filename: CompanyName - Discovery - MM-DD-YY
     var companyInput = document.querySelector('.info-cell input[type="text"]');
     var company = (companyInput && companyInput.value.trim()) ? companyInput.value.trim() : 'Unknown Company';
@@ -1723,36 +1706,59 @@
 
     // Strip characters that are invalid in file names on Windows/macOS
     var safeCompany = company.replace(/[\\/:*?"<>|]/g, '-').trim();
-    var filename = safeCompany + ' - Discovery - ' + dateStr + '.json';
+    var filename = safeCompany + ' - Discovery - ' + dateStr + '.html';
 
-    var json = JSON.stringify(data, null, 2);
+    // Build a self-contained HTML snapshot: bake every current value into the
+    // markup so the saved file reopens as the fully filled-in form on a simple
+    // double-click — no import step, no separate data file to lose.
+    document.querySelectorAll('input[type="text"], input[type="date"]').forEach(function(el) {
+      el.setAttribute('value', el.value);
+    });
+    document.querySelectorAll('textarea').forEach(function(el) {
+      el.textContent = el.value;
+    });
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+      if (el.checked) el.setAttribute('checked', 'checked'); else el.removeAttribute('checked');
+    });
+    // Mark the copy so, when reopened, it trusts the baked-in values instead of
+    // this browser's autosave. Removed from the live page right after we serialize.
+    document.documentElement.setAttribute('data-snapshot', '1');
+    var htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    document.documentElement.removeAttribute('data-snapshot');
 
     // Preferred: native "Save As" dialog (Chrome/Edge on Windows) — the user
     // picks any folder in Windows Explorer, just like saving from any app.
     if (window.showSaveFilePicker) {
       window.showSaveFilePicker({
         suggestedName: filename,
-        types: [{ description: 'Discovery save file', accept: { 'application/json': ['.json'] } }]
+        types: [{ description: 'Discovery form', accept: { 'text/html': ['.html'] } }]
       }).then(function(handle) {
         return handle.createWritable().then(function(writable) {
-          return writable.write(json).then(function() { return writable.close(); });
+          return writable.write(htmlContent).then(function() { return writable.close(); });
         });
+      }).then(function() {
+        flashSaveStatus('Saved ' + filename);
       }).catch(function(err) {
-        // User pressed Cancel — do nothing. Any other error → fall back to a download.
-        if (err && err.name === 'AbortError') return;
-        downloadJson(json, filename);
+        if (err && err.name === 'AbortError') return; // user pressed Cancel
+        downloadFile(htmlContent, filename, 'text/html');
+        flashSaveStatus('Saved ' + filename + ' to Downloads');
       });
       return;
     }
 
-    // Fallback for browsers without the native picker (Firefox/Safari): download
-    // to the Downloads folder.
-    downloadJson(json, filename);
+    // Fallback for browsers without the native picker (Firefox/Safari).
+    downloadFile(htmlContent, filename, 'text/html');
+    flashSaveStatus('Saved ' + filename + ' to Downloads');
+  }
+
+  function flashSaveStatus(msg) {
+    var s = document.getElementById('autosave-status');
+    if (s) s.textContent = msg;
   }
 
   // Fallback download used when the native "Save As" picker isn't available.
-  function downloadJson(json, filename) {
-    var blob = new Blob([json], { type: 'application/json' });
+  function downloadFile(content, filename, mime) {
+    var blob = new Blob([content], { type: mime });
     if (window.navigator && window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveOrOpenBlob(blob, filename); // legacy Edge / IE
       return;
@@ -1909,19 +1915,28 @@
       setStatus('');
     };
 
-    // Restore any progress saved earlier in this browser
-    try {
-      var raw = localStorage.getItem(LS_KEY);
-      if (raw) {
-        apply(JSON.parse(raw));
-        setStatus('Restored your saved progress');
-      }
-    } catch (e) {}
+    // A saved snapshot (opened from a "Save Session" file) already has every
+    // answer baked into the markup — trust those and don't touch this browser's
+    // autosave, so reopening a saved copy can't overwrite in-progress work.
+    var isSnapshot = document.documentElement.getAttribute('data-snapshot') === '1';
 
-    // Autosave shortly after any edit
-    function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(window.__autosaveNow, 600); }
-    document.addEventListener('input', queueSave);
-    document.addEventListener('change', queueSave);
+    if (isSnapshot) {
+      setStatus('Saved copy');
+    } else {
+      // Restore any progress saved earlier in this browser
+      try {
+        var raw = localStorage.getItem(LS_KEY);
+        if (raw) {
+          apply(JSON.parse(raw));
+          setStatus('Restored your saved progress');
+        }
+      } catch (e) {}
+
+      // Autosave shortly after any edit
+      function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(window.__autosaveNow, 600); }
+      document.addEventListener('input', queueSave);
+      document.addEventListener('change', queueSave);
+    }
 
     // Keep the instruction banner dismissed once the user closes it
     try {
