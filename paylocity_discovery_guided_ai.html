@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Paylocity Discovery Form</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
@@ -29,7 +30,7 @@
     --radius-sm: 5px;
     --shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 16px rgba(16,24,40,.07);
     --shadow-card: 0 1px 3px rgba(16,24,40,.1), 0 1px 2px rgba(16,24,40,.06);
-    --font: 'DM Sans', sans-serif;
+    --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
 
   body {
@@ -2451,13 +2452,8 @@ window.pbFromAI = function (p) {
 </script>
 
 <script>
-  // Auto-expand textareas
-  document.querySelectorAll('textarea').forEach(function(ta) {
-    ta.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = this.scrollHeight + 'px';
-    });
-  });
+  // Textarea auto-expand is handled by one delegated listener further below
+  // (no per-element listeners needed).
 
   // ── SAVE SESSION ──
   function saveSession() {
@@ -3598,15 +3594,22 @@ CRITICAL: Each checkbox is an object with "checked" and "note" fields. The "note
     el.style.height = 'auto';
     el.style.height = el.scrollHeight + 'px';
   }
+  // One delegated listener grows any form textarea as you type.
+  // Playbook (data-pb) textareas are handled by their own listener above.
   document.addEventListener('input', function(e) {
-    if (e.target && (e.target.classList.contains('meddpicc-input') || e.target.closest('.note-row') || e.target.classList.contains('detail-note-ta') || e.target.classList.contains('module-ta'))) {
+    if (e.target && e.target.tagName === 'TEXTAREA' && !e.target.hasAttribute('data-pb')) {
       autoExpand(e.target);
     }
   });
-  // Expand all on load
-  document.querySelectorAll('.meddpicc-input, .note-row textarea, .detail-note-ta, .module-ta').forEach(function(el) {
-    autoExpand(el);
-  });
+  // Expand all on load — batched (write heights, read once, write) so the
+  // whole form sizes itself in ~2 layout passes instead of one per textarea.
+  (function() {
+    var tas = document.querySelectorAll('.meddpicc-input, .note-row textarea, .detail-note-ta, .module-ta');
+    for (var i = 0; i < tas.length; i++) tas[i].style.height = 'auto';
+    var heights = [];
+    for (var j = 0; j < tas.length; j++) heights[j] = tas[j].scrollHeight;
+    for (var k = 0; k < tas.length; k++) tas[k].style.height = heights[k] + 'px';
+  })();
 
   function buildFieldMap() {
     return {
