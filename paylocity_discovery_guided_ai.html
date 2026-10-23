@@ -2457,16 +2457,23 @@ window.pbFromAI = function (p) {
 
   // ── SAVE SESSION ──
   function saveSession() {
-    var data = { inputs: {}, checkboxes: {} };
+    var data = { inputs: {}, checkboxes: {}, xq: {} };
 
-    // Save all text inputs, date inputs, and textareas
-    document.querySelectorAll('input[type="text"]:not([data-pb]):not([data-pb-ui]), input[type="date"]:not([data-pb]), textarea:not([data-pb]):not([data-pb-ui])').forEach(function(el, i) {
+    // Save all text inputs, date inputs, and textareas.
+    // [data-xq] (custom Discovery Questions) are excluded here and saved by their
+    // own stable id below, so adding/removing questions never shifts these keys.
+    document.querySelectorAll('input[type="text"]:not([data-pb]):not([data-pb-ui]):not([data-xq]), input[type="date"]:not([data-pb]):not([data-xq]), textarea:not([data-pb]):not([data-pb-ui]):not([data-xq])').forEach(function(el, i) {
       var key = el.id || el.getAttribute('data-module') || ('input_' + i);
       var idx = 0;
       var baseKey = key;
       while (data.inputs[key] !== undefined) { key = baseKey + '_' + (++idx); }
       el.setAttribute('data-save-key', key);
       data.inputs[key] = el.value;
+    });
+
+    // Save custom Discovery Questions by their stable id (text answers)
+    document.querySelectorAll('textarea[data-xq]').forEach(function(el) {
+      if (el.id) data.xq[el.id] = el.value;
     });
 
     // Save all checkboxes
@@ -2547,14 +2554,23 @@ window.pbFromAI = function (p) {
       try {
         var data = JSON.parse(e.target.result);
 
-        // Restore text / date inputs and textareas
-        document.querySelectorAll('input[type="text"]:not([data-pb]):not([data-pb-ui]), input[type="date"]:not([data-pb]), textarea:not([data-pb]):not([data-pb-ui])').forEach(function(el, i) {
+        // Restore text / date inputs and textareas (custom questions excluded —
+        // restored by stable id below, matching how they were saved)
+        document.querySelectorAll('input[type="text"]:not([data-pb]):not([data-pb-ui]):not([data-xq]), input[type="date"]:not([data-pb]):not([data-xq]), textarea:not([data-pb]):not([data-pb-ui]):not([data-xq])').forEach(function(el, i) {
           var key = el.getAttribute('data-save-key') || el.id || el.getAttribute('data-module') || ('input_' + i);
           if (data.inputs && data.inputs[key] !== undefined) {
             el.value = data.inputs[key];
             if (el.tagName === 'TEXTAREA') autoExpand(el);
           }
         });
+
+        // Restore custom Discovery Questions by stable id
+        if (data.xq) {
+          Object.keys(data.xq).forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) { el.value = data.xq[id]; if (el.tagName === 'TEXTAREA') autoExpand(el); }
+          });
+        }
 
         // Restore checkboxes
         document.querySelectorAll('input[type="checkbox"]:not([data-pb-ui])').forEach(function(el) {
@@ -3588,6 +3604,77 @@ CRITICAL: Each checkbox is an object with "checked" and "note" fields. The "note
       });
     }
   }
+
+  // ════════════════════════════════════════════════════════════════════
+  //  CUSTOM DISCOVERY QUESTIONS  —  edit this list to add your own.
+  //
+  //  To add a question: find the section by its key below and add a line
+  //  (a question in quotes, comma-separated). To add questions to another
+  //  section, add a new key. Valid section keys:
+  //    headcount-planning, recruiting, onboarding, employee-record,
+  //    time-labor, pto, payroll, talent-dev, lms, it-mgmt
+  //  New questions appear as a "Discovery Questions" group inside that
+  //  section, save/load/print like every other field, and never disturb
+  //  the built-in questions or your existing saved files.
+  // ════════════════════════════════════════════════════════════════════
+  var DISCOVERY_QUESTIONS = {
+    "recruiting": [
+      "How often do you revisit past applicants for new positions?",
+      "How many hires do you have annually? How many applications does a typical open role receive?",
+      "Are most of your hires repeatable / evergreen roles or highly specialized positions?",
+      "How quickly do candidates receive a response? How do you keep candidates engaged?",
+      "What recruiting tasks consume the most recruiter time? How do you schedule interviews?"
+    ]
+  };
+
+  (function renderDiscoveryQuestions() {
+    Object.keys(DISCOVERY_QUESTIONS).forEach(function(key) {
+      var list = DISCOVERY_QUESTIONS[key] || [];
+      if (!list.length) return;
+      var sub = document.querySelector('.subsection[data-bar="' + key + '"]');
+      var card = sub ? sub.closest('.card') : null;
+      if (!card) return;
+
+      var group = document.createElement('div');
+      group.className = 'ms-group ms-group-last';
+      group.style.borderTop = 'var(--border)';
+
+      var header = document.createElement('div');
+      header.className = 'ms-group-header';
+      header.textContent = 'Discovery Questions';
+      group.appendChild(header);
+
+      var col = document.createElement('div');
+      col.className = 'detail-col ms-col';
+
+      list.forEach(function(q, idx) {
+        var base = 'xq_' + key + '_' + (idx + 1);
+        var item = document.createElement('div');
+        item.className = 'detail-item';
+
+        var cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.id = base; cb.setAttribute('data-xq', '1');
+
+        var body = document.createElement('div');
+        body.className = 'detail-item-body';
+
+        var lbl = document.createElement('label');
+        lbl.setAttribute('for', base); lbl.textContent = q;
+
+        var ta = document.createElement('textarea');
+        ta.className = 'detail-note-ta'; ta.rows = 1; ta.placeholder = 'Notes...';
+        ta.id = base + '_note'; ta.setAttribute('data-xq', '1');
+
+        body.appendChild(lbl); body.appendChild(ta);
+        item.appendChild(cb); item.appendChild(body);
+        col.appendChild(item);
+      });
+
+      group.appendChild(col);
+      var notes = card.querySelector('.notes-rows');
+      if (notes) card.insertBefore(group, notes); else card.appendChild(group);
+    });
+  })();
 
   // ── AUTO-EXPAND TEXTAREAS ──
   function autoExpand(el) {
