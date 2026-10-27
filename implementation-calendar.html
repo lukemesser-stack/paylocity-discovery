@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Implementation Calendar</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Implementation Calendar</title></head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -141,6 +141,9 @@ td.w{font-family:var(--f-mono);color:var(--muted);white-space:nowrap;text-align:
 .flag{color:var(--warn);font-size:12px;font-weight:600;display:block}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
+.save-state{font-size:12px;color:var(--warn);font-weight:600;align-self:center}
+.save-state.ok{color:var(--muted);font-weight:500}
+.file-in{display:none}
 .example{font-size:11px;font-weight:600;color:var(--warn);border:1px solid currentColor;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:6px;font-family:var(--f-body);letter-spacing:.04em}
 
 /* Slide view: white 16:9 slides, identical to the PowerPoint export */
@@ -168,6 +171,24 @@ body:not(.slideview) .slides{display:none}
   body.present .months{grid-template-columns:minmax(0,1fr)}
 }
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+@media print{
+  @page{size:landscape;margin:.4in}
+  .rail,.tools,.toast,.slides{display:none!important}
+  .app{display:block}
+  .main{padding:0;gap:14px}
+  .months{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .month,.panel tr{break-inside:avoid}
+  .panel{break-before:page}
+  .legend .lg.off{display:none}
+  .cell.today{box-shadow:none}
+  .cell{min-height:64px;padding:3px}
+  .tag{font-size:8.5px;padding:1px 3px;overflow-wrap:anywhere}
+  .tag.ms::before{display:none}
+  body.slideview .legend.calview{display:flex!important}
+  body.slideview .months.calview{display:grid!important}
+  body.slideview .panel.calview{display:block!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
 
 <div class="app">
@@ -225,7 +246,14 @@ body:not(.slideview) .slides{display:none}
       <div class="row" style="margin-top:10px">
         <button class="btn primary" id="save" type="button">Save timeline</button>
         <button class="btn" id="newc" type="button">New client</button>
+        <span class="save-state" id="saveState" role="status"></span>
       </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn small ghost" id="exportAll" type="button">Back up saved timelines</button>
+        <button class="btn small ghost" id="importAll" type="button">Restore from backup</button>
+        <input type="file" id="importFile" class="file-in" accept="application/json,.json">
+      </div>
+      <p class="hint">Saved timelines live only in this browser. Back them up to a file to move them to another computer or share them with a colleague.</p>
     </section>
 
     <section>
@@ -281,6 +309,8 @@ body:not(.slideview) .slides{display:none}
       </div>
       <div class="tools">
         <button class="btn" id="copy" type="button">Copy key dates</button>
+        <button class="btn" id="ics" type="button" title="Download an .ics file to import into Outlook or Google Calendar">Add to calendar</button>
+        <button class="btn" id="print" type="button">Print / PDF</button>
         <button class="btn" id="slideToggle" type="button" aria-pressed="false">Slide view</button>
         <button class="btn" id="pptx" type="button">Download PowerPoint</button>
         <button class="btn primary" id="present" type="button">Present</button>
@@ -714,7 +744,7 @@ function renderMain(){
   const kick=a.find(m=>/planning call|kickoff/i.test(m.name))||a[0];
   const facts=[["First check date",fmtY(chk)],["Scope",scopeLabel()]]; const benLive=a.find(m=>m.benefits==="phased"&&/live/i.test(m.name)); if(benLive)facts.push(["Benefits live",fmt(benLive.d)]);
   if(kick){facts.push(["Kickoff",fmt(kick.d)]);
-    const until=Math.round((kick.d-today)/864e5); if(until>=0)facts.push(["Days until kickoff",String(until)]);else facts.push(["Kickoff","already passed: pick a later first check date"]);}
+    const until=Math.round((kick.d-today)/864e5); if(until>=0)facts.push(["Days until kickoff",String(until)]);else facts.push(["Heads up","kickoff has passed: pick a later first check date"]);}
   facts.push(["Pay frequency",freqLabel()]);
   $("facts").innerHTML=facts.map(([k,v])=>`<span>${k} <b>${esc(v)}</b></span>`).join("");
 
@@ -749,13 +779,21 @@ function renderMain(){
     const flag=!isBiz(m.d)?`<span class="flag">Falls on a ${m.d.getDay()%6===0?"weekend":"bank holiday"}${hm?" ("+esc(hm.name)+")":""}</span>`:"";
     return `<tr><td class="d">${fmtY(m.d)}</td><td>${esc(m.name)}${m.recur?' <span class="badge" style="font-size:10px;color:var(--muted)">then weekly</span>':""}${flag}${m.desc?`<ul>${m.desc.split(/\s*;\s*/).filter(Boolean).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</td><td><span class="ph p-${m.phase}">${PHASES[m.phase]}</span></td><td class="w">${wk}</td></tr>`}).join("");
 }
-const render=()=>{renderRail();renderMain();renderSlides();persist()};
+function renderSaveState(){const n=(S.client||"").trim(), el=$("saveState");
+  if(!n||!saved[n]){el.textContent=n&&!S.example?"Not saved yet":"";el.className="save-state";$("save").textContent="Save timeline";return}
+  const same=JSON.stringify(saved[n])===JSON.stringify(S);
+  el.textContent=same?"All changes saved":"Unsaved changes"; el.className="save-state"+(same?" ok":""); $("save").textContent=same?"Saved":"Save changes";}
+const render=()=>{renderRail();renderMain();renderSlides();renderSaveState();persist()};
 const toast=t=>{const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),1800)};
 const find=id=>S.milestones.find(m=>m.id===id);
 
 /* ---------- events ---------- */
-$("client").addEventListener("input",e=>{S.client=e.target.value;S.example=false;renderMain();renderSlides();persist()});
-$("check").addEventListener("change",e=>{if(e.target.value){S.check=e.target.value;render()}});
+$("client").addEventListener("input",e=>{S.client=e.target.value;S.example=false;renderMain();renderSlides();renderSaveState();persist()});
+// Moving the first check date shifts any hand-picked months by the same amount, so the calendar follows the timeline.
+$("check").addEventListener("change",e=>{if(!e.target.value)return;
+  const mi=k=>{const [y,m]=k.split("-").map(Number);return y*12+m-1}, delta=mi(e.target.value)-mi(S.check);
+  if(S.months&&delta)S.months=S.months.map(k=>{const n=mi(k)+delta;return Math.floor(n/12)+"-"+String(n%12+1).padStart(2,"0")});
+  S.check=e.target.value;render()});
 $("freq").addEventListener("change",e=>{S.freq=e.target.value;render()});
 $("semiPat").addEventListener("change",e=>{S.semi.pattern=e.target.value;render()});
 const semiDay=v=>Math.min(31,Math.max(1,parseInt(v||"1",10)));
@@ -776,11 +814,11 @@ $("autoMonths").addEventListener("click",()=>{S.months=null;render()});
 $("moreMonths").addEventListener("click",()=>{const m=shownMonths();const [y,mo]=m[m.length-1].split("-").map(Number);m.push(mkey(new Date(y,mo,1,12)));S.months=m;render()});
 
 $("msList").addEventListener("input",e=>{const row=e.target.closest(".ms");if(!row)return;const m=find(row.dataset.id),f=e.target.dataset.f;
-  if(f==="name"||f==="desc"){m[f]=e.target.value;renderMain();renderSlides();persist();}});
+  if(f==="name"||f==="desc"){m[f]=e.target.value;renderMain();renderSlides();renderSaveState();persist();}});
 $("msList").addEventListener("change",e=>{const row=e.target.closest(".ms");if(!row)return;const m=find(row.dataset.id),f=e.target.dataset.f;
   if(f==="on")m.on=e.target.checked;
   else if(f==="phase")m.phase=e.target.value;
-  else if(f==="offset")m.offset=Math.max(0,parseInt(e.target.value||"0",10));
+  else if(f==="offset")m.offset=Math.min(250,Math.max(-250,parseInt(e.target.value,10)||0));
   else if(f==="pin"&&e.target.value)m.pin=e.target.value;
   else return; render();});
 $("msList").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const id=b.closest(".ms").dataset.id;
@@ -789,10 +827,15 @@ $("msList").addEventListener("click",e=>{const b=e.target.closest("[data-act]");
   render();});
 $("addMs").addEventListener("click",()=>{S.milestones.splice(S.milestones.length-1,0,{id:nid(),name:"New milestone",phase:"data",offset:20,on:true,pin:null});render();
   const rows=document.querySelectorAll("#msList .ms");const r=rows[rows.length-2];r&&r.querySelector("input[type=text]").select();});
-$("resetMs").addEventListener("click",()=>{S.milestones=freshMilestones(S.weeks,S.scope);render();toast("Default milestones restored")});
+// Two-click confirm for actions that discard work.
+const armed={};
+function confirmArm(btn,key){if(armed[key])return true;const label=btn.textContent;armed[key]=true;btn.textContent="Click again to confirm";
+  setTimeout(()=>{armed[key]=false;btn.textContent=label},3000);return false}
+$("resetMs").addEventListener("click",e=>{if(!confirmArm(e.currentTarget,"reset"))return;armed.reset=false;e.currentTarget.textContent="Restore defaults";
+  S.milestones=freshMilestones(S.weeks,S.scope);render();toast("Default milestones restored")});
 
 $("save").addEventListener("click",()=>{const n=(S.client||"").trim();if(!n){toast("Add a client name first");return}
-  S.example=false;saved[n]=JSON.parse(JSON.stringify(S));render();$("saved").value=n;toast("Saved "+n)});
+  const had=!!saved[n];S.client=n;S.example=false;saved[n]=JSON.parse(JSON.stringify(S));render();$("saved").value=n;toast((had?"Updated ":"Saved ")+n)});
 $("saved").addEventListener("change",e=>{const n=e.target.value;if(!n||!saved[n])return;S=JSON.parse(JSON.stringify(saved[n]));render();$("saved").value=n;toast("Loaded "+n)});
 let delArm=null;
 $("del").addEventListener("click",e=>{const n=$("saved").value;if(!n){toast("Pick a saved client to delete");return}
@@ -808,6 +851,8 @@ $("copy").addEventListener("click",()=>{
   const fallback=()=>{const t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();try{document.execCommand("copy");toast("Key dates copied")}catch(_){toast("Select and copy from the table")}t.remove()};
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>toast("Key dates copied"),fallback);else fallback();
 });
+
+$("print").addEventListener("click",()=>window.print());
 
 // drag milestones between days
 let dragId=null;
@@ -922,26 +967,64 @@ let dlApi; const dlReady=(async()=>{try{dlApi=window.claude&&window.claude.use?a
 let libP=null;
 const loadLib=()=>libP||(libP=new Promise((res,rej)=>{if(window.PptxGenJS)return res();const s=document.createElement("script");
   s.src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";s.onload=()=>res();s.onerror=()=>{libP=null;rej(new Error("load"))};document.head.appendChild(s);}));
+async function saveBlob(name,blob){
+  await dlReady;
+  if(dlApi){await dlApi.save({filename:name,data:blob});return "saved";}
+  const url=URL.createObjectURL(blob), link=document.createElement("a"); // plain browser download
+  link.href=url; link.download=name; document.body.appendChild(link); link.click(); link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000); return "downloaded";}
+const fileName=t=>t.replace(/[\\/:*?"<>|]+/g,"").trim();
+const dlError=err=>{const c=err&&err.code;
+  if(c==="declined")toast("Download canceled");
+  else if(c==="rate_limited")toast("A download prompt is already open");
+  else toast("Download isn't available here. Use the desktop copy of this tool.");};
+
+// Calendar invite file: one all-day event per milestone and weekly touch point.
+function icsText(){
+  const a=active(), chk=P(S.check), client=(S.client||"Client").trim();
+  const d8=d=>K(d).replace(/-/g,""), stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
+  const tx=t=>String(t).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
+  const enc=new TextEncoder(), fold=l=>{let out="",n=0;for(const ch of l){const b=enc.encode(ch).length;if(n+b>74){out+="\r\n ";n=1}out+=ch;n+=b}return out}; // 75-octet lines
+  const ev=(uid,d,title,desc)=>["BEGIN:VEVENT","UID:"+uid+"@impl-cal","DTSTAMP:"+stamp,"DTSTART;VALUE=DATE:"+d8(d),"DTEND;VALUE=DATE:"+d8(add(d,1)),
+    "SUMMARY:"+tx(client+": "+title),desc?"DESCRIPTION:"+tx(desc):"","TRANSP:TRANSPARENT","END:VEVENT"].filter(Boolean);
+  const lines=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Implementation Calendar//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-CALNAME:"+tx(client+" implementation")];
+  a.forEach(m=>lines.push(...ev(m.id+"-"+d8(m.d),m.d,m.name,[PHASES[m.phase]].concat(splitDesc(m.desc).map(x=>"• "+x)).join("\n"))));
+  if(isOn("touch"))[...touchDays(a,chk)].sort().forEach(k=>lines.push(...ev("touch-"+k.replace(/-/g,""),P(k),"Weekly touch point","Address non-urgent issues and provide updates")));
+  lines.push("END:VCALENDAR");
+  return lines.map(fold).join("\r\n")+"\r\n";}
+$("ics").addEventListener("click",async()=>{
+  try{const r=await saveBlob((fileName(S.client||"")||"Client")+" Implementation Timeline.ics",new Blob([icsText()],{type:"text/calendar"}));
+    toast(r==="saved"?"Calendar file saved":"Calendar file downloaded: open it to add the dates");}
+  catch(err){dlError(err)}});
+
+// Back up and restore every saved timeline as one JSON file.
+$("exportAll").addEventListener("click",async()=>{
+  const n=Object.keys(saved).length; if(!n){toast("Save a timeline first");return}
+  try{await saveBlob("Implementation timelines "+K(new Date())+".json",new Blob([JSON.stringify({type:"impl-cal-backup",version:2,saved},null,2)],{type:"application/json"}));
+    toast("Backed up "+n+" timeline"+(n>1?"s":""));}
+  catch(err){dlError(err)}});
+$("importAll").addEventListener("click",()=>$("importFile").click());
+$("importFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
+  const rd=new FileReader(); rd.onload=()=>{
+    try{const o=JSON.parse(rd.result), list=o&&o.type==="impl-cal-backup"?o.saved:null;
+      if(!list||typeof list!=="object")throw new Error("format");
+      let n=0; Object.entries(list).forEach(([k,v])=>{if(v&&v.check&&Array.isArray(v.milestones)){saved[k]=fix(v);n++}});
+      render(); toast(n?"Restored "+n+" timeline"+(n>1?"s":"")+". Pick one under Saved timelines.":"No timelines found in that file");}
+    catch(_){toast("That file isn't a timeline backup")}};
+  rd.readAsText(f); e.target.value="";});
+
 $("pptx").addEventListener("click",async()=>{
-  const b=$("pptx"); await dlReady;
+  const b=$("pptx");
   b.disabled=true; const label=b.textContent; b.textContent="Building…";
   try{
     await loadLib();
     const m=buildModel(), deck=TimelineSlides.toPptx(window.PptxGenJS,TimelineSlides.build(m),{title:m.client+" Implementation Timeline"});
     const blob=await deck.write({outputType:"blob"});
-    const name=(m.client.replace(/[\\/:*?"<>|]+/g,"").trim()||"Client")+" Implementation Timeline.pptx";
-    if(dlApi){await dlApi.save({filename:name,data:blob}); toast("PowerPoint saved");}
-    else{ // plain browser download: works when the page is opened as a file on your computer
-      const url=URL.createObjectURL(blob), link=document.createElement("a");
-      link.href=url; link.download=name; document.body.appendChild(link); link.click(); link.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),60000);
-      toast(window.claude?"If nothing downloaded, use the desktop copy of this tool from your Claude chat.":"PowerPoint downloaded");}
+    const r=await saveBlob((fileName(m.client)||"Client")+" Implementation Timeline.pptx",blob);
+    toast(r==="saved"?"PowerPoint saved":window.claude?"If nothing downloaded, use the desktop copy of this tool from your Claude chat.":"PowerPoint downloaded");
   }catch(err){
-    const c=err&&err.code;
-    if(c==="declined")toast("Download canceled");
-    else if(c==="rate_limited")toast("A download prompt is already open");
-    else if(err&&err.message==="load")toast("Couldn't load the PowerPoint builder. Check your connection and try again.");
-    else toast("Download isn't available here. Use Slide view and screenshot.");
+    if(err&&err.message==="load")toast("Couldn't load the PowerPoint builder. Check your connection and try again.");
+    else dlError(err);
   }finally{b.disabled=false;b.textContent=label;}
 });
 
