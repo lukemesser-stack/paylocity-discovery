@@ -853,6 +853,7 @@ $("copy").addEventListener("click",()=>{
 });
 
 $("print").addEventListener("click",()=>window.print());
+if(window.claude)$("print").hidden=true; // the Claude viewer can't open the print dialog
 
 // drag milestones between days
 let dragId=null;
@@ -992,9 +993,18 @@ function icsText(){
   if(isOn("touch"))[...touchDays(a,chk)].sort().forEach(k=>lines.push(...ev("touch-"+k.replace(/-/g,""),P(k),"Weekly touch point","Address non-urgent issues and provide updates")));
   lines.push("END:VCALENDAR");
   return lines.map(fold).join("\r\n")+"\r\n";}
+// Inside Claude only some file types can be saved, so there the same events go out as a CSV that Google Calendar and Outlook import.
+function calCsv(){
+  const a=active(), chk=P(S.check), client=(S.client||"Client").trim();
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"', us=d=>String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")+"/"+d.getFullYear();
+  const rows=a.map(m=>[client+": "+m.name,us(m.d),"True",[PHASES[m.phase]].concat(splitDesc(m.desc)).join("; ")]);
+  if(isOn("touch"))[...touchDays(a,chk)].sort().forEach(k=>rows.push([client+": Weekly touch point",us(P(k)),"True","Address non-urgent issues and provide updates"]));
+  return [["Subject","Start Date","All Day Event","Description"]].concat(rows).map(r=>r.map(q).join(",")).join("\r\n")+"\r\n";}
 $("ics").addEventListener("click",async()=>{
-  try{const r=await saveBlob((fileName(S.client||"")||"Client")+" Implementation Timeline.ics",new Blob([icsText()],{type:"text/calendar"}));
-    toast(r==="saved"?"Calendar file saved":"Calendar file downloaded: open it to add the dates");}
+  await dlReady; const base=(fileName(S.client||"")||"Client")+" Implementation Timeline";
+  try{if(dlApi){await saveBlob(base+".csv",new Blob([calCsv()],{type:"text/csv"}));toast("Saved. In Google Calendar or Outlook, choose Import and pick this file.");return}
+    await saveBlob(base+".ics",new Blob([icsText()],{type:"text/calendar"}));
+    toast("Calendar file downloaded: open it to add the dates");}
   catch(err){dlError(err)}});
 
 // Back up and restore every saved timeline as one JSON file.
