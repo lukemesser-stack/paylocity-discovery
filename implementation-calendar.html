@@ -426,8 +426,8 @@ function month(m,P,mo){
     let fit=Math.floor(room/step);
     if(chips.length>fit)fit=Math.max(room>=step?1:0,Math.floor((room-.17)/step));
     chips.slice(0,fit).forEach(ch=>{const col=P[ch.phase];
-      els.push({t:"rect",x:x+.04,y:cy,w:w-.08,h:.28,fill:c.check?mix("FFFFFF",.22):mix(col,.14),radius:.03});
-      els.push({t:"text",x:x+.07,y:cy,w:w-.14,h:.28,text:ch.text,size:7,bold:true,color:c.check?C.white:col,m:0});
+      els.push({t:"rect",x:x+.04,y:cy,w:w-.08,h:.28,fill:c.check?C.white:mix(col,.14),radius:.03});
+      els.push({t:"text",x:x+.07,y:cy,w:w-.14,h:.28,text:ch.text,size:7,bold:true,color:C.ink,m:0});
       cy+=step;});
     if(chips.length>fit){els.push({t:"text",x:x+.07,y:cy-.01,w:w-.14,h:.16,text:"+"+(chips.length-fit)+" more",size:7,color:c.check?C.white:C.muted,m:0});cy+=.17;}
     tags.forEach((tg,k)=>{const tx=x+.04+k*((w-.08)/tags.length),tw=(w-.08)/tags.length-(tags.length>1?.03:0);
