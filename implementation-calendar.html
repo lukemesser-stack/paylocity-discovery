@@ -499,7 +499,9 @@ function build(m){
   if(m.months.length>1){const first=m.months[0].title,last=m.months[m.months.length-1].title, fy=first.split(" ")[1], ly=last.split(" ")[1];
     const range=first.split(" ")[0].slice(0,3)+(fy!==ly?" "+fy:"")+" – "+last.split(" ")[0].slice(0,3)+" "+ly;
     slides.push({kind:"At a glance",make:(p,t)=>{const e=glance(m,P);frame(m,e,"Implementation Timeline · "+m.client,"At a Glance: "+range,p,t);return e}});}
-  return slides.map((s,i)=>({kind:s.kind,els:s.make(i+1,slides.length)}));
+  // Text stays black: phase and accent colors live on the dots, lines and fills only.
+  const ink=e=>{if(e.t==="text"&&e.color!==C.muted&&e.color!==C.white)e.color=C.ink;return e};
+  return slides.map((s,i)=>({kind:s.kind,els:s.make(i+1,slides.length).map(ink)}));
 }
 
 /* ---- renderers ---- */
