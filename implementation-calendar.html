@@ -1,0 +1,952 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Implementation Calendar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: editor rail on the left, presentation canvas on the right (rail hides in Present mode).
+   Palette: charcoal + orange on white, matched to the exported slides. Light-only by design. */
+:root{
+  --bg:#ffffff; --surface:#ffffff; --sunk:#f1f3f5; --ink:#2e3a44; --muted:#66727d; --line:#dfe3e7;
+  --accent:#e0581b; --accent-ink:#ffffff; --holiday:#c0392b; --warn:#a85d00;
+  --p-kick:#2e3a44; --p-data:#5b7083; --p-build:#0e7c86; --p-test:#6e56a8; --p-live:#e0581b; --p-ben:#b03a78; --p-tl:#3a7d2c; --c-check:#e0581b; --c-pay:#e0581b; --c-touch:#5b6b7a;
+  --f-display:"Outfit", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:8px; color-scheme:light;
+}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:360px minmax(0,1fr);min-height:100vh}
+.rail{background:var(--surface);border-right:1px solid var(--line);padding:20px 16px 40px;display:flex;flex-direction:column;gap:22px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;overflow-y:auto}
+body.present .rail{display:none}
+body.present .app{grid-template-columns:minmax(0,1fr)}
+.main{padding-block:24px 48px;padding-inline:28px;display:flex;flex-direction:column;gap:24px;min-width:0}
+
+.rail h2{font-family:var(--f-body);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>.field{flex:1 1 120px;min-width:0}
+input[type=text],input[type=date],input[type=number],select{background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
+input[type=number]{font-family:var(--f-mono)}
+.btn{background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:7px 12px;font-weight:500}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{padding:4px 9px;font-size:12px}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--sunk);border-radius:999px;padding:4px 10px;font-size:12px;font-family:var(--f-mono)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.hint.warn{color:var(--warn);font-weight:600}
+.toggle{display:inline-flex;align-items:center;gap:8px;flex:1 1 120px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--sunk);font-weight:500;cursor:pointer}
+.toggle input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.scope{display:flex;flex-direction:column;gap:6px}
+.scope button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;background:var(--sunk);border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+.scope button b{font-weight:600}
+.scope button span{font-size:12px;color:var(--muted)}
+.scope button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface));box-shadow:inset 3px 0 0 var(--accent)}
+.ms textarea{grid-column:2 / 4;background:none;border:1px solid transparent;border-radius:5px;padding:3px 4px;font:inherit;font-size:12px;color:var(--muted);resize:vertical;min-height:34px;width:100%}
+.ms textarea:hover,.ms textarea:focus{border-color:var(--line);background:var(--sunk);color:var(--ink)}
+.ms .badge{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+td ul{margin:4px 0 0;padding-left:16px;color:var(--muted);font-size:12.5px}
+td ul li{margin:1px 0}
+.tag.tp{color:var(--c-touch);border:1px dashed color-mix(in srgb,var(--c-touch) 70%,transparent);text-align:center}
+.cell.check .tag.tp{color:var(--accent-ink);border-color:var(--accent-ink)}
+
+.ms-list{display:flex;flex-direction:column;gap:8px}
+.ms{border:1px solid var(--line);border-radius:var(--r);padding:8px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 8px;align-items:center;background:var(--surface)}
+.ms.off{opacity:.5}
+.ms .dot{width:10px;height:10px;border-radius:50%;background:var(--p)}
+.ms input[type=text]{background:none;border-color:transparent;padding:3px 4px;font-weight:500}
+.ms input[type=text]:hover,.ms input[type=text]:focus{border-color:var(--line);background:var(--sunk)}
+.ms .sub{grid-column:2 / 4;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ms .sub select{width:auto;flex:0 1 92px;padding:4px 6px;font-size:12px}
+.ms .sub input[type=number]{width:62px;padding:4px 6px;font-size:12px}
+.ms .sub input[type=date]{width:auto;flex:1 1 130px;padding:4px 6px;font-size:12px;font-family:var(--f-mono)}
+.ms .sub .lbl{font-size:11px;color:var(--muted)}
+.ms .pinned{font-size:11px;color:var(--warn);font-weight:600}
+
+/* Header */
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4vw,44px);line-height:1.05;margin:4px 0 8px;text-wrap:balance;letter-spacing:-.01em}
+.facts{display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--muted)}
+.facts b{color:var(--ink);font-weight:600;font-family:var(--f-mono);font-weight:500}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--muted)}
+.legend .lg{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid transparent;border-radius:999px;padding:3px 9px;font-size:12px;color:var(--ink)}
+.legend .lg:hover{border-color:var(--line);background:var(--sunk)}
+.legend .lg.off{color:var(--muted);text-decoration:line-through;opacity:.55}
+.sw{flex:none;display:inline-block;width:10px;height:10px;background:var(--sw)}
+.sw-dot{border-radius:50%} .sw-sq{border-radius:2px}
+.sw-line{width:13px;height:3px;border-radius:2px}
+.sw-dash{background:none;border:1.5px dashed var(--sw);border-radius:2px}
+.sw-soft{background:color-mix(in srgb,var(--sw) 14%,#fff);border:1.5px solid var(--sw);border-radius:2px}
+.lg-list{display:flex;flex-direction:column;gap:4px}
+.lg-row{display:grid;grid-template-columns:auto auto minmax(0,1fr);align-items:center;gap:8px;padding:3px 0}
+.lg-row input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.lg-row input[type=color]{width:34px;height:26px;padding:1px;border:1px solid var(--line);border-radius:5px;background:var(--sunk)}
+.lg-row label{font-size:13px}
+.lg-row.off label{color:var(--muted);text-decoration:line-through}
+
+
+/* Calendar */
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,440px),1fr));gap:18px}
+body.present .months{grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr))}
+.month{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 12px 12px;min-width:0}
+.month h3{font-family:var(--f-display);font-weight:500;font-size:20px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline}
+.month h3 small{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.dow{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:4px}
+.cell{min-height:74px;border-radius:5px;padding:4px;background:var(--sunk);display:flex;flex-direction:column;gap:2px;min-width:0;position:relative}
+.cell.blank{background:none}
+.cell.wknd{background:color-mix(in srgb,var(--sunk) 55%,var(--bg));}
+.cell.closed{background:color-mix(in srgb,var(--holiday) 9%,var(--surface))}
+.cell.today{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.cell.drop{box-shadow:inset 0 0 0 2px var(--accent)}
+.cell.check{background:var(--c-check);color:#ffffff}
+.num{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.cell.check .num{color:var(--accent-ink);font-weight:600}
+.tag{font-size:10.5px;line-height:1.2;border-radius:3px;padding:2px 4px;overflow-wrap:break-word;word-break:normal;hyphens:auto}
+.tag.hol{color:var(--holiday);font-weight:600;padding:0 2px}
+.tag.hol em{display:block;font-style:normal;font-weight:400;opacity:.85}
+.tag.ms{background:color-mix(in srgb,var(--p) 16%,var(--surface));color:var(--ink);border-left:0;display:flex;gap:4px;align-items:flex-start;cursor:grab}
+.tag.ms::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--p);margin-top:3px}
+.cell.check .tag.ms{background:color-mix(in srgb,var(--accent-ink) 18%,transparent);color:var(--accent-ink)}
+.cell.check .tag.ms::before{background:var(--accent-ink)}
+.tag.pay{border:1.5px solid var(--c-pay);color:var(--c-pay);font-weight:600;text-align:center}
+body.present .cell{min-height:88px}
+body.present .tag{font-size:11.5px}
+
+/* Agenda */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.panel h2{font-family:var(--f-display);font-weight:500;font-size:20px;margin:0 0 10px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px}
+th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.d{font-family:var(--f-mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+td.w{font-family:var(--f-mono);color:var(--muted);white-space:nowrap;text-align:right}
+.ph{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--p);font-weight:600}
+.ph::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--p)}
+.flag{color:var(--warn);font-size:12px;font-weight:600;display:block}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.example{font-size:11px;font-weight:600;color:var(--warn);border:1px solid currentColor;border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:6px;font-family:var(--f-body);letter-spacing:.04em}
+
+/* Slide view: white 16:9 slides, identical to the PowerPoint export */
+.slides{display:flex;flex-direction:column;gap:22px}
+.slide-wrap{display:flex;flex-direction:column;gap:6px}
+.slide-cap{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.slide-box{position:relative;width:100%;overflow:hidden;border:1px solid var(--line);border-radius:4px;background:#ffffff;box-shadow:0 1px 3px rgba(20,30,40,.08)}
+.slide{position:absolute;left:0;top:0;width:1280px;height:720px;background:#ffffff;transform-origin:0 0}
+body.slideview .calview{display:none}
+body:not(.slideview) .slides{display:none}
+.logo-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo-prev{height:40px;max-width:140px;object-fit:contain;background:#ffffff;border:1px solid var(--line);border-radius:6px;padding:4px}
+.swatch{display:inline-flex;align-items:center;gap:8px}
+.swatch input[type=color]{width:38px;height:32px;padding:2px;border:1px solid var(--line);border-radius:6px;background:var(--sunk)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.toast{max-width:min(560px,calc(100vw - 32px));text-align:center}
+
+.p-kick{--p:var(--p-kick)} .p-data{--p:var(--p-data)} .p-build{--p:var(--p-build)} .p-test{--p:var(--p-test)} .p-live{--p:var(--p-live)} .p-ben{--p:var(--p-ben)} .p-tl{--p:var(--p-tl)}
+
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .main{padding-inline:16px}
+  .months{grid-template-columns:minmax(0,1fr)}
+  body.present .months{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<div class="app">
+  <aside class="rail" aria-label="Timeline setup">
+    <section>
+      <h2>Client</h2>
+      <div class="field"><label for="saved">Saved timelines</label>
+        <div class="row" style="flex-wrap:nowrap">
+          <select id="saved"><option value="">Load a saved client…</option></select>
+          <button class="btn small" id="del" type="button" title="Delete saved timeline">Delete</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div class="field" style="flex-basis:100%"><label for="client">Client name</label><input type="text" id="client"></div>
+        <div class="field"><label for="check">First check date</label><input type="date" id="check"></div>
+        <div class="field"><label for="freq">Pay frequency</label>
+          <select id="freq"><option value="weekly">Weekly</option><option value="biweekly">Biweekly</option><option value="semimonthly">Semi-monthly</option><option value="monthly">Monthly</option></select>
+        </div>
+      </div>
+      <div class="row" id="semiRow" style="margin-top:10px;align-items:flex-end" hidden>
+        <div class="field"><label for="semiPat">Semi-monthly pay days</label>
+          <select id="semiPat"><option value="auto">Auto-detect</option><option value="15-last">15th &amp; last day</option><option value="1-15">1st &amp; 15th</option><option value="custom">Custom days</option></select>
+        </div>
+        <div class="field" id="semiCustom" hidden><label for="semiA">Days of month</label>
+          <span class="row" style="flex-wrap:nowrap;align-items:center;gap:6px"><input type="number" id="semiA" min="1" max="31" style="width:64px"><span>&amp;</span><input type="number" id="semiB" min="1" max="31" style="width:64px"></span>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div class="field"><label for="payAdj">Pay date on a weekend or holiday</label>
+          <select id="payAdj"><option value="prior">Move to prior business day</option><option value="next">Move to next business day</option></select>
+        </div>
+      </div>
+      <p class="hint" id="payNote" hidden></p>
+      <div class="row" style="margin-top:12px;align-items:flex-end">
+        <label class="toggle" for="tlOn" style="flex-basis:100%"><input type="checkbox" id="tlOn"> Hourly employees punch in Time &amp; Labor</label>
+        <div class="field" id="tlLagRow"><label for="tlLag">Pay period ends this many days before the check date</label>
+          <input type="number" id="tlLag" min="0" max="30" style="width:80px">
+        </div>
+      </div>
+      <p class="hint" id="tlNote" hidden></p>
+      <p class="hint warn" id="payWarn" role="status" hidden></p>
+      <div class="field" style="margin-top:12px"><label>Scope</label>
+        <div class="scope" id="scope" role="group" aria-label="Implementation scope">
+          <button type="button" data-scope="payroll"><b>Payroll, HR &amp; Time &amp; Labor</b><span>8 weeks, no Benefits Admin</span></button>
+          <button type="button" data-scope="bundled"><b>Benefits live with payroll</b><span>12 weeks, everything goes live together</span></button>
+          <button type="button" data-scope="phased"><b>Benefits phased in after</b><span>8 weeks, Benefits Admin live 4 weeks after first check</span></button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;align-items:flex-end">
+        <div class="field"><label for="weeks">Payroll build length</label>
+          <select id="weeks"><option value="8">8 weeks</option><option value="9">9 weeks</option><option value="10">10 weeks</option><option value="11">11 weeks</option><option value="12">12 weeks</option></select>
+        </div>
+      </div>
+      <p class="hint">Picking a scope sets the build length. Extra weeks go into the build; test payroll and deployment stay in the final two weeks.</p>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="save" type="button">Save timeline</button>
+        <button class="btn" id="newc" type="button">New client</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Months to show</h2>
+      <div class="chips" id="monthChips"></div>
+      <div class="row" style="margin-top:8px;align-items:center">
+        <button class="btn small" id="autoMonths" type="button">Auto (kickoff → last milestone)</button>
+        <button class="btn small ghost" id="moreMonths" type="button">+ next month</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Slides &amp; branding</h2>
+      <div class="field"><label for="logoFile">Logo on slides</label>
+        <div class="logo-row">
+          <img class="logo-prev" id="logoPrev" alt="Logo preview" hidden>
+          <input type="file" id="logoFile" accept="image/png,image/jpeg,image/svg+xml,image/webp">
+          <button class="btn small ghost" id="logoClear" type="button" hidden>Remove</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;align-items:flex-end">
+        <div class="field"><label for="accent">Accent color</label>
+          <span class="swatch"><input type="color" id="accent" value="#f26b21"><button class="btn small ghost" id="accentReset" type="button">Reset</button></span>
+        </div>
+      </div>
+      <p class="hint">Upload the logo file from your brand kit. It saves in this browser and appears top-right on every slide.</p>
+    </section>
+
+    <section>
+      <h2>Legend &amp; colors</h2>
+      <div class="lg-list" id="lgList"></div>
+      <div class="row" style="margin-top:8px"><button class="btn small ghost" id="lgReset" type="button">Reset colors &amp; show all</button></div>
+      <p class="hint">Uncheck an item to hide it on the calendar, slides and PowerPoint. You can also click items in the legend above the calendar.</p>
+    </section>
+
+    <section>
+      <h2>Milestones</h2>
+      <p class="hint" style="margin:0 0 10px">Offsets count back in business days from the first check date, skipping weekends and bank holidays. Set a date to pin a milestone, or drag it on the calendar.</p>
+      <div class="ms-list" id="msList"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn small" id="addMs" type="button">+ Add milestone</button>
+        <button class="btn small ghost" id="resetMs" type="button">Restore defaults</button>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <header class="head">
+      <div>
+        <div class="eyebrow">Implementation timeline</div>
+        <h1 id="title">Client</h1>
+        <div class="facts" id="facts"></div>
+      </div>
+      <div class="tools">
+        <button class="btn" id="copy" type="button">Copy key dates</button>
+        <button class="btn" id="slideToggle" type="button" aria-pressed="false">Slide view</button>
+        <button class="btn" id="pptx" type="button">Download PowerPoint</button>
+        <button class="btn primary" id="present" type="button">Present</button>
+      </div>
+    </header>
+
+    <div class="slides" id="slides" aria-label="Slides"></div>
+
+    <div class="legend calview" id="legend"></div>
+        <div class="months calview" id="months"></div>
+
+    <section class="panel calview">
+      <h2>Key dates</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Date</th><th>Milestone</th><th>Phase</th><th style="text-align:right">From 1st check</th></tr></thead>
+        <tbody id="agenda"></tbody>
+      </table></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>/* Slide layouts shared by the on-page slide view and the PowerPoint export.
+   Units are inches on a 13.333 x 7.5 slide; colors are hex without '#'. */
+(function(root){
+const W=13.333,H=7.5,FONT="Arial";
+const C={ink:"2E3A44",muted:"6B7782",line:"DDE1E5",soft:"F3F4F6",softer:"FAFAFB",hol:"C0392B",holFill:"FBECE9",white:"FFFFFF"};
+function mix(hex,pct){ // blend hex toward white; pct = share of the color
+  const n=parseInt(hex,16),r=n>>16,g=n>>8&255,b=n&255,f=c=>Math.round(c*pct+255*(1-pct)).toString(16).padStart(2,"0");
+  return (f(r)+f(g)+f(b)).toUpperCase();
+}
+function phaseColors(accent){return {kick:"2F66B3",data:"C2850C",test:"7650B8",live:"E0581B",tl:"3F8A2E",ben:"B8337A",hol:"C62828",check:accent,pay:accent,touch:"5B6B7A"}}
+
+// Legend laid out left to right, wrapping to a second row above when it would pass the right margin.
+function legendLayout(items){
+  const maxX=W-.5, est=it=>.24+it.name.length*.068, gap=.26, rows=[[]]; let x=.5;
+  items.forEach(it=>{const w=est(it); if(x+w>maxX&&rows[rows.length-1].length){rows.push([]);x=.5;} rows[rows.length-1].push({...it,x,w}); x+=w+gap;});
+  return rows;}
+function legend(els,items,baseY){
+  const rows=legendLayout(items), est=it=>it.w;
+  rows.forEach((row,r)=>{const y=baseY-(rows.length-1-r)*.3;
+    row.forEach(it=>{
+      if(it.kind==="line")els.push({t:"rect",x:it.x,y:y+.065,w:.16,h:.03,fill:it.fill});
+      else els.push({t:"rect",shape:it.kind==="dot"?"ellipse":undefined,x:it.x,y,w:.15,h:.15,fill:it.fill,line:it.line,lw:.75,radius:it.kind==="dot"?0:.02});
+      els.push({t:"text",x:it.x+.22,y:y-.065,w:est(it),h:.28,text:it.name,size:9,color:C.ink,m:0});});});
+}
+function frame(m,els,eyebrow,title,page,total){
+  els.push({t:"text",x:.5,y:.32,w:9.8,h:.3,text:eyebrow.toUpperCase(),size:11,bold:true,color:m.accent,m:0});
+  els.push({t:"text",x:.5,y:.6,w:10,h:.62,text:title,size:28,bold:true,color:C.ink,m:0,valign:"top"});
+  if(m.logo){const bw=2.1,bh=.62,r=Math.min(bw/m.logo.w,bh/m.logo.h),w=m.logo.w*r,h=m.logo.h*r;
+    els.push({t:"img",x:W-.5-w,y:.36+(bh-h)/2,w,h,data:m.logo.data});}
+  els.push({t:"line",x:.5,y:7.05,w:W-1,h:0,color:C.line,lw:.75});
+  els.push({t:"text",x:.5,y:7.1,w:9,h:.25,text:m.footer,size:8,color:C.muted,m:0});
+  els.push({t:"text",x:W-2.5,y:7.1,w:2,h:.25,text:page+" / "+total,size:8,color:C.muted,align:"right",m:0});
+}
+
+function overview(m,P){
+  const els=[];
+  // fact blocks
+  const fw=(W-1)/m.facts.length;
+  m.facts.forEach(([k,v],i)=>{const x=.5+i*fw;
+    if(i>0)els.push({t:"line",x:x-.15,y:1.45,w:0,h:.62,color:C.line,lw:.75});
+    els.push({t:"text",x,y:1.42,w:fw-.3,h:.22,text:k.toUpperCase(),size:8.5,bold:true,color:C.muted,m:0});
+    els.push({t:"text",x,y:1.66,w:fw-.3,h:.4,text:v,size:15,bold:true,color:i===0?P.check:C.ink,m:0});});
+  // roadmap
+  const ms=m.milestones, n=ms.length, x0=.95, x1=W-.95, ly=4.25;
+  els.push({t:"rect",x:x0,y:ly-.03,w:x1-x0,h:.06,fill:C.line});
+  ms.forEach((s,i)=>{
+    const sp=n>1?(x1-x0)/(n-1):9, cx=n>1?x0+i*sp:(x0+x1)/2, col=P[s.phase], up=i%2===0, lw=Math.min(2.3,2*sp-.12);
+    const lx=Math.min(Math.max(cx-lw/2,.3),W-.3-lw);
+    if(up){els.push({t:"line",x:cx,y:3.55,w:0,h:ly-3.55,color:mix(col,.45),lw:1});
+      els.push({t:"text",x:lx,y:2.55,w:lw,h:.26,text:s.dateLabel,size:10,bold:true,color:col,align:"center",m:0});
+      els.push({t:"text",x:lx,y:2.82,w:lw,h:.7,text:s.name,size:10.5,bold:true,color:C.ink,align:"center",valign:"top",m:0});}
+    else{els.push({t:"line",x:cx,y:ly,w:0,h:.7,color:mix(col,.45),lw:1});
+      els.push({t:"text",x:lx,y:5.0,w:lw,h:.26,text:s.dateLabel,size:10,bold:true,color:col,align:"center",m:0});
+      els.push({t:"text",x:lx,y:5.27,w:lw,h:.7,text:s.name,size:10.5,bold:true,color:C.ink,align:"center",valign:"top",m:0});}
+    const d=s.isCheck?.36:.24;
+    els.push({t:"rect",shape:"ellipse",x:cx-d/2,y:ly-d/2,w:d,h:d,fill:s.isCheck?P.check:C.white,line:col,lw:s.isCheck?0:2.25});
+  });
+  // phase legend
+  legend(els,m.phases.map(p=>({name:p.name,fill:P[p.id],kind:"dot"})),6.6);
+  return els;
+}
+
+function table(m,P){
+  const els=[], rows=m.milestones, top=1.45, cols=[[.5,1.95,"Date"],[2.55,3.3,"Milestone"],[5.95,6.88,"What happens"]];
+  cols.forEach(([x,w,l])=>els.push({t:"text",x,y:top,w,h:.3,text:l.toUpperCase(),size:8.5,bold:true,color:C.muted,m:0}));
+  els.push({t:"line",x:.5,y:top+.33,w:W-1,h:0,color:C.ink,lw:1});
+  const rh=Math.min(.56,(6.9-top-.4)/rows.length), sz=rh<.44?8.5:9.5;
+  rows.forEach((r,i)=>{const y=top+.4+i*rh;
+    if(i%2===1)els.push({t:"rect",x:.5,y,w:W-1,h:rh,fill:C.softer});
+    if(r.isCheck)els.push({t:"rect",x:.5,y,w:W-1,h:rh,fill:mix(P.check,.1)});
+    els.push({t:"rect",shape:"ellipse",x:.58,y:y+rh/2-.06,w:.12,h:.12,fill:P[r.phase]});
+    els.push({t:"text",x:.8,y,w:1.65,h:rh,text:r.dateLabel,size:sz+.5,bold:true,color:r.isCheck?P.check:C.ink,m:0});
+    els.push({t:"text",x:2.55,y,w:3.3,h:rh,text:r.name+(r.recur?"  (weekly)":""),size:sz+.5,bold:true,color:C.ink,m:0});
+    els.push({t:"text",x:5.95,y,w:6.88,h:rh,text:r.desc.join("  ·  "),size:sz,color:C.muted,m:0});
+  });
+  return els;
+}
+
+function month(m,P,mo){
+  const els=[], gx=.5, gw=8.55, cw=gw/7, top=1.42, hh=.28, rows=mo.weeks.length, rh=(6.88-top-hh)/rows, g=.035;
+  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach((d,i)=>els.push({t:"text",x:gx+i*cw,y:top,w:cw,h:hh,text:d.toUpperCase(),size:8,bold:true,color:C.muted,align:"center",m:0}));
+  mo.weeks.forEach((wk,r)=>wk.forEach((c,i)=>{
+    if(!c)return;
+    const x=gx+i*cw+g,y=top+hh+r*rh+g,w=cw-2*g,h=rh-2*g;
+    const fill=c.check?P.check:c.closed?mix(P.hol,.12):c.wknd?C.softer:C.soft;
+    els.push({t:"rect",x,y,w,h,fill,radius:.04});
+    els.push({t:"text",x:x+.06,y:y+.04,w:.4,h:.2,text:String(c.day),size:9,bold:!!c.check,color:c.check?C.white:C.muted,m:0});
+    let cy=y+.25;
+    if(c.holiday){els.push({t:"text",x:x+.05,y:cy-.01,w:w-.1,h:.36,text:c.holiday,size:7,bold:true,color:P.hol,m:0,valign:"top"});cy+=c.holiday.length>18?.3:.18;}
+    const chips=c.chips.slice(); const tags=[]; if(c.touch)tags.push("Touch point"); if(c.pay)tags.push("Pay date");
+    const room=y+h-cy-.03-(tags.length?.2:0), step=.3;
+    let fit=Math.floor(room/step);
+    if(chips.length>fit)fit=Math.max(room>=step?1:0,Math.floor((room-.17)/step));
+    chips.slice(0,fit).forEach(ch=>{const col=P[ch.phase];
+      els.push({t:"rect",x:x+.04,y:cy,w:w-.08,h:.28,fill:c.check?mix("FFFFFF",.22):mix(col,.14),radius:.03});
+      els.push({t:"text",x:x+.07,y:cy,w:w-.14,h:.28,text:ch.text,size:7,bold:true,color:c.check?C.white:col,m:0});
+      cy+=step;});
+    if(chips.length>fit){els.push({t:"text",x:x+.07,y:cy-.01,w:w-.14,h:.16,text:"+"+(chips.length-fit)+" more",size:7,color:c.check?C.white:C.muted,m:0});cy+=.17;}
+    tags.forEach((tg,k)=>{const tx=x+.04+k*((w-.08)/tags.length),tw=(w-.08)/tags.length-(tags.length>1?.03:0);
+      const touch=tg==="Touch point", col=touch?P.touch:(c.check?C.white:P.pay);
+      els.push({t:"rect",x:tx,y:y+h-.22,w:tw,h:.18,line:col,lw:.75,dash:touch,radius:.03});
+      els.push({t:"text",x:tx,y:y+h-.22,w:tw,h:.18,text:tg,size:6.5,bold:true,color:col,align:"center",m:0});});
+  }));
+  // side panel
+  const px=9.35,pw=W-.5-px;
+  els.push({t:"rect",x:px-.2,y:top,w:.012,h:6.88-top,fill:C.line});
+  els.push({t:"text",x:px,y:top,w:pw,h:.3,text:"THIS MONTH",size:8.5,bold:true,color:C.muted,m:0});
+  let y=top+.36; const avail=6.85; const withDesc=mo.items.length<=5;
+  mo.items.forEach(it=>{const need=withDesc&&it.desc.length?.95:.52; if(y+need>avail-(mo.holidays.length?.35+mo.holidays.length*.22:0))return;
+    els.push({t:"rect",shape:"ellipse",x:px,y:y+.07,w:.11,h:.11,fill:P[it.phase]});
+    els.push({t:"text",x:px+.2,y,w:pw-.2,h:.24,text:it.dateLabel,size:9,bold:true,color:P[it.phase],m:0});
+    els.push({t:"text",x:px+.2,y:y+.22,w:pw-.2,h:.26,text:it.name,size:10.5,bold:true,color:C.ink,m:0});
+    if(withDesc&&it.desc.length)els.push({t:"text",x:px+.2,y:y+.48,w:pw-.2,h:.42,text:it.desc.slice(0,2).join(" · "),size:8,color:C.muted,m:0,valign:"top"});
+    y+=need;});
+  if(!mo.items.length)els.push({t:"text",x:px,y,w:pw,h:.4,text:"No milestones this month",size:10,color:C.muted,m:0});
+  if(mo.holidays.length){let hy=Math.max(y+.1,avail-mo.holidays.length*.22-.3);
+    els.push({t:"text",x:px,y:hy,w:pw,h:.26,text:"BANK HOLIDAYS",size:8.5,bold:true,color:C.muted,m:0});hy+=.28;
+    mo.holidays.forEach(hd=>{els.push({t:"text",x:px,y:hy,w:pw,h:.22,text:hd,size:8.5,color:P.hol,m:0});hy+=.22;});}
+  return els;
+}
+
+function glanceLegend(m,P){const sh=m.show||{}, on=k=>sh[k]!==false;
+  return m.phases.map(p=>({name:p.name,fill:P[p.id],kind:"dot"})).concat([
+    on("hol")&&{name:"Bank holiday",fill:mix(P.hol,.12),line:P.hol},on("check")&&{name:"First check date",fill:P.check},on("pay")&&{name:"Pay date",fill:P.pay,kind:"line"}].filter(Boolean))}
+function glance(m,P){
+  const els=[], n=m.months.length, cols=Math.min(n,3), rowsN=Math.ceil(n/3), legItems=glanceLegend(m,P), legRows=legendLayout(legItems).length;
+  const top=1.42, bottom=6.4-(legRows-1)*.3, gap=.45, bw=(W-1-gap*(cols-1))/cols, bh=(bottom-top-(rowsN-1)*.3)/rowsN;
+  const gridRows=6, cw=bw/7, hdr=.3, dh=.18, rh=Math.min(.44,(bh-hdr-dh)*(rowsN>1?.62:.58)/gridRows);
+  m.months.forEach((mo,i)=>{
+    const bx=.5+(i%cols)*(bw+gap), by=top+Math.floor(i/cols)*(bh+.3);
+    els.push({t:"text",x:bx,y:by,w:bw,h:hdr,text:mo.title,size:13,bold:true,color:C.ink,m:0});
+    ["S","M","T","W","T","F","S"].forEach((d,k)=>els.push({t:"text",x:bx+k*cw,y:by+hdr,w:cw,h:dh,text:d,size:7,bold:true,color:C.muted,align:"center",m:0}));
+    const gy=by+hdr+dh;
+    mo.weeks.forEach((wk,r)=>wk.forEach((c,k)=>{if(!c)return;
+      const x=bx+k*cw+.02,y=gy+r*rh+.02,w=cw-.04,h=rh-.04, ph=c.chips[0]&&c.chips[0].phase;
+      const fill=c.check?P.check:ph?mix(P[ph],.26):c.closed?mix(P.hol,.12):c.wknd?C.softer:C.soft;
+      const col=c.check?C.white:ph?P[ph]:c.closed?P.hol:C.muted;
+      els.push({t:"rect",x,y,w,h,fill,radius:.03});
+      els.push({t:"text",x,y,w,h,text:String(c.day),size:8,bold:!!(ph||c.check||c.closed),color:col,align:"center",m:0});
+      if(c.pay)els.push({t:"rect",x:x+w*.3,y:y+h-.05,w:w*.4,h:.025,fill:c.check?C.white:P.pay});
+    }));
+    // milestone list under the grid
+    let ly=gy+gridRows*rh+.12; const lineH=.24, maxY=by+bh;
+    const lines=mo.items.map(it=>({d:it.dateLabel.replace(/^\w+, /,""),name:it.name,phase:it.phase}))
+      .concat(mo.holidays.map(h=>({d:h.split(" · ")[0].replace(/^\w+, /,""),name:h.split(" · ")[1],hol:true})));
+    const fit=Math.max(0,Math.floor((maxY-ly)/lineH)), shown=lines.length>fit?lines.slice(0,Math.max(fit-1,0)):lines;
+    shown.forEach(l=>{
+      if(l.hol)els.push({t:"rect",x:bx,y:ly+.08,w:.09,h:.09,fill:P.hol,radius:.01});
+      else els.push({t:"rect",shape:"ellipse",x:bx,y:ly+.075,w:.1,h:.1,fill:P[l.phase]});
+      els.push({t:"text",x:bx+.17,y:ly,w:.62,h:lineH,text:l.d,size:8.5,bold:true,color:l.hol?P.hol:C.ink,m:0});
+      els.push({t:"text",x:bx+.8,y:ly,w:bw-.8,h:lineH,text:l.name,size:8.5,color:l.hol?P.hol:C.ink,m:0});
+      ly+=lineH;});
+    if(shown.length<lines.length)els.push({t:"text",x:bx+.17,y:ly,w:bw-.17,h:lineH,text:"+"+(lines.length-shown.length)+" more on the "+mo.title.split(" ")[0]+" slide",size:8,color:C.muted,m:0});
+  });
+  legend(els,legItems,6.62);
+  return els;
+}
+
+function build(m){
+  const P={...phaseColors(m.accent),...(m.colors||{})}, slides=[];
+  slides.push({kind:"Overview",make:(p,t)=>{const e=overview(m,P);frame(m,e,"Implementation Timeline",m.client,p,t);return e}});
+  slides.push({kind:"Key dates",make:(p,t)=>{const e=table(m,P);frame(m,e,"Implementation Timeline · "+m.client,"Key Dates & Milestones",p,t);return e}});
+  m.months.forEach(mo=>slides.push({kind:mo.title,make:(p,t)=>{const e=month(m,P,mo);frame(m,e,"Implementation Timeline · "+m.client,mo.title,p,t);return e}}));
+  if(m.months.length>1){const first=m.months[0].title,last=m.months[m.months.length-1].title, fy=first.split(" ")[1], ly=last.split(" ")[1];
+    const range=first.split(" ")[0].slice(0,3)+(fy!==ly?" "+fy:"")+" – "+last.split(" ")[0].slice(0,3)+" "+ly;
+    slides.push({kind:"At a glance",make:(p,t)=>{const e=glance(m,P);frame(m,e,"Implementation Timeline · "+m.client,"At a Glance: "+range,p,t);return e}});}
+  return slides.map((s,i)=>({kind:s.kind,els:s.make(i+1,slides.length)}));
+}
+
+/* ---- renderers ---- */
+const PX=96, pt=v=>v*96/72;
+function toHTML(els){
+  return els.map(e=>{
+    const pos=`left:${e.x*PX}px;top:${e.y*PX}px;width:${Math.max(e.w*PX,1)}px;height:${Math.max(e.h*PX,1)}px;`;
+    if(e.t==="line"){const lw=Math.max((e.lw||1)*96/72,1);
+      return e.h===0?`<div style="position:absolute;left:${e.x*PX}px;top:${e.y*PX-lw/2}px;width:${e.w*PX}px;height:${lw}px;background:#${e.color}"></div>`
+                    :`<div style="position:absolute;left:${e.x*PX-lw/2}px;top:${e.y*PX}px;width:${lw}px;height:${e.h*PX}px;background:#${e.color}"></div>`;}
+    if(e.t==="img")return `<img alt="" src="${e.data}" style="position:absolute;${pos}object-fit:contain;max-width:none">`;
+    if(e.t==="rect"){const br=e.shape==="ellipse"?"50%":(e.radius?e.radius*PX+"px":"0");
+      const bd=e.line?`border:${Math.max((e.lw||.75)*96/72,1)}px ${e.dash?"dashed":"solid"} #${e.line};`:"";
+      return `<div style="position:absolute;${pos}box-sizing:border-box;border-radius:${br};${e.fill?"background:#"+e.fill+";":""}${bd}"></div>`;}
+    const jc=e.valign==="top"?"flex-start":e.valign==="bottom"?"flex-end":"center";
+    const esc=String(e.text).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+    return `<div style="position:absolute;${pos}display:flex;flex-direction:column;justify-content:${jc};padding:${pt(e.m??2)}px;box-sizing:border-box;overflow:hidden;font-family:Arial,Helvetica,sans-serif;font-size:${pt(e.size)}px;line-height:1.18;font-weight:${e.bold?700:400};color:#${e.color};text-align:${e.align||"left"};white-space:pre-wrap;overflow-wrap:anywhere"><span>${esc}</span></div>`;
+  }).join("");
+}
+function toPptx(Pptx,slides,meta){
+  const pptx=new Pptx(); pptx.layout="LAYOUT_WIDE"; pptx.title=meta.title; pptx.company=meta.company||"";
+  slides.forEach(s=>{const sl=pptx.addSlide(); sl.background={color:"FFFFFF"};
+    s.els.forEach(e=>{
+      if(e.t==="line"){sl.addShape(pptx.ShapeType.line,{x:e.x,y:e.y,w:e.w,h:e.h,line:{color:e.color,width:e.lw||1}});return}
+      if(e.t==="img"){sl.addImage({data:e.data,x:e.x,y:e.y,w:e.w,h:e.h});return}
+      if(e.t==="rect"){const shape=e.shape==="ellipse"?pptx.ShapeType.ellipse:(e.radius?pptx.ShapeType.roundRect:pptx.ShapeType.rect);
+        const o={x:e.x,y:e.y,w:e.w,h:e.h,fill:e.fill?{color:e.fill}:{color:"FFFFFF",transparency:100},line:e.line?{color:e.line,width:e.lw||.75,dashType:e.dash?"dash":"solid"}:{color:"FFFFFF",transparency:100,width:0}};
+        if(e.radius)o.rectRadius=e.radius; sl.addShape(shape,o);return}
+      sl.addText(String(e.text),{x:e.x,y:e.y,w:e.w,h:e.h,fontFace:FONT,fontSize:e.size,bold:!!e.bold,color:e.color,align:e.align||"left",valign:e.valign||"middle",margin:e.m??2,lineSpacingMultiple:1.0,fit:"none"});
+    });});
+  return pptx;
+}
+root.TimelineSlides={build,toHTML,toPptx,W,H};
+})(typeof window!=="undefined"?window:globalThis);
+</script>
+<script>
+document.documentElement.lang="en";
+(function(){
+const PHASES={kick:"Kickoff",data:"Data collection",test:"Parallel testing",live:"Go-live",tl:"Time & Labor",ben:"Benefits Admin"};
+// Offsets are business days before the first check date, written for an 8-week build.
+const DEFAULTS=[
+  {name:"Agreement signed",phase:"kick",offset:5,role:"agreement",desc:"Sign-by date to hold this first check date; Implementation Planning Call follows signing"},
+  {name:"Implementation Planning Call",phase:"kick",offset:40,role:"planning",desc:"Review discovery questions; Confirm contracted products; Confirm dates"},
+  {name:"Intro Call",phase:"kick",offset:37,desc:"Introductions to Implementation Consultants; Review implementation timeline; Schedule key milestone calls and Admin trainings"},
+  {name:"Data Extraction",phase:"data",offset:33,desc:"Consultant extracts pertinent demographic data"},
+  {name:"Alignment Call",phase:"data",offset:28,desc:"Review extracted data; Confirm configuration details; Ensure maximum system functionality"},
+  {name:"Begin Weekly Touch Points",phase:"kick",offset:27,recur:true,desc:"Address non-urgent issues; Provide updates; Security roles and access"},
+  {name:"Benefits Admin build & carrier setup",phase:"ben",offset:22,benefits:"bundled",desc:"Benefit plans, eligibility rules and carrier connections configured"},
+  {name:"System Delivery & Maintenance",phase:"data",offset:20,desc:"Database audit and review; Initial data surety: review and catch-up from extraction to delivery; Ongoing dual maintenance in both systems until YTD extraction"},
+  {name:"Test Payroll",phase:"test",offset:10,desc:"Gain proficiency in Paylocity's payroll process; Verify test payroll against recent payroll registers"},
+  {name:"Deployment",phase:"live",offset:5,desc:"Employee Self-Service communication planning; Workforce system training; Test punching"},
+  {name:"First clock in/out in Paylocity",phase:"tl",offset:0,calc:"clockin",desc:"Hourly employees start punching in Paylocity Time & Labor; Hours from this pay period pay on the first check"},
+  {name:"First pay period ends",phase:"tl",offset:0,calc:"periodend",desc:"Supervisors review and approve timecards for the first payroll"},
+  {name:"First payroll submitted",phase:"live",offset:2,desc:"Payroll processed for the first live check date"},
+  {name:"First check date",phase:"live",offset:0,anchor:true,desc:"First live payroll in Paylocity"},
+  {name:"Benefits Admin kickoff",phase:"ben",offset:-2,benefits:"phased",desc:"Confirm plans, carriers and eligibility rules; Schedule benefits milestone calls"},
+  {name:"Benefits plan build & carrier setup",phase:"ben",offset:-8,benefits:"phased",desc:"Benefit plans and deduction codes configured; Carrier connections set up and tested"},
+  {name:"Benefits Admin live",phase:"ben",offset:-20,benefits:"phased",desc:"Employees can view and elect benefits in Paylocity; Deductions flow to payroll"}
+];
+const STORE="impl-cal-v2", BASEW=8, TAIL=10;
+// Extra weeks land in the build, so the last two weeks (test + deployment) stay fixed.
+const rescale=(off,from,to)=>off<=TAIL?off:Math.max(TAIL+1,Math.round(TAIL+(off-TAIL)*(to*5-TAIL)/(from*5-TAIL)));
+let uid=0; const nid=()=>"m"+(++uid)+Date.now().toString(36);
+const freshMilestones=(weeks=BASEW,scope="payroll")=>DEFAULTS.map(d=>({id:nid(),name:d.name,phase:d.phase,offset:rescale(d.offset,BASEW,weeks),anchor:!!d.anchor,recur:!!d.recur,calc:d.calc||"",role:d.role||"",benefits:d.benefits||"",desc:d.desc,on:d.benefits?d.benefits===scope:true,pin:null}));
+const blank=()=>({client:"Sample Client",example:true,check:"2027-01-08",freq:"biweekly",semi:{pattern:"auto",a:10,b:25},payAdj:"prior",tl:{on:true,lag:5},weeks:8,scope:"payroll",months:null,milestones:freshMilestones()});
+
+/* ---------- dates ---------- */
+const P=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d,12)};
+const K=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const fmt=d=>DOW[d.getDay()]+", "+MON[d.getMonth()]+" "+d.getDate();
+const fmtY=d=>fmt(d)+", "+d.getFullYear();
+
+const nth=(y,m,wd,n)=>{const f=new Date(y,m,1,12);return new Date(y,m,1+((wd-f.getDay()+7)%7)+(n-1)*7,12)};
+const last=(y,m,wd)=>{const l=new Date(y,m+1,0,12);return new Date(y,m,l.getDate()-((l.getDay()-wd+7)%7),12)};
+const hCache={};
+function holidays(y){
+  if(hCache[y])return hCache[y];
+  const fixed=[["New Year's Day",0,1],["Juneteenth",5,19],["Independence Day",6,4],["Veterans Day",10,11],["Christmas Day",11,25]];
+  const out=[];
+  fixed.forEach(([n,m,d])=>{
+    const a=new Date(y,m,d,12),wd=a.getDay();
+    if(wd===6) out.push({name:n,date:a,obs:add(a,-1),bank:null});      // Sat: federal observes Fri, banks stay open
+    else if(wd===0) out.push({name:n,date:a,obs:add(a,1),bank:add(a,1)}); // Sun: everyone observes Mon
+    else out.push({name:n,date:a,obs:a,bank:a});
+  });
+  [["Martin Luther King Jr. Day",nth(y,0,1,3)],["Presidents Day",nth(y,1,1,3)],["Memorial Day",last(y,4,1)],["Labor Day",nth(y,8,1,1)],["Columbus Day",nth(y,9,1,2)],["Thanksgiving Day",nth(y,10,4,4)]]
+    .forEach(([n,d])=>out.push({name:n,date:d,obs:d,bank:d}));
+  return hCache[y]=out;
+}
+function holidayMap(y){ // key -> {name, closed, note}
+  const map={};
+  [y-1,y,y+1].forEach(yy=>holidays(yy).forEach(h=>{
+    const k=K(h.date);
+    map[k]={name:h.name,closed:!!h.bank&&K(h.bank)===k,note:""};
+    if(K(h.obs)!==k){const ko=K(h.obs);map[ko]={name:h.name,closed:!!h.bank&&K(h.bank)===ko,note:h.bank?"observed":"observed · banks open"};}
+  }));
+  return map;
+}
+const bankClosed=d=>{const y=d.getFullYear();return [y,y+1].some(yy=>holidays(yy).some(h=>h.bank&&K(h.bank)===K(d)))};
+const isBiz=d=>d.getDay()!==0&&d.getDay()!==6&&!bankClosed(d);
+const prevBiz=d=>{let x=new Date(d);while(!isBiz(x))x=add(x,-1);return x};
+function backBiz(d,n){let x=new Date(d);const step=n<0?1:-1;let i=0;while(i<Math.abs(n)){x=add(x,step);if(isBiz(x))i++;}return x} // n<0 counts forward
+
+/* ---------- state ---------- */
+let saved={}, S;
+try{const raw=localStorage.getItem(STORE);if(raw){const o=JSON.parse(raw);saved=o.saved||{};S=o.current||null;}}catch(e){}
+if(!S||!S.milestones)S=blank();
+const fix=s=>{s.weeks=s.weeks||8; s.semi=s.semi||{pattern:"auto",a:10,b:25}; s.payAdj=s.payAdj||"prior"; s.tl=s.tl||{on:true,lag:5};
+  const plan=s.milestones.find(m=>m.role==="planning")||s.milestones.find(m=>/planning call/i.test(m.name));
+  const agr=s.milestones.find(m=>m.role==="agreement")||s.milestones.find(m=>/agreement/i.test(m.name));
+  if(plan&&!plan.role)plan.role="planning";
+  if(agr&&!agr.role){agr.role="agreement";agr.offset=plan?Math.max(1,(agr.offset|0)-(plan.offset|0)):5;}
+  if(!s.milestones.some(m=>m.calc))DEFAULTS.filter(d=>d.calc).forEach(d=>s.milestones.splice(Math.max(0,s.milestones.length-1),0,{id:nid(),name:d.name,phase:d.phase,offset:0,anchor:false,recur:false,calc:d.calc,benefits:"",desc:d.desc,on:s.tl.on,pin:null}));
+  if(!s.scope)s.scope=s.benefits?"bundled":"payroll"; delete s.benefits;
+  s.milestones.forEach(m=>{if(!m.id)m.id=nid(); if(m.phase==="build")m.phase=m.recur?"kick":"data"; if(m.benefits===true){m.benefits="bundled";m.phase="ben"} if(!m.benefits)m.benefits=""});
+  if(!s.milestones.some(m=>m.benefits==="phased"))DEFAULTS.filter(d=>d.benefits==="phased").forEach(d=>s.milestones.push({id:nid(),name:d.name,phase:d.phase,offset:d.offset,anchor:false,recur:false,benefits:"phased",desc:d.desc,on:s.scope==="phased",pin:null}));
+  return s};
+fix(S); Object.values(saved).forEach(fix);
+const persist=()=>{try{localStorage.setItem(STORE,JSON.stringify({saved,current:S}))}catch(e){}};
+
+const roleM=r=>S.milestones.find(m=>m.role===r);
+function planningDate(){const pl=roleM("planning");if(!pl)return null;
+  if(pl.pin)return P(pl.pin);
+  let d=backBiz(P(S.check),pl.offset); const ag=roleM("agreement");
+  if(ag&&ag.on&&ag.pin&&P(ag.pin)>=d)d=backBiz(P(ag.pin),-1); // a late signature pushes the call to the next business day
+  return d;}
+const dateOf=m=>m.role==="planning"?planningDate():m.role==="agreement"&&!m.pin&&roleM("planning")?backBiz(planningDate(),m.offset):m.pin?P(m.pin):m.calc?(m.calc==="clockin"?firstPeriod().start:firstPeriod().end):backBiz(P(S.check),m.offset);
+// The pay period the first check pays: its last day is the latest period end at least `lag` days before the check.
+function firstPeriod(){
+  const target=add(P(S.check),-(S.tl.lag|0));
+  if(S.freq==="weekly"||S.freq==="biweekly"){const len=S.freq==="weekly"?7:14;return {start:add(target,-(len-1)),end:target};}
+  const y=target.getFullYear(),m=target.getMonth(),last=d=>new Date(d.getFullYear(),d.getMonth()+1,0,12);
+  if(S.freq==="monthly"){const endThis=last(target);const e=K(endThis)===K(target)?endThis:new Date(y,m,0,12);return {start:new Date(e.getFullYear(),e.getMonth(),1,12),end:e};}
+  // semi-monthly periods run 1st-15th and 16th-last day
+  const cands=[new Date(y,m,15,12),last(target),new Date(y,m,0,12),new Date(y,m-1,15,12)].filter(d=>d<=target).sort((a,b)=>b-a);
+  const e=cands[0];return {start:e.getDate()===15?new Date(e.getFullYear(),e.getMonth(),1,12):new Date(e.getFullYear(),e.getMonth(),16,12),end:e};
+}
+const active=()=>S.milestones.filter(m=>m.on&&(m.anchor||isOn(m.phase))).map(m=>({...m,d:dateOf(m)})).sort((a,b)=>a.d-b.d||b.offset-a.offset);
+const mkey=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+function autoMonths(){
+  const a=active(); const first=a.length?a[0].d:P(S.check); const end=new Date(Math.max(+P(S.check),...a.map(m=>+m.d)));
+  const out=[]; let x=new Date(first.getFullYear(),first.getMonth(),1,12);
+  while(x<=end){out.push(mkey(x));x=new Date(x.getFullYear(),x.getMonth()+1,1,12)}
+  return out;
+}
+const shownMonths=()=>(S.months&&S.months.length?S.months:autoMonths()).slice().sort();
+
+const nextBiz=d=>{let x=new Date(d);while(!isBiz(x))x=add(x,1);return x};
+const adjPay=d=>S.payAdj==="next"?nextBiz(d):prevBiz(d);
+const SEMI_LABEL={"15-last":"15th & last day","1-15":"1st & 15th"};
+const ord=n=>n+(n%100>=11&&n%100<=13?"th":({1:"st",2:"nd",3:"rd"}[n%10]||"th"));
+// raw pay days for a semi-monthly pattern in one month; 31 means "last day"
+function semiDays(pat,y,m){const last=new Date(y,m+1,0,12).getDate();
+  const pair=pat==="1-15"?[1,15]:pat==="custom"?[S.semi.a,S.semi.b]:[15,last];
+  return [...new Set(pair.map(d=>Math.min(Math.max(1,d|0),last)))].sort((a,b)=>a-b).map(d=>new Date(y,m,d,12));}
+function semiFits(pat){const c=P(S.check);
+  for(let i=-1;i<=1;i++){const y=c.getFullYear(),m=c.getMonth()+i;const mm=new Date(y,m,1,12);
+    if(semiDays(pat,mm.getFullYear(),mm.getMonth()).some(d=>K(adjPay(d))===S.check||K(d)===S.check))return true;}
+  return false;}
+function semiPattern(){ // resolved pattern: the user's pick, or the one the first check date fits
+  if(S.semi.pattern!=="auto")return S.semi.pattern;
+  const fits=["15-last","1-15"].filter(semiFits);
+  return fits.length?fits[0]:"15-last";}
+function semiLabel(){const p=semiPattern();return p==="custom"?ord(S.semi.a)+" & "+(S.semi.b>=31?"last day":ord(S.semi.b)):SEMI_LABEL[p];}
+function orderWarning(){const ag=roleM("agreement"),pl=roleM("planning");
+  if(ag&&pl&&ag.on&&pl.on&&dateOf(pl)<=dateOf(ag))return "The Implementation Planning Call ("+fmt(dateOf(pl))+") is on or before the agreement signing ("+fmt(dateOf(ag))+"). The call has to follow a signed agreement.";
+  return "";}
+function tlWarning(){
+  if(!S.tl.on)return "";
+  const ci=S.milestones.find(m=>m.calc==="clockin"&&m.on), dep=S.milestones.find(m=>m.on&&/deployment/i.test(m.name));
+  if(ci&&dep&&dateOf(ci)<dateOf(dep))return "First clock-in ("+fmt(dateOf(ci))+") comes before Deployment ("+fmt(dateOf(dep))+"). Workforce training and test punching need to finish before employees start punching.";
+  return "";}
+function payWarning(){
+  const c=P(S.check);
+  if(!isBiz(c))return "The first check date falls on a "+(c.getDay()%6===0?"weekend":"bank holiday")+". Banks won't settle direct deposits that day.";
+  if(S.freq==="semimonthly"&&!semiFits(semiPattern()))return "The first check date isn't a "+semiLabel()+" pay date. Pick a matching first check date or change the pay days.";
+  return "";}
+function payDates(untilKey){
+  const start=P(S.check), out=[start];
+  const [uy,um]=untilKey.split("-").map(Number); const end=new Date(uy,um,0,12);
+  if(S.freq==="weekly"||S.freq==="biweekly"){const step=S.freq==="weekly"?7:14;for(let d=add(start,step);d<=add(end,7);d=add(d,step))out.push(adjPay(d));}
+  else if(S.freq==="semimonthly"){const pat=semiPattern();
+    for(let y=start.getFullYear(),m=start.getMonth()-1;new Date(y,m,1,12)<=add(end,31);m++){const mm=new Date(y,m,1,12);
+      semiDays(pat,mm.getFullYear(),mm.getMonth()).forEach(d=>{const a=adjPay(d);if(a>start)out.push(a)});}}
+  else {const day=start.getDate();for(let i=1;i<36;i++){const y=start.getFullYear(),m=start.getMonth()+i;const lim=new Date(y,m+1,0,12).getDate();const d=new Date(y,m,Math.min(day,lim),12);if(d>add(end,31))break;out.push(adjPay(d));}}
+  return new Set(out.filter(d=>d<=end).map(K));
+}
+
+function freqLabel(){const t={weekly:"Weekly",biweekly:"Biweekly",semimonthly:"Semi-monthly",monthly:"Monthly"}[S.freq];return S.freq==="semimonthly"?t+" ("+semiLabel()+")":t}
+function scopeLabel(short){
+  if(S.scope==="bundled")return S.weeks+"-week build"+(short?" + Benefits":" · Benefits live with payroll");
+  if(S.scope==="phased")return S.weeks+"-week build"+(short?"":" · Benefits phased in after");
+  return S.weeks+"-week build";
+}
+/* ---------- render ---------- */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function renderRail(){
+  $("client").value=S.client; $("check").value=S.check; $("freq").value=S.freq;
+  $("weeks").value=String(S.weeks);
+  $("semiRow").hidden=S.freq!=="semimonthly"; $("semiPat").value=S.semi.pattern; $("semiCustom").hidden=S.semi.pattern!=="custom";
+  $("semiA").value=S.semi.a; $("semiB").value=S.semi.b; $("payAdj").value=S.payAdj;
+  const note=S.freq==="semimonthly"&&S.semi.pattern==="auto"; $("payNote").hidden=!note; if(note)$("payNote").textContent="Detected from the first check date: "+semiLabel()+".";
+  $("tlOn").checked=!!S.tl.on; $("tlLag").value=S.tl.lag; $("tlLagRow").hidden=!S.tl.on;
+  const fp=firstPeriod(); $("tlNote").hidden=!S.tl.on;
+  if(S.tl.on)$("tlNote").textContent="First check pays "+fmt(fp.start)+" – "+fmt(fp.end)+". Hourly employees start punching in Paylocity "+fmt(fp.start)+".";
+  const warn=[orderWarning(),payWarning(),tlWarning()].filter(Boolean).join(" "); $("payWarn").hidden=!warn; $("payWarn").textContent=warn; document.querySelectorAll("#scope [data-scope]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.scope===S.scope)));
+  const sel=$("saved"); sel.innerHTML='<option value="">Load a saved client…</option>'+Object.keys(saved).sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  // month chips: 4 months before earliest milestone through 6 after first check
+  const a=active(); const first=a.length?a[0].d:P(S.check); const chk=P(S.check);
+  const shown=new Set(shownMonths()); const keys=[];
+  let x=new Date(first.getFullYear(),first.getMonth()-3,1,12); const end=new Date(chk.getFullYear(),chk.getMonth()+6,1,12);
+  while(x<=end){keys.push(x);x=new Date(x.getFullYear(),x.getMonth()+1,1,12)}
+  shownMonths().forEach(k=>{if(!keys.some(d=>mkey(d)===k)){const [y,m]=k.split("-").map(Number);keys.push(new Date(y,m-1,1,12))}});
+  keys.sort((a,b)=>a-b);
+  $("monthChips").innerHTML=keys.map(d=>{const k=mkey(d);return `<button type="button" class="chip" data-month="${k}" aria-pressed="${shown.has(k)}">${MON[d.getMonth()]} ’${String(d.getFullYear()).slice(2)}</button>`}).join("");
+  $("msList").innerHTML=S.milestones.map(m=>{
+    const d=dateOf(m);
+    return `<div class="ms p-${m.phase}${m.on?"":" off"}" data-id="${m.id}">
+      <input type="checkbox" data-f="on" ${m.on?"checked":""} ${m.anchor?"disabled":""} aria-label="Show ${esc(m.name)}" id="on-${m.id}">
+      <input type="text" data-f="name" value="${esc(m.name)}" aria-label="Milestone name" id="name-${m.id}">
+      ${m.anchor?'<span class="dot" title="Anchor date"></span>':`<button type="button" class="btn small ghost" data-act="rm" aria-label="Remove ${esc(m.name)}">✕</button>`}
+      <div class="sub">
+        <select data-f="phase" aria-label="Phase" id="phase-${m.id}" ${m.anchor?"disabled":""}>${Object.entries(PHASES).map(([k,v])=>`<option value="${k}" ${k===m.phase?"selected":""}>${v}</option>`).join("")}</select>
+        ${m.anchor?'<span class="lbl">Set in Client above</span>':`${m.calc?'<span class="lbl">From first pay period</span>':`<input type="number" min="-250" max="250" data-f="offset" value="${m.offset}" ${m.pin?"disabled":""} aria-label="Business days before first check (negative means after)" id="off-${m.id}"><span class="lbl">${m.role==="agreement"?"bus. days before Planning Call":"bus. days"}</span>`}
+        <input type="date" data-f="pin" value="${K(d)}" aria-label="Date" id="pin-${m.id}">
+        ${m.pin?'<span class="pinned">Pinned</span><button type="button" class="btn small ghost" data-act="unpin">Unpin</button>':""}`}
+        ${m.recur?'<span class="badge">Weekly</span>':""}${m.benefits?'<span class="badge">'+(m.benefits==="phased"?"Benefits phased":"Benefits w/ payroll")+'</span>':""}
+      </div>
+      <textarea data-f="desc" rows="2" aria-label="Details for ${esc(m.name)}" id="desc-${m.id}" placeholder="Details, separated by semicolons">${esc(m.desc||"")}</textarea></div>`}).join("");
+}
+
+function renderMain(){
+  const a=active(), chk=P(S.check), today=P(K(new Date()));
+  const touch=touchDays(a,chk);
+  $("title").innerHTML=esc(S.client||"New client")+(S.example?'<span class="example">EXAMPLE</span>':"");
+  const kick=a.find(m=>/planning call|kickoff/i.test(m.name))||a[0];
+  const facts=[["First check date",fmtY(chk)],["Scope",scopeLabel()]]; const benLive=a.find(m=>m.benefits==="phased"&&/live/i.test(m.name)); if(benLive)facts.push(["Benefits live",fmt(benLive.d)]);
+  if(kick){facts.push(["Kickoff",fmt(kick.d)]);
+    const until=Math.round((kick.d-today)/864e5); if(until>=0)facts.push(["Days until kickoff",String(until)]);else facts.push(["Kickoff","already passed: pick a later first check date"]);}
+  facts.push(["Pay frequency",freqLabel()]);
+  $("facts").innerHTML=facts.map(([k,v])=>`<span>${k} <b>${esc(v)}</b></span>`).join("");
+
+  renderLegend();
+
+  // calendar
+  const months=shownMonths(); const pays=payDates(months[months.length-1]||mkey(chk));
+  const byDay={}; a.forEach(m=>{(byDay[K(m.d)]=byDay[K(m.d)]||[]).push(m)});
+  $("months").innerHTML=months.map(k=>{
+    const [y,mo]=k.split("-").map(Number); const first=new Date(y,mo-1,1,12); const days=new Date(y,mo,0,12).getDate();
+    const hm=holidayMap(y); let cells=DOW.map(d=>`<div class="dow">${d.slice(0,2)}</div>`).join("");
+    for(let i=0;i<first.getDay();i++)cells+='<div class="cell blank"></div>';
+    let count=0;
+    for(let dd=1;dd<=days;dd++){
+      const d=new Date(y,mo-1,dd,12), key=K(d), h=hm[key], ms=byDay[key]||[];
+      count+=ms.length;
+      const cls=["cell"]; if(d.getDay()===0||d.getDay()===6)cls.push("wknd"); if(h&&h.closed&&isOn("hol"))cls.push("closed");
+      if(key===K(today))cls.push("today"); if(key===S.check&&isOn("check"))cls.push("check");
+      let inner=`<span class="num">${dd}</span>`;
+      if(h&&isOn("hol"))inner+=`<span class="tag hol">${esc(h.name)}${h.note?`<em>${h.note}</em>`:""}</span>`;
+      ms.forEach(m=>inner+=`<span class="tag ms p-${m.phase}" draggable="${m.anchor?"false":"true"}" data-drag="${m.id}" title="${esc(m.name)}${m.desc?"\n• "+esc(m.desc).split(/\s*;\s*/).join("\n• "):""}${m.anchor?"":"\n(drag to move)"}">${esc(m.name)}</span>`);
+      if(isOn("touch")&&touch.has(key)&&!ms.some(m=>m.recur))inner+='<span class="tag tp">Touch point</span>';
+      if(isOn("pay")&&pays.has(key)&&key!==S.check)inner+='<span class="tag pay">Pay date</span>';
+      cells+=`<div class="${cls.join(" ")}" data-day="${key}">${inner}</div>`;
+    }
+    return `<article class="month"><h3>${MONTHS[mo-1]} ${y}<small>${count?count+" milestone"+(count>1?"s":""):""}</small></h3><div class="grid">${cells}</div></article>`;
+  }).join("");
+
+  $("agenda").innerHTML=a.map(m=>{
+    const bd=Math.round((chk-m.d)/864e5); const ab=Math.abs(bd), wk=bd===0?"—":(ab<14?ab+" days":Math.round(ab/7)+" wks")+(bd>0?" before":" after");
+    const hm=holidayMap(m.d.getFullYear())[K(m.d)];
+    const flag=!isBiz(m.d)?`<span class="flag">Falls on a ${m.d.getDay()%6===0?"weekend":"bank holiday"}${hm?" ("+esc(hm.name)+")":""}</span>`:"";
+    return `<tr><td class="d">${fmtY(m.d)}</td><td>${esc(m.name)}${m.recur?' <span class="badge" style="font-size:10px;color:var(--muted)">then weekly</span>':""}${flag}${m.desc?`<ul>${m.desc.split(/\s*;\s*/).filter(Boolean).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</td><td><span class="ph p-${m.phase}">${PHASES[m.phase]}</span></td><td class="w">${wk}</td></tr>`}).join("");
+}
+const render=()=>{renderRail();renderMain();renderSlides();persist()};
+const toast=t=>{const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),1800)};
+const find=id=>S.milestones.find(m=>m.id===id);
+
+/* ---------- events ---------- */
+$("client").addEventListener("input",e=>{S.client=e.target.value;S.example=false;renderMain();renderSlides();persist()});
+$("check").addEventListener("change",e=>{if(e.target.value){S.check=e.target.value;render()}});
+$("freq").addEventListener("change",e=>{S.freq=e.target.value;render()});
+$("semiPat").addEventListener("change",e=>{S.semi.pattern=e.target.value;render()});
+const semiDay=v=>Math.min(31,Math.max(1,parseInt(v||"1",10)));
+$("semiA").addEventListener("change",e=>{S.semi.a=semiDay(e.target.value);render()});
+$("semiB").addEventListener("change",e=>{S.semi.b=semiDay(e.target.value);render()});
+$("payAdj").addEventListener("change",e=>{S.payAdj=e.target.value;render()});
+$("tlOn").addEventListener("change",e=>{S.tl.on=e.target.checked;S.milestones.forEach(m=>{if(m.calc)m.on=S.tl.on});render()});
+$("tlLag").addEventListener("change",e=>{S.tl.lag=Math.min(30,Math.max(0,parseInt(e.target.value||"0",10)));render()});
+function setWeeks(w){const from=S.weeks;if(w===from)return;S.milestones.forEach(m=>{if(!m.anchor)m.offset=rescale(m.offset,from,w)});S.weeks=w;}
+$("weeks").addEventListener("change",e=>{setWeeks(parseInt(e.target.value,10));render()});
+function setScope(sc){S.scope=sc;setWeeks(sc==="bundled"?12:8);S.milestones.forEach(m=>{if(m.benefits)m.on=m.benefits===sc});S.months=null;}
+$("scope").addEventListener("click",e=>{const b=e.target.closest("[data-scope]");if(!b||b.dataset.scope===S.scope)return;setScope(b.dataset.scope);render();
+  toast({payroll:"Payroll, HR & Time and Labor: 8-week build",bundled:"Benefits live with payroll: 12-week build",phased:"Benefits Admin phased in 4 weeks after first check"}[S.scope])});
+$("monthChips").addEventListener("click",e=>{const b=e.target.closest("[data-month]");if(!b)return;
+  const set=new Set(shownMonths());set.has(b.dataset.month)?set.delete(b.dataset.month):set.add(b.dataset.month);
+  S.months=set.size?[...set]:null;render()});
+$("autoMonths").addEventListener("click",()=>{S.months=null;render()});
+$("moreMonths").addEventListener("click",()=>{const m=shownMonths();const [y,mo]=m[m.length-1].split("-").map(Number);m.push(mkey(new Date(y,mo,1,12)));S.months=m;render()});
+
+$("msList").addEventListener("input",e=>{const row=e.target.closest(".ms");if(!row)return;const m=find(row.dataset.id),f=e.target.dataset.f;
+  if(f==="name"||f==="desc"){m[f]=e.target.value;renderMain();renderSlides();persist();}});
+$("msList").addEventListener("change",e=>{const row=e.target.closest(".ms");if(!row)return;const m=find(row.dataset.id),f=e.target.dataset.f;
+  if(f==="on")m.on=e.target.checked;
+  else if(f==="phase")m.phase=e.target.value;
+  else if(f==="offset")m.offset=Math.max(0,parseInt(e.target.value||"0",10));
+  else if(f==="pin"&&e.target.value)m.pin=e.target.value;
+  else return; render();});
+$("msList").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const id=b.closest(".ms").dataset.id;
+  if(b.dataset.act==="rm")S.milestones=S.milestones.filter(m=>m.id!==id);
+  if(b.dataset.act==="unpin")find(id).pin=null;
+  render();});
+$("addMs").addEventListener("click",()=>{S.milestones.splice(S.milestones.length-1,0,{id:nid(),name:"New milestone",phase:"data",offset:20,on:true,pin:null});render();
+  const rows=document.querySelectorAll("#msList .ms");const r=rows[rows.length-2];r&&r.querySelector("input[type=text]").select();});
+$("resetMs").addEventListener("click",()=>{S.milestones=freshMilestones(S.weeks,S.scope);render();toast("Default milestones restored")});
+
+$("save").addEventListener("click",()=>{const n=(S.client||"").trim();if(!n){toast("Add a client name first");return}
+  S.example=false;saved[n]=JSON.parse(JSON.stringify(S));render();$("saved").value=n;toast("Saved "+n)});
+$("saved").addEventListener("change",e=>{const n=e.target.value;if(!n||!saved[n])return;S=JSON.parse(JSON.stringify(saved[n]));render();$("saved").value=n;toast("Loaded "+n)});
+let delArm=null;
+$("del").addEventListener("click",e=>{const n=$("saved").value;if(!n){toast("Pick a saved client to delete");return}
+  if(delArm!==n){delArm=n;e.target.textContent="Confirm";setTimeout(()=>{delArm=null;e.target.textContent="Delete"},3000);return}
+  delete saved[n];delArm=null;e.target.textContent="Delete";render();toast("Deleted "+n)});
+$("newc").addEventListener("click",()=>{const c=P(S.check);S={...blank(),client:"",example:false,check:S.check,freq:S.freq};render();$("client").focus()});
+
+$("present").addEventListener("click",()=>{const on=document.body.classList.toggle("present");$("present").textContent=on?"Edit":"Present";});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.classList.contains("present")){document.body.classList.remove("present");$("present").textContent="Present";}});
+
+$("copy").addEventListener("click",()=>{
+  const a=active(); const text=`${S.client||"Client"}: implementation timeline\nFirst check date: ${fmtY(P(S.check))}\n\n`+a.map(m=>`${fmtY(m.d)}  ${m.name}`).join("\n");
+  const fallback=()=>{const t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();try{document.execCommand("copy");toast("Key dates copied")}catch(_){toast("Select and copy from the table")}t.remove()};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>toast("Key dates copied"),fallback);else fallback();
+});
+
+// drag milestones between days
+let dragId=null;
+$("months").addEventListener("dragstart",e=>{const t=e.target.closest("[data-drag]");if(!t)return;dragId=t.dataset.drag;e.dataTransfer.effectAllowed="move";try{e.dataTransfer.setData("text/plain",dragId)}catch(_){}});
+$("months").addEventListener("dragover",e=>{const c=e.target.closest("[data-day]");if(!c||!dragId)return;e.preventDefault();document.querySelectorAll(".cell.drop").forEach(x=>x!==c&&x.classList.remove("drop"));c.classList.add("drop")});
+$("months").addEventListener("dragleave",e=>{const c=e.target.closest("[data-day]");if(c&&!c.contains(e.relatedTarget))c.classList.remove("drop")});
+$("months").addEventListener("drop",e=>{const c=e.target.closest("[data-day]");if(!c||!dragId)return;e.preventDefault();const m=find(dragId);
+  if(m&&!m.anchor){m.pin=c.dataset.day;render();toast(m.name+" moved to "+fmt(P(c.dataset.day)))}dragId=null});
+$("months").addEventListener("dragend",()=>{dragId=null;document.querySelectorAll(".cell.drop").forEach(x=>x.classList.remove("drop"))});
+
+/* ---------- slides ---------- */
+const BRAND="impl-cal-brand", DEF_ACCENT="#f26b21";
+let brand={accent:DEF_ACCENT,logo:null};
+try{const b=JSON.parse(localStorage.getItem(BRAND)||"null");if(b)brand={...brand,...b};}catch(e){}
+// Legend items: phases plus calendar markers. Colors and visibility are display preferences saved in this browser.
+const LEGEND=[
+  {id:"kick",def:"#2f66b3",shape:"dot",phase:1},{id:"data",def:"#c2850c",shape:"dot",phase:1},
+  {id:"test",def:"#7650b8",shape:"dot",phase:1},{id:"live",def:"#e0581b",shape:"dot",phase:1},
+  {id:"tl",def:"#3f8a2e",shape:"dot",phase:1},{id:"ben",def:"#b8337a",shape:"dot",phase:1},
+  {id:"hol",label:"Bank holiday",def:"#c62828",shape:"soft"},
+  {id:"check",label:"First check date",def:null,shape:"sq"},
+  {id:"pay",label:"Pay date",def:null,shape:"line"},
+  {id:"touch",label:"Weekly touch point",def:"#5b6b7a",shape:"dash"}];
+brand.colors=brand.colors||{}; brand.show=brand.show||{};
+const legLabel=l=>l.label||PHASES[l.id];
+const legColor=id=>{const l=LEGEND.find(x=>x.id===id);return brand.colors[id]||(l&&l.def)||brand.accent;};
+function isOn(id){return brand.show[id]!==false}
+function applyColors(){const r=document.documentElement.style;
+  LEGEND.forEach(l=>{const c=legColor(l.id); r.setProperty(l.phase?"--p-"+l.id:l.id==="hol"?"--holiday":"--c-"+l.id,c);});}
+function renderLegendPanel(){
+  $("lgList").innerHTML=LEGEND.map(l=>`<div class="lg-row${isOn(l.id)?"":" off"}" data-leg="${l.id}">
+    <input type="checkbox" id="lgOn-${l.id}" ${isOn(l.id)?"checked":""} aria-label="Show ${esc(legLabel(l))}">
+    <input type="color" id="lgCol-${l.id}" value="${legColor(l.id)}" aria-label="${esc(legLabel(l))} color">
+    <label for="lgOn-${l.id}">${esc(legLabel(l))}</label></div>`).join("");}
+function renderLegend(){
+  const used=new Set(S.milestones.filter(m=>m.on).map(m=>m.phase)), hasTouch=S.milestones.some(m=>m.on&&m.recur);
+  $("legend").innerHTML=LEGEND.filter(l=>l.phase?used.has(l.id):l.id==="touch"?hasTouch:true).map(l=>{const on=isOn(l.id);
+    return `<button type="button" class="lg${on?"":" off"}" data-leg="${l.id}" aria-pressed="${on}" title="${on?"Hide":"Show"} ${esc(legLabel(l))}"><i class="sw sw-${l.shape}" style="--sw:${legColor(l.id)}"></i>${esc(legLabel(l))}</button>`}).join("");}
+function toggleLeg(id,on){brand.show[id]=on;saveBrand();renderLegendPanel();render();}
+const saveBrand=()=>{try{localStorage.setItem(BRAND,JSON.stringify(brand))}catch(e){toast("Logo is too large to remember in this browser")}};
+
+function touchDays(a,chk){const t=new Set();a.filter(m=>m.recur).forEach(m=>{for(let d=add(m.d,7);d<chk;d=add(d,7)){const b=isBiz(d)?d:add(d,1);if(b<chk&&isBiz(b))t.add(K(b))}});return t}
+const splitDesc=s=>String(s||"").split(/\s*;\s*/).filter(Boolean);
+
+function buildModel(){
+  const a=active(), chk=P(S.check), months=shownMonths(), pays=payDates(months[months.length-1]||mkey(chk)), touch=touchDays(a,chk);
+  const plan=a.find(m=>/planning call|kickoff/i.test(m.name)), sign=a.find(m=>/agreement|sign/i.test(m.name));
+  const facts=[["First check date",fmtY(chk)]];
+  if(sign&&sign!==plan)facts.push(["Sign by",fmt(sign.d)]);
+  facts.push(["Scope",scopeLabel(true)]); const benLive=a.find(m=>m.benefits==="phased"&&/live/i.test(m.name)); if(benLive)facts.push(["Benefits live",fmt(benLive.d)]);
+  const byDay={}; a.forEach(m=>{(byDay[K(m.d)]=byDay[K(m.d)]||[]).push(m)});
+  const mo=months.map(k=>{
+    const [y,m]=k.split("-").map(Number), first=new Date(y,m-1,1,12), days=new Date(y,m,0,12).getDate(), hm=holidayMap(y);
+    const cells=[]; for(let i=0;i<first.getDay();i++)cells.push(null);
+    const hol=[];
+    for(let d=1;d<=days;d++){const dt=new Date(y,m-1,d,12),key=K(dt),h=hm[key];
+      if(h&&isOn("hol"))hol.push(fmt(dt)+" · "+h.name+(h.note?" ("+h.note+")":""));
+      cells.push({day:d,wknd:dt.getDay()%6===0,closed:!!(h&&h.closed&&isOn("hol")),holiday:h&&isOn("hol")?h.name+(h.note==="observed"?" (obs.)":h.note?" (obs., banks open)":""):"",
+        check:isOn("check")&&key===S.check,chips:(byDay[key]||[]).map(x=>({text:x.name,phase:x.phase})),pay:isOn("pay")&&pays.has(key)&&key!==S.check,touch:isOn("touch")&&touch.has(key)&&!(byDay[key]||[]).some(x=>x.recur)});}
+    while(cells.length%7)cells.push(null);
+    const weeks=[];for(let i=0;i<cells.length;i+=7)weeks.push(cells.slice(i,i+7));
+    const items=a.filter(x=>mkey(x.d)===k).map(x=>({dateLabel:fmt(x.d),name:x.name,phase:x.phase,desc:splitDesc(x.desc)}));
+    return {title:MONTHS[m-1]+" "+y,weeks,items,holidays:hol};
+  });
+  const client=S.client||"New Client";
+  return {client,accent:brand.accent.replace("#","").toUpperCase(),logo:brand.logo,
+    footer:client+" · First check date "+fmtY(chk)+" · Dates confirmed at the Implementation Planning Call",
+    facts,phases:Object.entries(PHASES).filter(([k])=>isOn(k)&&a.some(m=>m.phase===k)).map(([id,name])=>({id,name})),
+    milestones:a.map(m=>({dateLabel:fmt(m.d),name:m.name,phase:m.phase,desc:splitDesc(m.desc),recur:!!m.recur,isCheck:!!m.anchor&&isOn("check")})),months:mo,
+    colors:Object.fromEntries(LEGEND.map(l=>[l.id,legColor(l.id).replace("#","").toUpperCase()])),show:Object.fromEntries(LEGEND.map(l=>[l.id,isOn(l.id)]))};
+}
+function fitSlides(){document.querySelectorAll(".slide-box").forEach(b=>{const sc=b.clientWidth/1280;b.style.height=(720*sc)+"px";b.firstElementChild.style.transform="scale("+sc+")"})}
+function renderSlides(){
+  if(!document.body.classList.contains("slideview"))return;
+  const slides=TimelineSlides.build(buildModel());
+  $("slides").innerHTML=slides.map((s,i)=>`<div class="slide-wrap"><div class="slide-cap"><span>Slide ${i+1} of ${slides.length} · ${esc(s.kind)}</span><span>16:9</span></div><div class="slide-box"><div class="slide">${TimelineSlides.toHTML(s.els)}</div></div></div>`).join("");
+  fitSlides();
+}
+try{new ResizeObserver(()=>fitSlides()).observe($("slides"))}catch(e){window.addEventListener("resize",fitSlides)}
+
+function renderBrand(){
+  $("accent").value=brand.accent; applyColors(); renderLegendPanel();
+  $("logoPrev").hidden=!brand.logo; $("logoClear").hidden=!brand.logo; if(brand.logo)$("logoPrev").src=brand.logo.data;
+}
+$("accent").addEventListener("input",e=>{brand.accent=e.target.value;saveBrand();applyColors();renderLegendPanel();render()});
+$("accentReset").addEventListener("click",()=>{brand.accent=DEF_ACCENT;saveBrand();renderBrand();render()});
+$("lgList").addEventListener("change",e=>{const row=e.target.closest("[data-leg]");if(!row||e.target.type!=="checkbox")return;toggleLeg(row.dataset.leg,e.target.checked);});
+$("lgList").addEventListener("input",e=>{const row=e.target.closest("[data-leg]");if(!row||e.target.type!=="color")return;
+  brand.colors[row.dataset.leg]=e.target.value;saveBrand();applyColors();renderLegend();renderSlides();});
+$("lgList").addEventListener("change",e=>{if(e.target.type==="color")render();});
+$("legend").addEventListener("click",e=>{const b=e.target.closest("[data-leg]");if(b)toggleLeg(b.dataset.leg,!isOn(b.dataset.leg));});
+$("lgReset").addEventListener("click",()=>{brand.colors={};brand.show={};saveBrand();renderBrand();render();toast("Colors reset; all legend items showing")});
+$("logoFile").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f)return;
+  const rd=new FileReader(); rd.onload=()=>{const img=new Image(); img.onload=()=>{
+    const max=900, r=Math.min(1,max/Math.max(img.naturalWidth||max,img.naturalHeight||max));
+    const w=Math.round((img.naturalWidth||max)*r), h=Math.round((img.naturalHeight||max/3)*r);
+    const cv=document.createElement("canvas"); cv.width=w; cv.height=h; cv.getContext("2d").drawImage(img,0,0,w,h);
+    brand.logo={data:cv.toDataURL("image/png"),w,h}; saveBrand(); renderBrand(); renderSlides(); toast("Logo added to slides");};
+    img.onerror=()=>toast("That file couldn't be read as an image. Try a PNG."); img.src=rd.result;};
+  rd.readAsDataURL(f); e.target.value="";
+});
+$("logoClear").addEventListener("click",()=>{brand.logo=null;saveBrand();renderBrand();renderSlides()});
+
+$("slideToggle").addEventListener("click",()=>{const on=document.body.classList.toggle("slideview");
+  $("slideToggle").setAttribute("aria-pressed",String(on));$("slideToggle").textContent=on?"Calendar view":"Slide view";
+  if(on)renderSlides();});
+
+// PowerPoint export: native, editable shapes and text
+let dlApi; const dlReady=(async()=>{try{dlApi=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(e){dlApi=null}
+})();
+let libP=null;
+const loadLib=()=>libP||(libP=new Promise((res,rej)=>{if(window.PptxGenJS)return res();const s=document.createElement("script");
+  s.src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";s.onload=()=>res();s.onerror=()=>{libP=null;rej(new Error("load"))};document.head.appendChild(s);}));
+$("pptx").addEventListener("click",async()=>{
+  const b=$("pptx"); await dlReady;
+  b.disabled=true; const label=b.textContent; b.textContent="Building…";
+  try{
+    await loadLib();
+    const m=buildModel(), deck=TimelineSlides.toPptx(window.PptxGenJS,TimelineSlides.build(m),{title:m.client+" Implementation Timeline"});
+    const blob=await deck.write({outputType:"blob"});
+    const name=(m.client.replace(/[\\/:*?"<>|]+/g,"").trim()||"Client")+" Implementation Timeline.pptx";
+    if(dlApi){await dlApi.save({filename:name,data:blob}); toast("PowerPoint saved");}
+    else{ // plain browser download: works when the page is opened as a file on your computer
+      const url=URL.createObjectURL(blob), link=document.createElement("a");
+      link.href=url; link.download=name; document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+      toast(window.claude?"If nothing downloaded, use the desktop copy of this tool from your Claude chat.":"PowerPoint downloaded");}
+  }catch(err){
+    const c=err&&err.code;
+    if(c==="declined")toast("Download canceled");
+    else if(c==="rate_limited")toast("A download prompt is already open");
+    else if(err&&err.message==="load")toast("Couldn't load the PowerPoint builder. Check your connection and try again.");
+    else toast("Download isn't available here. Use Slide view and screenshot.");
+  }finally{b.disabled=false;b.textContent=label;}
+});
+
+renderBrand();
+render();
+})();
+</script>
+</body></html>
