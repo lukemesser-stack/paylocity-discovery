@@ -403,8 +403,7 @@ function table(m,P){
   rows.forEach((r,i)=>{const y=top+.4+i*rh;
     if(i%2===1)els.push({t:"rect",x:.5,y,w:W-1,h:rh,fill:C.softer});
     if(r.isCheck)els.push({t:"rect",x:.5,y,w:W-1,h:rh,fill:mix(P.check,.1)});
-    els.push({t:"rect",shape:"ellipse",x:.58,y:y+rh/2-.06,w:.12,h:.12,fill:P[r.phase]});
-    els.push({t:"text",x:.8,y,w:1.65,h:rh,text:r.dateLabel,size:sz+.5,bold:true,color:r.isCheck?P.check:C.ink,m:0});
+    els.push({t:"text",x:.5,y,w:1.95,h:rh,text:r.dateLabel,size:sz+.5,bold:true,color:r.isCheck?P.check:C.ink,m:0});
     els.push({t:"text",x:2.55,y,w:3.3,h:rh,text:r.name+(r.recur?"  (weekly)":""),size:sz+.5,bold:true,color:C.ink,m:0});
     els.push({t:"text",x:5.95,y,w:6.88,h:rh,text:r.desc.join("  ·  "),size:sz,color:C.muted,m:0});
   });
