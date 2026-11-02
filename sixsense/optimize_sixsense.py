@@ -345,9 +345,17 @@ def main():
         html = template.read_text(encoding="utf-8")
         marker = "/*__EMBEDDED_DATA__*/null"
         assert marker in html, "dashboard_template.html is missing the data marker"
-        payload = json.dumps(out, ensure_ascii=False).replace("</", "<\\/")
+        payload = json.dumps(out, ensure_ascii=False).replace("<", "\\u003c")
+        stamp = datetime.now().astimezone().isoformat(timespec="seconds")
+        page = html.replace(marker, payload, 1).replace("const PUBLISHED_AT = null;", f"const PUBLISHED_AT = {json.dumps(stamp)};", 1)
+        # _share.html: the page fragment claude.ai publishes (it adds its own <html>/<head>)
+        share_path = dst.with_name(dst.stem + "_share.html")
+        share_path.write_text(page, encoding="utf-8")
+        # _dashboard.html: the same page wrapped as a normal file you open from disk
         html_path = dst.with_name(dst.stem + "_dashboard.html")
-        html_path.write_text(html.replace(marker, payload, 1), encoding="utf-8")
+        html_path.write_text('<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n'
+                             '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n</head>\n<body>\n'
+                             + page + '\n</body>\n</html>\n', encoding="utf-8")
 
     tiers = {}
     for a in ranked:

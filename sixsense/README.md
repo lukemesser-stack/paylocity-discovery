@@ -22,6 +22,12 @@
 - **⬇ Call list CSV** exports the rows you're currently looking at.
 - Scores are recalculated against today's date every time you open the page, so the file never goes stale. Add `?today=YYYY-MM-DD` to the URL to see the ranking as of another day.
 
+## Sharing with your SDR
+The run also writes `6SENSE_Update_File_share.html`. That's the same dashboard, published as a claude.ai page.
+- The owner (and anyone you add as an Editor) can click **Worked**, write notes and import emails. Each change saves the page itself, and everyone with the link sees it.
+- Anyone else with the link gets a read-only copy: the same ranking, reasons, pages and notes, plus the CSV export.
+- To push a fresh JSON run, ask Claude to republish `_share.html` to the same link, or just drop the JSON on the shared page.
+
 The scoring rules are written twice, once in the script and once in the template. If you change one, change the other.
 
 Re-running is safe: the output is the same each time, and a `.bak` copy of the previous file is kept. The JSON is still a flat `{company: account}` dict, so the dashboard keeps working.

@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>6sense Target Now</title>
+<!--6S-START--><title>6sense Target Now</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <style>
+  /* Layout: command header, filter cards, today's call cards, then the ranked table. Single dark look on purpose. */
   :root {
+    color-scheme: dark;
     --bg: #0a0c0f;
     --surface: #111318;
     --surface-2: #181c23;
@@ -39,7 +37,7 @@
 
   /* Header */
   .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-    padding: 18px 32px 14px; border-bottom: 1px solid var(--border);
+    padding-block: 18px 14px; padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--border);
     background: linear-gradient(180deg, rgba(79,110,247,0.06) 0%, transparent 100%); }
   .brand { display: flex; align-items: center; gap: 14px; }
   .logo-mark { width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; color: #fff;
@@ -59,7 +57,7 @@
   .save-state.ok { color: var(--green); }
   .save-state.err { color: var(--a); }
 
-  .wrap { padding: 20px 32px 40px; display: flex; flex-direction: column; gap: 20px; }
+  .wrap { padding-block: 20px 40px; padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 20px; }
   h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-2);
     display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
   h2 small { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text-dim); font-size: 12px; }
@@ -196,20 +194,21 @@
   .notes { width: 100%; min-height: 64px; background: var(--bg); border: 1px solid var(--border-bright); border-radius: var(--radius-sm); padding: 8px; font-size: 12px; resize: vertical; }
   .muted { color: var(--text-dim); font-size: 12px; }
 
-  footer { padding: 16px 32px 28px; color: var(--text-dim); font-size: 11px; border-top: 1px solid var(--border); }
+  .share-badge { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: var(--accent-dim); color: var(--accent); white-space: nowrap; }
+  .share-badge.ro { background: var(--d-dim); color: var(--text-2); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+  footer { padding-block: 16px 28px; padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); color: var(--text-dim); font-size: 11px; border-top: 1px solid var(--border); }
 
   @media (max-width: 1100px) {
     .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .detail-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 640px) {
-    .header, .wrap, footer { padding-left: 16px; padding-right: 16px; }
+    .header, .wrap, footer { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
     .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .col-why, .col-sf { display: none; }
   }
 </style>
-</head>
-<body>
 
 <header class="header">
   <div class="brand">
@@ -220,6 +219,7 @@
     </div>
   </div>
   <div class="header-actions">
+    <span class="share-badge hidden" id="shareBadge"></span>
     <span class="save-state" id="saveState">Ready</span>
     <button class="btn primary" id="btnImport">⬆ Add emails / JSON</button>
     <button class="btn" id="btnCsv" title="Download the rows currently shown as a CSV call list">⬇ Call list CSV</button>
@@ -297,6 +297,16 @@
 <script>
 // Data is injected by optimize_sixsense.py. Do not edit by hand.
 const EMBEDDED_DATA = /*__EMBEDDED_DATA__*/null;
+const PUBLISHED_AT = null;
+// The page's own source as served, captured before anything renders. Used to republish itself when shared.
+const PAGE_SRC = (() => {
+  try {
+    const html = document.body.innerHTML;
+    const s = html.indexOf('<!-' + '-6S-START-->');
+    const e = html.lastIndexOf('</scr' + 'ipt>');
+    return s >= 0 && e > s ? html.slice(s, e + 9) : null;
+  } catch (err) { return null; }
+})();
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Scoring config: keep in sync with optimize_sixsense.py
@@ -565,6 +575,8 @@ function toObject() {
 }
 
 function persist() {
+  if (share.mode === 'writer') { schedulePublish(1500); return; }
+  if (share.mode === 'reader') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toObject()));
     setSaveState('ok', 'Saved in this browser');
@@ -664,8 +676,10 @@ function renderHeader() {
   const all = accounts.flatMap(a => [...a.dates, ...a.activity_dates]).filter(Boolean).sort();
   const range = all.length ? `${fmtDate(all[0])} → ${fmtDate(all[all.length - 1])}` : 'no data yet';
   const files = new Set(accounts.flatMap(a => a.source_files)).size;
+  const upd = PUBLISHED_AT ? new Date(PUBLISHED_AT) : null;
+  const updText = upd && !isNaN(upd) ? ` · updated ${upd.toLocaleDateString()} ${upd.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : '';
   document.getElementById('subline').innerHTML =
-    `Scored for <b>${fmtDate(TODAY)}</b> · activity ${esc(range)} · <b>${accounts.length}</b> accounts`;
+    `Scored for <b>${fmtDate(TODAY)}</b> · activity ${esc(range)} · <b>${accounts.length}</b> accounts${esc(updText)}`;
   document.getElementById('footer').textContent =
     `${accounts.length} accounts · ${files} source emails · score = recency 25 + momentum 15 + stage 20 + fit 15 + pages 15 + volume 5 + competitor 5 (+2 known contact). Tier A ≥ 65, B ≥ 45, C ≥ 28; silent 60+ days caps at C.`;
   document.title = `6sense Target Now · ${fmtDate(TODAY)}`;
@@ -703,7 +717,7 @@ function renderFocus() {
       <span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>
       <div class="reasons">${reasons(a).slice(0, 3).map(r => `<span>${esc(r.s)}</span>`).join('')}</div>
       <div class="fcard-actions">
-        <button class="work-btn" data-work="${esc(a.company)}">✓ Worked</button>
+        ${share.mode === 'reader' ? '' : `<button class="work-btn" data-work="${esc(a.company)}">✓ Worked</button>`}
         ${a.website ? `<a class="btn sm" href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener">Website ↗</a>` : ''}
         <button class="btn sm" data-jump="${esc(a.company)}">Details</button>
       </div>
@@ -754,7 +768,7 @@ function rowHtml(a) {
     <td class="when"><div class="num">${p.last_activity ? fmtDate(p.last_activity) : '—'} ${trend}</div><div class="ago">${agoText(p.days_since_activity)}</div>${spark(a)}</td>
     <td class="col-why"><div class="why">${reasons(a).map(r => `<span class="${r.t}">${esc(r.s)}</span>`).join('')}</div></td>
     <td><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span></td>
-    <td><button class="work-btn ${a.worked_on === TODAY ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${a.worked_on === TODAY ? '✓ Worked' : 'Worked?'}</button></td>
+    <td>${share.mode === 'reader' ? '' : `<button class="work-btn ${a.worked_on === TODAY ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${a.worked_on === TODAY ? '✓ Worked' : 'Worked?'}</button>`}</td>
   </tr>`;
 }
 
@@ -803,7 +817,7 @@ function detailHtml(a) {
         ${a.aliases.length ? `<div class="dblock"><div class="dlabel">Also appears as</div><div class="muted">${esc(a.aliases.join(' · '))}</div></div>` : ''}
         ${a.possible_duplicate_of.length ? `<div class="dblock"><div class="dlabel">Possible duplicate of</div><div class="muted">${esc(a.possible_duplicate_of.join(' · '))}. Confirm, then add to ALIASES in optimize_sixsense.py.</div></div>` : ''}
         <div class="dblock"><div class="dlabel">Notes</div>
-          <textarea class="notes" data-notes="${esc(a.company)}" placeholder="Call notes, next step, who you spoke with…">${esc(a.notes || '')}</textarea>
+          <textarea class="notes" id="notes-${esc(slug(a.company))}" data-notes="${esc(a.company)}" ${share.mode === 'reader' ? 'readonly' : ''} placeholder="${share.mode === 'reader' ? 'No notes yet' : 'Call notes, next step, who you spoke with…'}">${esc(a.notes || '')}</textarea>
           <div class="muted" style="margin-top:4px">${isISO(a.worked_on) ? 'Last worked ' + fmtDate(a.worked_on) : 'Not worked yet'}</div></div>
       </div>
     </div>
@@ -827,7 +841,7 @@ document.addEventListener('click', e => {
   const t = e.target;
   if (t.closest('[data-stop]')) return;
   const work = t.closest('[data-work]');
-  if (work) { e.stopPropagation(); toggleWorked(work.dataset.work); return; }
+  if (work && share.mode !== 'reader') { e.stopPropagation(); toggleWorked(work.dataset.work); return; }
   const jump = t.closest('[data-jump]');
   if (jump) {
     const name = jump.dataset.jump;
@@ -865,7 +879,11 @@ document.addEventListener('input', e => {
   a.notes = ta.value;
   clearTimeout(notesTimer);
   setSaveState('', 'Saving…');
+  if (share.mode === 'writer') { setSaveState('', 'Unsaved note: click outside the box to share it'); return; }
   notesTimer = setTimeout(persist, 500);
+});
+document.addEventListener('change', e => {
+  if (e.target.closest('textarea[data-notes]') && share.mode === 'writer') schedulePublish(0);
 });
 
 function clearFilters(rerender = true) {
@@ -888,6 +906,10 @@ document.addEventListener('keydown', e => {
 
 // Downloads
 function download(name, text, type) {
+  if (share.downloads) {
+    share.downloads.save({ filename: name, data: text }).catch(() => setSaveState('err', 'Download was not saved'));
+    return;
+  }
   const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -940,6 +962,7 @@ document.addEventListener('drop', e => {
   if (e.target.closest && e.target.closest('#drop')) return;
   if (e.dataTransfer && e.dataTransfer.files.length) {
     e.preventDefault();
+    if (share.mode === 'reader') return;
     document.getElementById('importPanel').classList.remove('hidden');
     handleFiles(e.dataTransfer.files);
   }
@@ -949,13 +972,19 @@ document.getElementById('btnClearLog').addEventListener('click', () => {
   staged = []; document.getElementById('log').innerHTML = ''; document.getElementById('btnApply').classList.add('hidden');
 });
 document.getElementById('btnApply').addEventListener('click', applyStaged);
-document.getElementById('btnRestore').addEventListener('click', () => document.getElementById('restoreInput').click());
+// two-step confirm (dialogs are blocked inside claude.ai pages)
+let restoreArmed = 0;
+document.getElementById('btnRestore').addEventListener('click', e => {
+  if (Date.now() - restoreArmed < 5000) { restoreArmed = 0; e.target.textContent = 'Restore from JSON (replace all)'; document.getElementById('restoreInput').click(); return; }
+  restoreArmed = Date.now();
+  e.target.textContent = `Click again to replace all ${accounts.length} accounts`;
+  setTimeout(() => { if (restoreArmed && Date.now() - restoreArmed >= 5000) e.target.textContent = 'Restore from JSON (replace all)'; }, 5100);
+});
 document.getElementById('restoreInput').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = '';
   if (!f) return;
   try {
     const data = JSON.parse(await f.text());
-    if (!confirm(`Replace all ${accounts.length} accounts in this browser with the ${Object.keys(data).length} in ${f.name}?`)) return;
     accounts = [];
     ingest(data, 'snapshot');
     persist(); render();
@@ -1156,20 +1185,116 @@ function parseSixsenseText(raw, fileName) {
 function cap(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(); }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Sharing: when opened as a claude.ai page, the page itself is the shared copy.
+// Editors' changes (Worked, notes, imports) republish it, and everyone with
+// the link sees the update. Viewers get a read-only mirror.
+// ═══════════════════════════════════════════════════════════════════════════
+const share = { mode: 'local', artifact: null, downloads: null, timer: null };
+function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60); }
+
+const SESSION_UI_KEY = 'sixsense_ui_session';
+function saveSessionUi() {
+  try {
+    sessionStorage.setItem(SESSION_UI_KEY, JSON.stringify({ q: ui.q, tiers: [...ui.tiers], stage: ui.stage, fit: ui.fit, card: ui.card,
+      hideWorked: ui.hideWorked, sort: ui.sort, dir: ui.dir, open: [...ui.open], y: window.scrollY }));
+  } catch (e) { /* ignore */ }
+}
+function restoreSessionUi() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(SESSION_UI_KEY) || 'null');
+    if (!s) return;
+    sessionStorage.removeItem(SESSION_UI_KEY);
+    Object.assign(ui, { q: s.q || '', stage: s.stage || '', fit: s.fit || '', card: s.card || '', hideWorked: s.hideWorked !== false,
+      sort: s.sort || 'score', dir: s.dir || -1 });
+    ui.tiers = new Set(s.tiers || []); ui.open = new Set(s.open || []);
+    document.getElementById('q').value = ui.q;
+    document.getElementById('fStage').value = ui.stage;
+    document.getElementById('fFit').value = ui.fit;
+    if (s.y) setTimeout(() => window.scrollTo(0, s.y), 0);
+  } catch (e) { /* ignore */ }
+}
+
+async function initShare() {
+  const use = n => window.claude.use(n).catch(() => null);
+  const [art, dl, user] = await Promise.all([use('artifact'), use('downloads'), use('user')]);
+  share.downloads = dl;
+  if (!art || !PAGE_SRC) return;            // not running as a shared page: stay local
+  share.artifact = art;
+  let canEdit = false;
+  try { canEdit = user ? await user.canEdit() : false; } catch (e) { canEdit = false; }
+  setShareMode(canEdit ? 'writer' : 'reader');
+}
+
+function setShareMode(mode) {
+  share.mode = mode;
+  const badge = document.getElementById('shareBadge');
+  badge.classList.remove('hidden');
+  badge.classList.toggle('ro', mode === 'reader');
+  badge.textContent = mode === 'writer' ? 'Shared · your changes update everyone' : 'Shared view · read only';
+  badge.title = mode === 'writer'
+    ? 'Worked marks, notes and imported emails are saved to this page for everyone who has the link.'
+    : 'This is a live copy of the owner\'s dashboard. It updates when they make changes.';
+  for (const id of ['btnImport', 'btnSave']) document.getElementById(id).classList.toggle('hidden', mode === 'reader');
+  if (mode === 'reader') document.getElementById('importPanel').classList.add('hidden');
+  setSaveState(mode === 'writer' ? 'ok' : '', mode === 'writer' ? 'Up to date' : '');
+  render();
+}
+
+function buildDocument() {
+  const head = document.head.querySelector('style');
+  const reset = head ? head.textContent : '';
+  const swap = (src, key, value) => {
+    const i = src.indexOf(key);
+    if (i < 0) throw new Error('page source is missing ' + key);
+    const j = key.startsWith('const EMBEDDED_DATA') ? src.indexOf(';\n', i) : src.indexOf(';', i);
+    return src.slice(0, i + key.length) + value + src.slice(j);
+  };
+  let src = PAGE_SRC;
+  src = swap(src, 'const EMBEDDED_DATA = ', JSON.stringify(toObject()).replace(/</g, '\\u003c'));
+  src = swap(src, 'const PUBLISHED_AT = ', JSON.stringify(new Date().toISOString()));
+  return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>' +
+    reset + '</style></head><body>' + src + '</body></html>';
+}
+
+function schedulePublish(delay) {
+  clearTimeout(share.timer);
+  setSaveState('', 'Sharing changes…');
+  share.timer = setTimeout(publishNow, delay);
+}
+
+async function publishNow() {
+  if (share.mode !== 'writer' || !share.artifact) return;
+  let doc;
+  try { doc = buildDocument(); } catch (e) { setSaveState('err', 'Could not share: ' + e.message); return; }
+  saveSessionUi();
+  try {
+    await share.artifact.publish(doc);      // every open view, this one included, reloads to the new version
+    setSaveState('ok', 'Shared');
+  } catch (err) {
+    const code = err && err.code;
+    if (code === 'conflict') setSaveState('', 'Someone else just saved. Reloading…');
+    else if (code === 'not_writer' || code === 'not_granted') { setSaveState('err', 'Read-only: changes were not saved'); setShareMode('reader'); }
+    else setSaveState('err', 'Could not share changes' + (code ? ' (' + code + ')' : '') + '. Use 💾 Save JSON as a backup.');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Init
 // ═══════════════════════════════════════════════════════════════════════════
 (function init() {
   loadPrefs();
+  restoreSessionUi();
   if (EMBEDDED_DATA) ingest(EMBEDDED_DATA, 'snapshot');
+  // Inside claude.ai the published page is the shared record, so this browser's copy is not merged in.
+  const inClaude = !!(window.claude && typeof window.claude.use === 'function');
   let stored = null;
-  try { stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (e) { stored = null; }
+  try { stored = inClaude ? null : JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (e) { stored = null; }
   if (stored && typeof stored === 'object' && Object.keys(stored).length) {
     ingest(stored, 'snapshot');
     setSaveState('ok', 'Merged with this browser\'s saved data');
   }
   if (!accounts.length) document.getElementById('importPanel').classList.remove('hidden');
   render();
+  if (inClaude) initShare();
 })();
 </script>
-</body>
-</html>
