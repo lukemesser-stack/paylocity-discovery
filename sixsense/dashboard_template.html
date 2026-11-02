@@ -1110,16 +1110,50 @@ async function handleFiles(fileList) {
   if (staged.length) log('info', `Review the list above, then click ✓ Apply to merge ${staged.length} file${staged.length === 1 ? '' : 's'}.`);
 }
 
-function applyStaged() {
+async function applyStaged() {
+  const applyBtn = document.getElementById('btnApply');
+  applyBtn.disabled = true;
   const before = new Map(accounts.map(a => [a.company, a.priority.score]));
   let added = 0, merged = 0;
-  for (const s of staged) { const r = ingest(s.data, s.mode); added += r.added; merged += r.merged; }
+  const touched = new Set();
+  for (const s of staged) {
+    const r = ingest(s.data, s.mode); added += r.added; merged += r.merged;
+    for (const raw of Object.values(s.data || {})) {
+      if (!raw || !raw.company) continue;
+      const a = findExisting(clean(raw));
+      if (a) touched.add(a);
+    }
+  }
   staged = [];
-  persist(); render();
+  render();
   const jumped = accounts.filter(a => before.has(a.company) && a.priority.score - before.get(a.company) >= 10).map(a => a.company);
   log('ok', `✓ Applied: ${added} new accounts, ${merged} updated.${jumped.length ? ' Big movers: ' + esc(jumped.slice(0, 5).join(', ')) : ''}`);
-  log('info', 'Click 💾 Save JSON to keep a copy of the update file.');
-  document.getElementById('btnApply').classList.add('hidden');
+
+  // Auto ZoomInfo: accounts from these files that now rank Call today / This week (free accounts only, once a day)
+  const targets = [...touched].filter(a => 'AB'.includes(tierLetter(a)) && !(a.zi && a.zi.pulled_on === TODAY && !a.zi.skipped));
+  if (ziCanRefresh() && targets.length && !ziState.busy) {
+    ziState.busy = true;
+    log('info', `Checking ZoomInfo for ${targets.length} Call today / This week account${targets.length === 1 ? '' : 's'}: ${esc(targets.map(a => a.company).slice(0, 6).join(', '))}${targets.length > 6 ? '…' : ''}`);
+    setSaveState('', 'ZoomInfo: checking new hot accounts…');
+    try {
+      const r = await ziRefresh(targets, false);
+      r.needCredits.forEach(a => { a.zi.skipped = a.zi.skipped || 'Not pulled: not under management in ZoomInfo, so it would cost credits.'; });
+      const withIntent = r.pulled.filter(a => ziRecent(a).length);
+      log('ok', `✓ ZoomInfo: ${r.pulled.length} updated${withIntent.length ? ' (' + esc(withIntent.map(a => a.company + ': ' + ziRecent(a).slice(0, 2).map(t => shortTopic(t.topic)).join(', ')).join(' · ')) + ')' : ''}` +
+        (r.needCredits.length ? ` · ${r.needCredits.length} skipped (would cost credits; use the account's ZoomInfo button)` : '') +
+        (r.noMatch.length ? ` · ${r.noMatch.length} not found in ZoomInfo` : ''));
+    } catch (err) {
+      log('warn', '⚠ ' + esc(ziErrorText(err)) + ' The email data is still saved.');
+    } finally {
+      ziState.busy = false;
+    }
+  } else if (targets.length && !ziCanRefresh() && share.mode === 'writer') {
+    log('info', 'ZoomInfo is not available on this page right now, so intent was not refreshed.');
+  }
+  persist(); render();
+  applyBtn.disabled = false;
+  applyBtn.classList.add('hidden');
+  log('info', 'Saved. Click 💾 Save JSON any time for a backup copy.');
 }
 
 // ── .msg (Outlook / OLE compound file) → plain-text body ──
