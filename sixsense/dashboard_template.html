@@ -360,7 +360,7 @@ function uniqSorted(list) { return Array.from(new Set((list || []).filter(x => x
 
 function clean(src) {
   const a = { ...src };
-  for (const f of ['keywords', 'competitor_keywords', 'decoded_urls', 'contacts', 'form_fills', 'dates', 'activity_dates', 'source_files', 'aliases', 'possible_duplicate_of'])
+  for (const f of ['keywords', 'competitor_keywords', 'decoded_urls', 'contacts', 'form_fills', 'dates', 'activity_dates', 'source_files', 'aliases', 'possible_duplicate_of', 'surge_topics'])
     a[f] = Array.isArray(a[f]) ? a[f].slice() : [];
   for (const f of ['signal_count', 'web_visits']) a[f] = parseInt(a[f], 10) || 0;
   for (const f of ['stage', 'fit', 'reach', 'website', 'company']) a[f] = String(a[f] || '').trim();
@@ -384,6 +384,7 @@ function clean(src) {
   [...a.keywords, ...a.competitor_keywords].forEach(k => { if (COMPETITORS.includes(String(k).trim().toLowerCase())) comp.add(k); });
   a.competitor_keywords = Array.from(comp).sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase()));
   a.keywords = uniqSorted(a.keywords);
+  a.surge_topics = dedupeObjects(a.surge_topics.filter(t => t && t.topic)).sort((x, y) => (y.date || '').localeCompare(x.date || ''));
   return a;
 }
 
@@ -448,7 +449,7 @@ function score(a) {
 }
 
 function hasKw(a, ...words) {
-  const blob = a.keywords.join(' | ').toLowerCase();
+  const blob = [...a.keywords, ...a.surge_topics.map(t => t.topic)].join(' | ').toLowerCase();
   return words.some(w => blob.includes(w));
 }
 
@@ -490,6 +491,8 @@ function reasons(a) {
   else if (ad) out.push({ t: '', s: `Ad landing page ${fmtDate(ad.date)}` });
   if (a.six_qa_on) out.push({ t: 'hot', s: `6sense Qualified Account (6QA) since ${fmtDate(a.six_qa_on)}` });
   if (a.competitor_keywords.length) out.push({ t: 'hot', s: `Researching ${a.competitor_keywords.join(', ')}` });
+  const surge = a.surge_topics.filter(t => isISO(t.date) && daysBetween(TODAY, t.date) <= 30);
+  if (surge.length) out.push({ t: 'hot', s: `Bombora surge: ${uniqSorted(surge.map(t => t.topic)).join(', ')} (${fmtDate(surge[0].date)})` });
   const kws = a.keywords.filter(k => !a.competitor_keywords.includes(k)).slice(0, 3);
   if (kws.length) out.push({ t: '', s: kws.join(' · ') });
   return out;
@@ -552,6 +555,7 @@ function mergeInto(ex, inc, mode) {
   ex.decoded_urls = dedupeUrls([...ex.decoded_urls, ...inc.decoded_urls]);
   ex.contacts = dedupeObjects([...ex.contacts, ...inc.contacts]);
   ex.form_fills = dedupeObjects([...ex.form_fills, ...inc.form_fills]);
+  ex.surge_topics = dedupeObjects([...ex.surge_topics, ...inc.surge_topics]).sort((x, y) => (y.date || '').localeCompare(x.date || ''));
   for (const f of ['email_date', 'activity_date', '_latest_date']) if ((inc[f] || '') > (ex[f] || '')) ex[f] = inc[f];
   ex.aliases = union(ex.aliases, [...(inc.aliases || []), inc.company]).filter(n => n !== ex.company);
   ex.possible_duplicate_of = union(ex.possible_duplicate_of, inc.possible_duplicate_of);
@@ -634,7 +638,7 @@ const CARDS = {
 
 function matchesSearch(a, q) {
   if (!q) return true;
-  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
+  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
     ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw)), ...(a.contacts || []).map(c => (c.name || '') + ' ' + (c.title || '')), a.notes || ''].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
 }
@@ -822,6 +826,7 @@ function detailHtml(a) {
         <div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
           ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>
         <div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>
+        ${a.surge_topics.length ? `<div class="dblock"><div class="dlabel">Bombora surge topics</div><div class="pages">${a.surge_topics.map(t => `<div><span class="d num">${fmtDate(t.date)}</span><span>${esc(t.topic)}</span></div>`).join('')}</div></div>` : ''}
       </div>
       <div>
         ${contacts ? `<div class="dblock"><div class="dlabel">Known contacts</div><div style="font-size:12px">${contacts}</div></div>` : ''}
@@ -1160,6 +1165,10 @@ function parseSixsenseText(raw, fileName) {
     if ((m = line.match(/Account Reach:\s*([A-Za-z]+)/i))) cur.reach = cap(m[1]);
     if ((m = line.match(/^(\d+)\s+Web Visits?\b/i)) && !cur._visits) { cur._visits = true; cur.web_visits += +m[1]; cur.signal_count += +m[1]; }
     if ((m = line.match(/(\d+)\s+Keywords?\s*-\s*(\d+)\s+times?\s+researched/i)) && !cur._kwcount) { cur._kwcount = true; cur.signal_count += +m[2]; }
+    if ((m = line.match(/\d+\s+Bombora Company Surge Topics?:\s*(.+)$/i))) {
+      m[1].split(/\s*[,;]\s*/).map(t => t.trim()).filter(Boolean).forEach(topic => cur.surge_topics.push({ topic, date }));
+      return;
+    }
     if ((m = line.match(/^(https?:\/\/[^\s<>]+)/i)) && /paylocity\.com/i.test(m[1])) {
       const url = m[1].replace(/[),.;]+$/, '');
       cur.decoded_urls.push({ decoded: url, raw: url, date });
@@ -1179,7 +1188,7 @@ function parseSixsenseText(raw, fileName) {
     const dm = lines.length >= 2 && looksLikeCompany(lines[0]) ? lines[1].match(DOMAIN_RE) : null;
     if (dm) {
       cur = { company: lines[0], website: 'https://' + dm[1].toLowerCase().replace(/^www\./, ''), stage: '', fit: '', reach: '',
-        signal_count: 0, web_visits: 0, keywords: [], competitor_keywords: [], decoded_urls: [], contacts: [], form_fills: [],
+        signal_count: 0, web_visits: 0, keywords: [], competitor_keywords: [], decoded_urls: [], contacts: [], form_fills: [], surge_topics: [],
         dates: activityDate ? [activityDate] : [], activity_dates: activityDate ? [activityDate] : [],
         email_date: activityDate, activity_date: activityDate, _latest_date: activityDate, source_files: [fileName] };
       accounts.push(cur);

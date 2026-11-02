@@ -98,7 +98,7 @@ def merge_into(dst, src):
         if (u.get("decoded"), u.get("date")) not in seen:
             dst.setdefault("decoded_urls", []).append(u)
             seen.add((u.get("decoded"), u.get("date")))
-    for f in ("contacts", "form_fills"):
+    for f in ("contacts", "form_fills", "surge_topics"):
         existing = {json.dumps(x, sort_keys=True) for x in dst.get(f, [])}
         for x in src.get(f, []):
             if json.dumps(x, sort_keys=True) not in existing:
@@ -131,7 +131,7 @@ def clean(account):
     a = account
     # consistent schema for every record
     for f in ("keywords", "competitor_keywords", "decoded_urls", "contacts", "form_fills",
-              "dates", "activity_dates", "source_files"):
+              "dates", "activity_dates", "source_files", "surge_topics"):
         a[f] = a.get(f) or []
     for f in ("signal_count", "web_visits"):
         a[f] = int(a.get(f) or 0)
@@ -165,6 +165,12 @@ def clean(account):
     a["keywords"] = sorted(set(a["keywords"]), key=str.lower)
 
     a["decoded_urls"].sort(key=lambda u: u.get("date") or "", reverse=True)
+    seen_t, topics = set(), []
+    for t in a["surge_topics"]:
+        k = (t.get("topic"), t.get("date"))
+        if t.get("topic") and k not in seen_t:
+            seen_t.add(k); topics.append(t)
+    a["surge_topics"] = sorted(topics, key=lambda t: t.get("date") or "", reverse=True)
     a["contacts"] = [fix_contact(c) for c in a["contacts"]]
     return a
 
@@ -234,7 +240,7 @@ def score(a, today):
 
 
 def has_kw(a, *words):
-    blob = " | ".join(a["keywords"]).lower()
+    blob = " | ".join(a["keywords"] + [t["topic"] for t in a.get("surge_topics", [])]).lower()
     return any(w in blob for w in words)
 
 
@@ -325,7 +331,7 @@ def main():
 
     # field order: the things you look at first, then the history
     order = ["company", "priority", "stage", "fit", "reach", "website", "signal_count", "web_visits",
-             "competitor_keywords", "keywords", "contacts", "form_fills", "decoded_urls",
+             "competitor_keywords", "keywords", "surge_topics", "contacts", "form_fills", "decoded_urls",
              "activity_date", "email_date", "_latest_date", "dates", "activity_dates", "source_files",
              "aliases", "possible_duplicate_of", "six_qa_on", "worked_on", "notes"]
     out = {a["company"]: {**{k: a[k] for k in order if k in a}, **{k: v for k, v in a.items() if k not in order}}
