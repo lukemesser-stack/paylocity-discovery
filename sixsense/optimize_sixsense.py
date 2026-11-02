@@ -1,0 +1,350 @@
+#!/usr/bin/env python3
+"""
+Clean, de-duplicate and score the 6sense accounts JSON so you know who to call today.
+
+Usage (run it every time you add new 6sense email alerts to the JSON):
+
+    python3 optimize_sixsense.py 6SENSE_Update_File.json
+    python3 optimize_sixsense.py 6SENSE_Update_File.json --top 25 --today 2026-11-02
+
+Writes, next to the input file:
+    <name>.json  (overwritten in place, a .bak copy is kept) - same shape the dashboard expects,
+                 plus a `priority` block on every account, sorted best-first
+    <name>_target_now.csv - ranked call list, opens in Excel
+
+Standard library only. The output stays a flat {company: account} dict, so the existing
+6sense dashboard and its drag-and-drop merge keep working.
+"""
+import argparse
+import csv
+import json
+import math
+import re
+import shutil
+import sys
+from datetime import date, datetime
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Configuration: edit these as you learn more about your accounts
+# ---------------------------------------------------------------------------
+
+# Alternate names 6sense uses for the same company -> the name to keep.
+# Applied on every run, so a new alert under an alias is folded in automatically.
+ALIASES = {
+    "National Realty Of Brevard, Inc.": "National Realty Of Brevard",
+    "COLORVISION INC": "Colorvision",
+    "World Hotels": "WorldHotels",
+    "Mitsukoshi, Inc.": "Mitsukoshi",
+    "Silver Springs Bottled Water Co Inc": "Silver Springs Bottled Water Company",
+    "ACCESS | MANAGEMENT ∙ REALTY ∙ MAINTENANCE ∙ LIFESTYLE": "Access Residential Management, LLC",
+}
+
+# Look alike but have different websites or names, so they are flagged and not merged.
+# Move a pair into ALIASES once you confirm it is the same company.
+POSSIBLE_DUPLICATES = [
+    ("Di Pasqua Enterprises", "Dipasqua Enterprises, Inc."),   # dipasqua.com vs subwaydipasqua.com
+    ("Hillpointe", "Hillpointe LLC"),                          # hillpointe.com vs pointegrand.com
+    ("Velovita", "Jeunesse.Global"),                           # both map to velovita.com
+    ("Access Residential Management, LLC", "Ahm Rbr Associates, LLC"),  # both accessdifference.com
+]
+
+COMPETITORS = ["adp", "workable", "rippling", "expensify", "pluralsight", "beti",
+               "paycor", "paychex", "ultimate software", "ukg", "gusto", "bamboohr",
+               "workday", "paycom", "isolved", "dayforce", "ceridian", "namely", "trinet"]
+
+# Paylocity pages where someone is raising their hand (strongest web signal there is).
+HAND_RAISE_PAGES = ["/request-a-demo", "/contact", "/pricing", "/get-a-quote"]
+# Paid-ad / campaign landing pages: real interest, but often one click from an ad.
+AD_LANDING_PAGES = ["/lp/", "/learn-more", "/demo/"]
+
+STAGE_POINTS = {"purchase": 20, "decision": 18, "consideration": 13, "awareness": 6, "target": 3}
+FIT_POINTS = {"strong": 15, "moderate": 8, "weak": 0}
+REACH_POINTS = {"high": 0, "medium": 0, "low": 0}  # reach is about *our* coverage, not their intent
+
+# Words that the .msg parser sometimes glues onto the end of a contact name instead of the title.
+TITLE_SPILL = {"account", "senior", "sr.", "sr", "hr", "payroll", "office", "operations", "general",
+               "regional", "executive", "assistant", "vice", "chief", "human", "benefits", "finance"}
+
+# ---------------------------------------------------------------------------
+
+
+def norm_comp(text):
+    return text.strip().lower()
+
+
+def parse_d(s):
+    try:
+        return datetime.strptime(s, "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return None
+
+
+def merge_into(dst, src):
+    """Same merge rules the skill/dashboard uses."""
+    dst["signal_count"] = dst.get("signal_count", 0) + src.get("signal_count", 0)
+    dst["web_visits"] = dst.get("web_visits", 0) + src.get("web_visits", 0)
+    if (src.get("_latest_date") or "") > (dst.get("_latest_date") or ""):
+        dst["stage"] = src.get("stage", dst.get("stage"))
+    for f in ("fit", "reach", "website"):
+        if not dst.get(f) and src.get(f):
+            dst[f] = src[f]
+    for f in ("keywords", "competitor_keywords"):
+        dst[f] = sorted(set(dst.get(f, [])) | set(src.get(f, [])), key=str.lower)
+    for f in ("dates", "activity_dates", "source_files"):
+        dst[f] = sorted(set(dst.get(f, [])) | set(src.get(f, [])))
+    seen = {(u.get("decoded"), u.get("date")) for u in dst.get("decoded_urls", [])}
+    for u in src.get("decoded_urls", []):
+        if (u.get("decoded"), u.get("date")) not in seen:
+            dst.setdefault("decoded_urls", []).append(u)
+            seen.add((u.get("decoded"), u.get("date")))
+    for f in ("contacts", "form_fills"):
+        existing = {json.dumps(x, sort_keys=True) for x in dst.get(f, [])}
+        for x in src.get(f, []):
+            if json.dumps(x, sort_keys=True) not in existing:
+                dst.setdefault(f, []).append(x)
+    for f in ("email_date", "activity_date", "_latest_date"):
+        if (src.get(f) or "") > (dst.get(f) or ""):
+            dst[f] = src[f]
+    names = set(dst.get("aliases", [])) | {src["company"]} | set(src.get("aliases", []))
+    dst["aliases"] = sorted(names - {dst["company"]})
+
+
+def fix_contact(c):
+    name, title = (c.get("name") or "").split(), (c.get("title") or "").strip()
+    moved = []
+    while len(name) > 2 and name[-1].lower() in TITLE_SPILL:
+        moved.insert(0, name.pop())
+    if moved:
+        c["name"] = " ".join(name)
+        c["title"] = " ".join(moved + ([title] if title else []))
+    return c
+
+
+def clean(account):
+    a = account
+    # consistent schema for every record
+    for f in ("keywords", "competitor_keywords", "decoded_urls", "contacts", "form_fills",
+              "dates", "activity_dates", "source_files"):
+        a[f] = a.get(f) or []
+    for f in ("signal_count", "web_visits"):
+        a[f] = int(a.get(f) or 0)
+    for f in ("stage", "fit", "reach", "website"):
+        a[f] = (a.get(f) or "").strip()
+
+    # Empty filenames break the dashboard's "already loaded" check.
+    a["source_files"] = sorted({s for s in a["source_files"] if s})
+    a["dates"] = sorted(set(a["dates"]))
+    a["activity_dates"] = sorted(set(a["activity_dates"]))
+
+    # Records added without an email header had no dates. Fill them from the activity history.
+    last = max(a["activity_dates"] + a["dates"], default=None)
+    a.setdefault("email_date", None)
+    if not a.get("activity_date"):
+        a["activity_date"] = max(a["activity_dates"], default=last)
+    if not a.get("_latest_date"):
+        a["_latest_date"] = last
+
+    # Competitor keywords: one consistent list, case-insensitive.
+    found = {k for k in a["keywords"] + a["competitor_keywords"] if norm_comp(k) in COMPETITORS}
+    a["competitor_keywords"] = sorted(found, key=str.lower)
+    a["keywords"] = sorted(set(a["keywords"]), key=str.lower)
+
+    a["decoded_urls"].sort(key=lambda u: u.get("date") or "", reverse=True)
+    a["contacts"] = [fix_contact(c) for c in a["contacts"]]
+    return a
+
+
+def page_path(url):
+    return re.sub(r"^https?://[^/]+", "", url or "") or "/"
+
+
+def score(a, today):
+    """0-100 'call this account now' score. Recency and momentum dominate on purpose:
+    6sense signals cool off fast, so a Decision-stage account that went quiet in March
+    should rank below a Consideration account that has been on the site all week."""
+    days = sorted({d for d in (parse_d(x) for x in a["dates"] + a["activity_dates"]) if d and d <= today})
+    last = days[-1] if days else None
+    since = (today - last).days if last else 999
+
+    # 1. Recency (25)
+    recency = 25 if since <= 7 else 20 if since <= 14 else 14 if since <= 30 else 8 if since <= 60 else 3 if since <= 90 else 0
+    # 2. Momentum (15): distinct active days in last 30, plus acceleration vs the 30 before
+    d30 = sum(1 for d in days if (today - d).days <= 30)
+    d60 = sum(1 for d in days if 30 < (today - d).days <= 60)
+    momentum = min(12, d30 * 3) + (3 if d30 > d60 and d30 >= 2 else 0)
+    # 3. Buying stage (20) & 4. Profile fit (15)
+    stage = STAGE_POINTS.get(a["stage"].lower(), 0)
+    fit = FIT_POINTS.get(a["fit"].lower(), 0)
+    # 5. High-intent pages (15): demo/contact > ad landing pages > any page; recent counts more
+    def pages_matching(patterns, max_age=None):
+        return [u for u in a["decoded_urls"]
+                if any(p in page_path(u.get("decoded")) for p in patterns)
+                and (max_age is None or ((pd := parse_d(u.get("date"))) and (today - pd).days <= max_age))]
+    hand, ad = pages_matching(HAND_RAISE_PAGES), pages_matching(AD_LANDING_PAGES)
+    hot = hand + ad
+    if pages_matching(HAND_RAISE_PAGES, 30):
+        pages = 15
+    elif hand or pages_matching(AD_LANDING_PAGES, 30):
+        pages = 10
+    elif ad:
+        pages = 6
+    else:
+        pages = 3 if a["decoded_urls"] else 0
+    # 6. Volume (5): log-scaled so one huge account does not swamp everything
+    volume = min(5, round(math.log2(1 + a["signal_count"]), 1))
+    # 7. Competitor research (5): they are shopping, and probably on a competitor today
+    comp = 5 if a["competitor_keywords"] else 0
+    # Penalties: we already have a known person to call -> small bump instead
+    known = 2 if a["contacts"] or a["form_fills"] else 0
+
+    total = round(min(100, recency + momentum + stage + fit + pages + volume + comp + known))
+    tier = "A - Call today" if total >= 65 else "B - This week" if total >= 45 else "C - Nurture" if total >= 28 else "D - Monitor"
+    if since > 60 and tier[0] in "AB":  # gone quiet: good account, wrong moment
+        tier = "C - Nurture"
+
+    return {
+        "score": total,
+        "tier": tier,
+        "action": recommended_action(a, since, hand, ad, d30, today),
+        "last_activity": last.isoformat() if last else None,
+        "days_since_activity": since if last else None,
+        "active_days_30d": d30,
+        "active_days_prev_30d": d60,
+        "trend": "heating up" if d30 > d60 else "cooling" if d30 < d60 else "steady",
+        "hot_pages": sorted({page_path(u.get("decoded")) for u in hot}),
+        "breakdown": {"recency": recency, "momentum": momentum, "stage": stage, "fit": fit,
+                      "pages": pages, "volume": volume, "competitor": comp, "known_contact": known},
+        "scored_on": today.isoformat(),
+    }
+
+
+def has_kw(a, *words):
+    blob = " | ".join(a["keywords"]).lower()
+    return any(w in blob for w in words)
+
+
+def recommended_action(a, since, hand, ad, d30, today):
+    """Same priority order as the dashboard's action engine, with a recency gate so a
+    'Call today' never fires on an account that has been silent for months."""
+    stage, fit = a["stage"].lower(), a["fit"].lower()
+    comp = ", ".join(a["competitor_keywords"])
+    fresh = since <= 30
+    recent = lambda us: any((pd := parse_d(u.get("date"))) and (today - pd).days <= 30 for u in us)
+    if recent(hand):
+        return "P1 Call today: visited demo/contact page"
+    if comp and stage == "decision":
+        return f"P1 Close competitor deal ({comp})"
+    if comp and stage == "consideration" and since <= 14:
+        return f"P1 Displace {comp}"
+    if stage in ("decision", "purchase") and fit == "strong" and fresh:
+        return "P1 Push to close"
+    if stage == "consideration" and d30 >= 3 and since <= 7:
+        return "P1 Strike while hot"
+    if recent(ad) and fit in ("strong", "moderate"):
+        return "P2 Follow up on ad click (landing page)"
+    if stage == "consideration" and a["signal_count"] >= 5 and fresh:
+        return "P2 Run discovery"
+    if has_kw(a, "benefit", "enrollment", "aca", "safe harbor", "401k", "retirement") and fresh:
+        return "P2 Benefits pitch"
+    if has_kw(a, "hris", "hcm", "migration", "ultimate software", "paycor", "workday") and stage == "consideration":
+        return "P2 Migration conversation"
+    if stage == "awareness" and a["signal_count"] >= 10 and fresh:
+        return "P2 Warm up"
+    if has_kw(a, "compensation", "pay transparency", "performance"):
+        return "P3 Comp & performance pitch"
+    if has_kw(a, "talent", "recruit", "candidate", "on boarding", "onboarding"):
+        return "P3 Talent suite angle"
+    if has_kw(a, "engagement", "communication", "retention", "culture"):
+        return "P3 Engagement pitch"
+    if has_kw(a, "airbase", "corporate card", "expense"):
+        return "P3 Spend management (Airbase) angle"
+    if fit == "strong":
+        return "P3 Early nurture"
+    return "P4 Monitor"
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("json_file")
+    ap.add_argument("--today", help="YYYY-MM-DD (default: today)")
+    ap.add_argument("--top", type=int, default=20, help="rows to print (default 20)")
+    ap.add_argument("--out", help="write here instead of overwriting the input")
+    args = ap.parse_args()
+
+    src = Path(args.json_file)
+    today = parse_d(args.today) if args.today else date.today()
+    data = json.loads(src.read_text(encoding="utf-8"))
+
+    # junk rows the .msg parser sometimes produces
+    data = {k: v for k, v in data.items()
+            if not k.lower().startswith(("3 web visits",)) and "known contact" not in k.lower()}
+
+    accounts = {}
+    for key, acc in data.items():
+        acc = clean(dict(acc, company=acc.get("company") or key))
+        canon = ALIASES.get(acc["company"], acc["company"])
+        if canon in accounts:
+            if acc["company"] == canon:  # canonical arrived after its alias: swap so its name wins
+                acc, accounts[canon] = accounts[canon], acc
+            merge_into(accounts[canon], acc)
+        else:
+            if acc["company"] != canon:
+                acc["aliases"] = sorted(set(acc.get("aliases", [])) | {acc["company"]})
+                acc["company"] = canon
+            accounts[canon] = acc
+
+    for a, b in POSSIBLE_DUPLICATES:
+        if a in accounts and b in accounts:
+            accounts[a].setdefault("possible_duplicate_of", [])
+            accounts[b].setdefault("possible_duplicate_of", [])
+            if b not in accounts[a]["possible_duplicate_of"]:
+                accounts[a]["possible_duplicate_of"].append(b)
+            if a not in accounts[b]["possible_duplicate_of"]:
+                accounts[b]["possible_duplicate_of"].append(a)
+
+    for acc in accounts.values():
+        acc["priority"] = score(acc, today)
+
+    ranked = sorted(accounts.values(), key=lambda a: (-a["priority"]["score"], a["company"].lower()))
+
+    # field order: the things you look at first, then the history
+    order = ["company", "priority", "stage", "fit", "reach", "website", "signal_count", "web_visits",
+             "competitor_keywords", "keywords", "contacts", "form_fills", "decoded_urls",
+             "activity_date", "email_date", "_latest_date", "dates", "activity_dates", "source_files",
+             "aliases", "possible_duplicate_of"]
+    out = {a["company"]: {**{k: a[k] for k in order if k in a}, **{k: v for k, v in a.items() if k not in order}}
+           for a in ranked}
+
+    dst = Path(args.out) if args.out else src
+    if dst == src:
+        shutil.copy2(src, src.with_suffix(".json.bak"))
+    dst.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    csv_path = dst.with_name(dst.stem + "_target_now.csv")
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["Rank", "Company", "Score", "Tier", "Action", "Stage", "Fit", "Last activity",
+                    "Days since", "Active days (30d)", "Trend", "Competitors", "Hot pages", "Top keywords", "Website"])
+        for i, a in enumerate(ranked, 1):
+            p = a["priority"]
+            w.writerow([i, a["company"], p["score"], p["tier"], p["action"], a["stage"], a["fit"],
+                        p["last_activity"], p["days_since_activity"], p["active_days_30d"], p["trend"],
+                        "; ".join(a["competitor_keywords"]), "; ".join(p["hot_pages"]),
+                        "; ".join(a["keywords"][:6]), a["website"]])
+
+    tiers = {}
+    for a in ranked:
+        tiers[a["priority"]["tier"]] = tiers.get(a["priority"]["tier"], 0) + 1
+    print(f"{len(data)} rows in -> {len(accounts)} accounts out (scored as of {today})")
+    print("  " + " | ".join(f"{t}: {n}" for t, n in sorted(tiers.items())))
+    print(f"  wrote {dst}\n  wrote {csv_path}\n")
+    print(f"{'#':>3} {'Score':>5}  {'Company':<38} {'Stage':<13} {'Fit':<9} {'Last':>10} {'30d':>3}  Action")
+    for i, a in enumerate(ranked[: args.top], 1):
+        p = a["priority"]
+        print(f"{i:>3} {p['score']:>5}  {a['company'][:38]:<38} {a['stage']:<13} {a['fit']:<9} "
+              f"{p['last_activity'] or '-':>10} {p['active_days_30d']:>3}  {p['action']}")
+
+
+if __name__ == "__main__":
+    sys.exit(main())
