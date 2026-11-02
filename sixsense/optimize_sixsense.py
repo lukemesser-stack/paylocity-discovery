@@ -108,6 +108,10 @@ def merge_into(dst, src):
             dst[f] = src[f]
     names = set(dst.get("aliases", [])) | {src["company"]} | set(src.get("aliases", []))
     dst["aliases"] = sorted(names - {dst["company"]})
+    if (src.get("worked_on") or "") > (dst.get("worked_on") or ""):
+        dst["worked_on"] = src["worked_on"]
+    if src.get("notes") and src["notes"] not in (dst.get("notes") or ""):
+        dst["notes"] = "\n".join(filter(None, [dst.get("notes"), src["notes"]]))
 
 
 def fix_contact(c):
@@ -142,8 +146,9 @@ def clean(account):
     a.setdefault("email_date", None)
     if not a.get("activity_date"):
         a["activity_date"] = max(a["activity_dates"], default=last)
-    if not a.get("_latest_date"):
-        a["_latest_date"] = last
+    # always derived from the real dates (the dashboard does the same when merging)
+    url_dates = [u.get("date") for u in a["decoded_urls"] if parse_d(u.get("date"))]
+    a["_latest_date"] = max(a["dates"] + a["activity_dates"] + url_dates, default=None)
 
     # Competitor keywords: one consistent list, case-insensitive.
     found = {k for k in a["keywords"] + a["competitor_keywords"] if norm_comp(k) in COMPETITORS}
@@ -192,13 +197,13 @@ def score(a, today):
     else:
         pages = 3 if a["decoded_urls"] else 0
     # 6. Volume (5): log-scaled so one huge account does not swamp everything
-    volume = min(5, round(math.log2(1 + a["signal_count"]), 1))
+    volume = min(5, math.floor(math.log2(1 + a["signal_count"])))
     # 7. Competitor research (5): they are shopping, and probably on a competitor today
     comp = 5 if a["competitor_keywords"] else 0
     # Penalties: we already have a known person to call -> small bump instead
     known = 2 if a["contacts"] or a["form_fills"] else 0
 
-    total = round(min(100, recency + momentum + stage + fit + pages + volume + comp + known))
+    total = min(100, recency + momentum + stage + fit + pages + volume + comp + known)
     tier = "A - Call today" if total >= 65 else "B - This week" if total >= 45 else "C - Nurture" if total >= 28 else "D - Monitor"
     if since > 60 and tier[0] in "AB":  # gone quiet: good account, wrong moment
         tier = "C - Nurture"
@@ -270,6 +275,7 @@ def main():
     ap.add_argument("--today", help="YYYY-MM-DD (default: today)")
     ap.add_argument("--top", type=int, default=20, help="rows to print (default 20)")
     ap.add_argument("--out", help="write here instead of overwriting the input")
+    ap.add_argument("--no-dashboard", action="store_true", help="skip building <name>_dashboard.html")
     args = ap.parse_args()
 
     src = Path(args.json_file)
@@ -312,7 +318,7 @@ def main():
     order = ["company", "priority", "stage", "fit", "reach", "website", "signal_count", "web_visits",
              "competitor_keywords", "keywords", "contacts", "form_fills", "decoded_urls",
              "activity_date", "email_date", "_latest_date", "dates", "activity_dates", "source_files",
-             "aliases", "possible_duplicate_of"]
+             "aliases", "possible_duplicate_of", "worked_on", "notes"]
     out = {a["company"]: {**{k: a[k] for k in order if k in a}, **{k: v for k, v in a.items() if k not in order}}
            for a in ranked}
 
@@ -333,12 +339,22 @@ def main():
                         "; ".join(a["competitor_keywords"]), "; ".join(p["hot_pages"]),
                         "; ".join(a["keywords"][:6]), a["website"]])
 
+    template = Path(__file__).with_name("dashboard_template.html")
+    html_path = None
+    if not args.no_dashboard and template.exists():
+        html = template.read_text(encoding="utf-8")
+        marker = "/*__EMBEDDED_DATA__*/null"
+        assert marker in html, "dashboard_template.html is missing the data marker"
+        payload = json.dumps(out, ensure_ascii=False).replace("</", "<\\/")
+        html_path = dst.with_name(dst.stem + "_dashboard.html")
+        html_path.write_text(html.replace(marker, payload, 1), encoding="utf-8")
+
     tiers = {}
     for a in ranked:
         tiers[a["priority"]["tier"]] = tiers.get(a["priority"]["tier"], 0) + 1
     print(f"{len(data)} rows in -> {len(accounts)} accounts out (scored as of {today})")
     print("  " + " | ".join(f"{t}: {n}" for t, n in sorted(tiers.items())))
-    print(f"  wrote {dst}\n  wrote {csv_path}\n")
+    print(f"  wrote {dst}\n  wrote {csv_path}" + (f"\n  wrote {html_path}" if html_path else "") + "\n")
     print(f"{'#':>3} {'Score':>5}  {'Company':<38} {'Stage':<13} {'Fit':<9} {'Last':>10} {'30d':>3}  Action")
     for i, a in enumerate(ranked[: args.top], 1):
         p = a["priority"]

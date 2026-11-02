@@ -9,7 +9,20 @@
    ```bash
    python3 optimize_sixsense.py 6SENSE_Update_File.json
    ```
-3. Work the call list top-down: Tier A today, Tier B this week. It's in `6SENSE_Update_File_target_now.csv` and also printed in the terminal.
+3. Open `6SENSE_Update_File_dashboard.html` (it's rebuilt on every run with the fresh data). Work the **Call today** cards first, then tier B.
+   The same ranking is also in `6SENSE_Update_File_target_now.csv` and printed in the terminal.
+
+## Dashboard (`dashboard_template.html`)
+- **Call today** cards: the top tier-A accounts, each with a next step and why it ranks there.
+- **Stat cards are filters**: Call today, This week, Heating up, Active 7 days, Competitor research.
+- **Search** (press `/`) covers company, keywords, pages visited and your notes. You can also filter by tier, stage and fit.
+- **✓ Worked**: marks an account as contacted today. It drops off the list for 7 days, and comes back early (tagged *new since worked*) if 6sense records new activity.
+- **Notes** per account, saved in the browser and included in 💾 Save JSON. The Python script keeps `worked_on` and `notes` too.
+- **Add emails / JSON**: drop 6sense alert `.msg` files (or a JSON update) anywhere on the page. Emails already loaded are skipped, matched by file name and by activity date. Nothing is merged until you click Apply.
+- **⬇ Call list CSV** exports the rows you're currently looking at.
+- Scores are recalculated against today's date every time you open the page, so the file never goes stale. Add `?today=YYYY-MM-DD` to the URL to see the ranking as of another day.
+
+The scoring rules are written twice, once in the script and once in the template. If you change one, change the other.
 
 Re-running is safe: the output is the same each time, and a `.bak` copy of the previous file is kept. The JSON is still a flat `{company: account}` dict, so the dashboard keeps working.
 
