@@ -63,7 +63,7 @@
   h2 small { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text-dim); font-size: 12px; }
 
   /* Stat cards = filters */
-  .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
   .stat { text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; transition: border-color .15s, background .15s; }
   .stat:hover { border-color: var(--border-bright); background: var(--surface-2); }
@@ -146,6 +146,13 @@
   .flag.dup { background: var(--yellow-dim); color: var(--yellow); }
   .flag.worked { background: var(--d-dim); color: var(--text-2); }
   .flag.qa { background: var(--a-dim); color: var(--a); letter-spacing: .3px; }
+  .flag.ok { background: var(--green-dim); color: var(--green); }
+  .flag.warn { background: var(--yellow-dim); color: var(--yellow); }
+  .zi-row { display: grid; grid-template-columns: 72px 1fr auto; gap: 10px; font-size: 12px; align-items: baseline; }
+  .zi-row .d { color: var(--text-dim); }
+  .zi-row .s { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .zi-row.off { opacity: .45; }
+  .zi-row .cat { color: var(--text-dim); font-size: 11px; }
   .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
   .badge.stage { background: var(--accent-dim); color: var(--accent); }
   .badge.strong { background: var(--green-dim); color: var(--green); }
@@ -384,6 +391,8 @@ function clean(src) {
   [...a.keywords, ...a.competitor_keywords].forEach(k => { if (COMPETITORS.includes(String(k).trim().toLowerCase())) comp.add(k); });
   a.competitor_keywords = Array.from(comp).sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase()));
   a.keywords = uniqSorted(a.keywords);
+  if (!a.zi || typeof a.zi !== 'object') delete a.zi;
+  else a.zi = { ...a.zi, intent: Array.isArray(a.zi.intent) ? a.zi.intent : [] };
   a.surge_topics = dedupeObjects(a.surge_topics.filter(t => t && t.topic)).sort((x, y) => (y.date || '').localeCompare(x.date || ''));
   return a;
 }
@@ -476,6 +485,36 @@ function recommendedAction(a, since, hand, ad, d30) {
   return 'P4 Monitor';
 }
 
+// ── ZoomInfo intent (display only, not part of the score) ──
+// Buying themes used to check whether ZoomInfo agrees with 6sense / Bombora / page visits.
+const THEMES = {
+  'Payroll / HCM': /\badp\b|automatic data processing|paychex|ukg|ultimate software|paycor|rippling|gusto|payroll|\bhris\b|\bhcm\b|workday|paycom|isolved|dayforce|ceridian|pay on demand/i,
+  'Benefits': /benefit|\baca\b|affordable care|cobra|safe harbor|enrollment|401k|retirement|\bhra\b|health insurance/i,
+  'Talent / recruiting': /talent|recruit|candidate|applicant|onboarding|on boarding|hiring/i,
+  'Engagement': /engagement|communication|retention|culture|recognition/i,
+  'Time & attendance': /attendance|time clock|timekeeping|\bhours\b|scheduling/i,
+  'Asset management': /asset/i,
+  'Spend / cards': /airbase|corporate card|credit card|expense|spend management/i,
+};
+function themesOf(text) { return Object.keys(THEMES).filter(k => THEMES[k].test(text)); }
+function ziRelevant(t) { return themesOf(t.topic + ' ' + (t.category || '')).length > 0; }
+function ziRecent(a, days = 60) {
+  if (!a.zi) return [];
+  return a.zi.intent.filter(t => isISO(t.date) && daysBetween(TODAY, t.date) <= days && ziRelevant(t))
+    .sort((x, y) => y.score - x.score);
+}
+function ziConfirmed(a) {
+  const zt = new Set(ziRecent(a).flatMap(t => themesOf(t.topic + ' ' + t.category)));
+  if (!zt.size) return [];
+  // 6sense side: keywords, Bombora surge topics and Paylocity pages visited
+  const sixItems = [...a.keywords, ...a.competitor_keywords, ...a.surge_topics.map(t => t.topic),
+    ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw).replace(/[-/]+/g, ' '))];
+  const st = new Set(sixItems.flatMap(themesOf));
+  return [...zt].filter(t => st.has(t));
+}
+const SHORT_TOPICS = { 'Automatic Data Processing (ADP)': 'ADP', 'Affordable Care Act (ACA)': 'ACA', 'COBRA (Health Insurance Continuation)': 'COBRA' };
+function shortTopic(t) { return SHORT_TOPICS[t] || t; }
+
 // Plain-English "why now" bullets (display only, not part of the score)
 function reasons(a) {
   const p = a.priority, out = [];
@@ -493,6 +532,11 @@ function reasons(a) {
   if (a.competitor_keywords.length) out.push({ t: 'hot', s: `Researching ${a.competitor_keywords.join(', ')}` });
   const surge = a.surge_topics.filter(t => isISO(t.date) && daysBetween(TODAY, t.date) <= 30);
   if (surge.length) out.push({ t: 'hot', s: `Bombora surge: ${uniqSorted(surge.map(t => t.topic)).join(', ')} (${fmtDate(surge[0].date)})` });
+  const zr = ziRecent(a);
+  if (zr.length) {
+    const conf = ziConfirmed(a);
+    out.push({ t: (conf.length || zr[0].score >= 90) ? 'hot' : '', s: `ZoomInfo: ${zr.slice(0, 3).map(t => `${shortTopic(t.topic)} (${t.score}${t.audience ? '·' + t.audience : ''})`).join(', ')}` });
+  }
   const kws = a.keywords.filter(k => !a.competitor_keywords.includes(k)).slice(0, 3);
   if (kws.length) out.push({ t: '', s: kws.join(' · ') });
   return out;
@@ -560,6 +604,7 @@ function mergeInto(ex, inc, mode) {
   ex.aliases = union(ex.aliases, [...(inc.aliases || []), inc.company]).filter(n => n !== ex.company);
   ex.possible_duplicate_of = union(ex.possible_duplicate_of, inc.possible_duplicate_of);
   if ((inc.six_qa_on || '') > (ex.six_qa_on || '')) ex.six_qa_on = inc.six_qa_on;
+  if (inc.zi && (inc.zi.pulled_on || '') >= ((ex.zi && ex.zi.pulled_on) || '')) ex.zi = inc.zi;
   if ((inc.worked_on || '') > (ex.worked_on || '')) ex.worked_on = inc.worked_on;
   if (!ex.notes && inc.notes) ex.notes = inc.notes;
 }
@@ -633,12 +678,13 @@ const CARDS = {
   B:       { label: 'This week', unit: 'Tier B · score 45–64', color: 'var(--b)', test: a => tierLetter(a) === 'B' },
   heating: { label: 'Heating up', unit: 'more active days than prior 30', color: 'var(--green)', test: a => a.priority.trend === 'heating up' && a.priority.active_days_30d >= 2 },
   active7: { label: 'Active 7 days', unit: 'any 6sense activity this week', color: 'var(--accent-2)', test: a => a.priority.days_since_activity != null && a.priority.days_since_activity <= 7 },
+  zi:      { label: 'ZoomInfo confirmed', unit: 'ZoomInfo intent matches 6sense', color: 'var(--green)', test: a => ziConfirmed(a).length > 0 },
   comp:    { label: 'Competitor research', unit: 'ADP, Rippling, Paycor…', color: 'var(--comp)', test: a => a.competitor_keywords.length > 0 },
 };
 
 function matchesSearch(a, q) {
   if (!q) return true;
-  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
+  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
     ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw)), ...(a.contacts || []).map(c => (c.name || '') + ' ' + (c.title || '')), a.notes || ''].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
 }
@@ -724,7 +770,7 @@ function renderFocus() {
       <div class="fcard-top">
         <div>
           <div class="fcard-name" data-jump="${esc(a.company)}">${esc(a.company)}</div>
-          <div class="fcard-meta">${a.six_qa_on ? '<span class="flag qa">6QA</span> ' : ''}${esc(a.stage || '?')} · ${esc(a.fit || '?')} fit${newSinceWorked(a) ? ' · <span class="flag new">new activity</span>' : ''}</div>
+          <div class="fcard-meta">${a.six_qa_on ? '<span class="flag qa">6QA</span> ' : ''}${ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo agrees: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span> ` : ''}${a.zi && a.zi.note ? '<span class="flag warn">check fit</span> ' : ''}${esc(a.stage || '?')} · ${esc(a.fit || '?')} fit${newSinceWorked(a) ? ' · <span class="flag new">new activity</span>' : ''}</div>
         </div>
         <span class="score ${L} num">${p.score}</span>
       </div>
@@ -768,6 +814,8 @@ function rowHtml(a) {
   const worked = isISO(a.worked_on);
   const flags = [
     a.six_qa_on ? `<span class="flag qa" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
+    ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo intent agrees with 6sense: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span>` : '',
+    a.zi && a.zi.note ? `<span class="flag warn" title="${esc(a.zi.note)}">check fit</span>` : '',
     newSinceWorked(a) ? '<span class="flag new">new since worked</span>' : '',
     worked && !newSinceWorked(a) ? `<span class="flag worked">worked ${fmtDate(a.worked_on)}</span>` : '',
     a.possible_duplicate_of.length ? `<span class="flag dup" title="Possible duplicate of ${esc(a.possible_duplicate_of.join(', '))}">dup?</span>` : '',
@@ -826,6 +874,14 @@ function detailHtml(a) {
         <div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
           ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>
         <div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>
+        ${a.zi ? `<div class="dblock"><div class="dlabel">ZoomInfo intent · pulled ${fmtDate(a.zi.pulled_on)}</div>
+          <div class="muted" style="margin-bottom:4px">${esc(a.zi.name)}${a.zi.location ? ' · ' + esc(a.zi.location) : ''}${a.zi.employees ? ' · ' + esc(a.zi.employees) + ' employees' : ''}</div>
+          ${a.zi.note ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:4px">${esc(a.zi.note)}</div>` : ''}
+          ${a.zi.skipped ? `<div class="muted">${esc(a.zi.skipped)}</div>`
+            : a.zi.intent.length ? a.zi.intent.slice().sort((x, y) => (y.date || '').localeCompare(x.date || '')).map(t => `<div class="zi-row ${ziRelevant(t) ? '' : 'off'}"><span class="d num">${fmtDate(t.date)}</span><span>${esc(t.topic)} <span class="cat">${esc(t.category || '')}${ziRelevant(t) ? '' : ' · not HR-related'}</span></span><span class="s">${t.score}${t.audience ? ' · ' + esc(t.audience) : ''}</span></div>`).join('')
+            : '<div class="muted">No ZoomInfo intent signals right now.</div>'}
+          ${ziConfirmed(a).length ? `<div style="font-size:12px;color:var(--green);margin-top:4px">✓ Agrees with 6sense on: ${esc(ziConfirmed(a).join(', '))}</div>` : ''}
+          <div class="muted" style="margin-top:4px">Score 60–100 = interest vs. their normal; audience A = largest group researching, E = smallest.</div></div>` : ''}
         ${a.surge_topics.length ? `<div class="dblock"><div class="dlabel">Bombora surge topics</div><div class="pages">${a.surge_topics.map(t => `<div><span class="d num">${fmtDate(t.date)}</span><span>${esc(t.topic)}</span></div>`).join('')}</div></div>` : ''}
       </div>
       <div>
@@ -940,11 +996,11 @@ document.getElementById('btnSave').addEventListener('click', () => {
 });
 document.getElementById('btnCsv').addEventListener('click', () => {
   const cell = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Website', 'Worked on', 'Notes']];
+  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
   sortList(filtered()).forEach((a, i) => {
     const p = a.priority;
     rows.push([i + 1, a.company, p.score, p.tier, p.action, a.stage, a.fit, p.last_activity, p.days_since_activity, p.active_days_30d, p.trend,
-      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), a.website, a.worked_on || '', a.notes || '']);
+      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
   });
   download(`6sense_call_list_${TODAY}.csv`, rows.map(r => r.map(cell).join(',')).join('\r\n'), 'text/csv');
 });

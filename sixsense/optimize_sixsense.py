@@ -108,6 +108,8 @@ def merge_into(dst, src):
             dst[f] = src[f]
     names = set(dst.get("aliases", [])) | {src["company"]} | set(src.get("aliases", []))
     dst["aliases"] = sorted(names - {dst["company"]})
+    if src.get("zi") and (src["zi"].get("pulled_on") or "") >= ((dst.get("zi") or {}).get("pulled_on") or ""):
+        dst["zi"] = src["zi"]
     if (src.get("six_qa_on") or "") > (dst.get("six_qa_on") or ""):
         dst["six_qa_on"] = src["six_qa_on"]
     if (src.get("worked_on") or "") > (dst.get("worked_on") or ""):
@@ -331,7 +333,7 @@ def main():
 
     # field order: the things you look at first, then the history
     order = ["company", "priority", "stage", "fit", "reach", "website", "signal_count", "web_visits",
-             "competitor_keywords", "keywords", "surge_topics", "contacts", "form_fills", "decoded_urls",
+             "competitor_keywords", "keywords", "surge_topics", "zi", "contacts", "form_fills", "decoded_urls",
              "activity_date", "email_date", "_latest_date", "dates", "activity_dates", "source_files",
              "aliases", "possible_duplicate_of", "six_qa_on", "worked_on", "notes"]
     out = {a["company"]: {**{k: a[k] for k in order if k in a}, **{k: v for k, v in a.items() if k not in order}}

@@ -28,6 +28,13 @@ The run also writes `6SENSE_Update_File_share.html`. That's the same dashboard, 
 - Anyone else with the link gets a read-only copy: the same ranking, reasons, pages and notes, plus the CSV export.
 - To push a fresh JSON run, ask Claude to republish `_share.html` to the same link, or just drop the JSON on the shared page.
 
+## ZoomInfo intent (Call today + This week only)
+Each account can carry a `zi` block: `{company_id, name, location, employees, pulled_on, intent: [{topic, category, score, audience, date}], skipped?, note?}`.
+- It's pulled through the ZoomInfo connector. Match accounts by website with `search_companies` (free), then call `enrich_company_signals` with `signalTypes: ["INTENT"]`, which is free for companies already under management.
+- Accounts not under management are skipped and marked `skipped`, so no credits are spent without asking.
+- The dashboard shows a "ZoomInfo:" line under Why now and a ZoomInfo section in the account detail. Accounts get a **✓ Confirmed** badge (and a filter card) when a ZoomInfo topic matches a 6sense keyword, Bombora surge topic or page visit on the same theme.
+- ZoomInfo doesn't change the score.
+
 The scoring rules are written twice, once in the script and once in the template. If you change one, change the other.
 
 Re-running is safe: the output is the same each time, and a `.bak` copy of the previous file is kept. The JSON is still a flat `{company: account}` dict, so the dashboard keeps working.
