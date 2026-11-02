@@ -153,6 +153,9 @@
   .zi-row .s { font-weight: 700; font-variant-numeric: tabular-nums; }
   .zi-row.off { opacity: .45; }
   .zi-row .cat { color: var(--text-dim); font-size: 11px; }
+  .zi-btn { margin-top: 6px; }
+  .zi-btn.confirm { border-color: var(--yellow); color: var(--yellow); }
+  .btn:disabled { opacity: .5; cursor: wait; }
   .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
   .badge.stage { background: var(--accent-dim); color: var(--accent); }
   .badge.strong { background: var(--green-dim); color: var(--green); }
@@ -230,6 +233,7 @@
     <span class="share-badge hidden" id="shareBadge"></span>
     <span class="save-state" id="saveState">Ready</span>
     <button class="btn primary" id="btnImport">⬆ Add emails / JSON</button>
+    <button class="btn hidden" id="btnZi" title="Refresh ZoomInfo intent for every Call today and This week account. Only pulls accounts that are free (under management) in ZoomInfo.">↻ ZoomInfo</button>
     <button class="btn" id="btnCsv" title="Download the rows currently shown as a CSV call list">⬇ Call list CSV</button>
     <button class="btn" id="btnSave" title="Download everything (incl. worked / notes) as JSON">💾 Save JSON</button>
   </div>
@@ -874,14 +878,16 @@ function detailHtml(a) {
         <div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
           ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>
         <div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>
-        ${a.zi ? `<div class="dblock"><div class="dlabel">ZoomInfo intent · pulled ${fmtDate(a.zi.pulled_on)}</div>
+        ${a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel">ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>
+          ${!a.zi ? '<div class="muted">Not pulled yet.</div>' : `
           <div class="muted" style="margin-bottom:4px">${esc(a.zi.name)}${a.zi.location ? ' · ' + esc(a.zi.location) : ''}${a.zi.employees ? ' · ' + esc(a.zi.employees) + ' employees' : ''}</div>
           ${a.zi.note ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:4px">${esc(a.zi.note)}</div>` : ''}
           ${a.zi.skipped ? `<div class="muted">${esc(a.zi.skipped)}</div>`
             : a.zi.intent.length ? a.zi.intent.slice().sort((x, y) => (y.date || '').localeCompare(x.date || '')).map(t => `<div class="zi-row ${ziRelevant(t) ? '' : 'off'}"><span class="d num">${fmtDate(t.date)}</span><span>${esc(t.topic)} <span class="cat">${esc(t.category || '')}${ziRelevant(t) ? '' : ' · not HR-related'}</span></span><span class="s">${t.score}${t.audience ? ' · ' + esc(t.audience) : ''}</span></div>`).join('')
             : '<div class="muted">No ZoomInfo intent signals right now.</div>'}
           ${ziConfirmed(a).length ? `<div style="font-size:12px;color:var(--green);margin-top:4px">✓ Agrees with 6sense on: ${esc(ziConfirmed(a).join(', '))}</div>` : ''}
-          <div class="muted" style="margin-top:4px">Score 60–100 = interest vs. their normal; audience A = largest group researching, E = smallest.</div></div>` : ''}
+          <div class="muted" style="margin-top:4px">Score 60–100 = interest vs. their normal; audience A = largest group researching, E = smallest.</div>`}
+          ${ziCanRefresh() ? ziButtonHtml(a) : ''}</div>` : ''}
         ${a.surge_topics.length ? `<div class="dblock"><div class="dlabel">Bombora surge topics</div><div class="pages">${a.surge_topics.map(t => `<div><span class="d num">${fmtDate(t.date)}</span><span>${esc(t.topic)}</span></div>`).join('')}</div></div>` : ''}
       </div>
       <div>
@@ -1299,6 +1305,7 @@ async function initShare() {
   let canEdit = false;
   try { canEdit = user ? await user.canEdit() : false; } catch (e) { canEdit = false; }
   setShareMode(canEdit ? 'writer' : 'reader');
+  initZi();
 }
 
 function setShareMode(mode) {
@@ -1353,6 +1360,160 @@ async function publishNow() {
     else setSaveState('err', 'Could not share changes' + (code ? ' (' + code + ')' : '') + '. Use 💾 Save JSON as a backup.');
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ZoomInfo refresh (owner only): the page calls ZoomInfo through the owner's
+// claude.ai connector. Search is free; intent is only pulled for accounts that
+// are under management (free) unless the owner confirms the credit cost.
+// ═══════════════════════════════════════════════════════════════════════════
+const ZI_SERVER = 'ZoomInfo';
+const ziState = { mcp: null, tools: { search: 'search_companies', enrich: 'enrich_company_signals' }, busy: false, confirm: new Set(), working: new Set() };
+function ziCanRefresh() { return share.mode === 'writer' && !!ziState.mcp; }
+
+function ziButtonHtml(a) {
+  const n = esc(a.company);
+  if (ziState.working.has(a.company)) return `<button class="btn sm zi-btn" disabled>Checking ZoomInfo…</button>`;
+  if (ziState.confirm.has(a.company)) return `<button class="btn sm zi-btn confirm" data-zi="${n}" title="This company is not under management in ZoomInfo">Uses ZoomInfo credits. Click to pull anyway</button>`;
+  return `<button class="btn sm zi-btn" data-zi="${n}">↻ ${a.zi ? 'Refresh' : 'Pull'} ZoomInfo intent</button>`;
+}
+
+async function initZi() {
+  if (share.mode !== 'writer') return;
+  const mcp = await window.claude.use('mcp').catch(() => null);
+  if (!mcp) return;
+  try {
+    const lt = await mcp.listTools(ZI_SERVER);
+    const srv = (lt.servers || []).find(x => x.server === ZI_SERVER);
+    if (!srv || !srv.tools.length) return;           // owner has no ZoomInfo connector here
+    const names = srv.tools.map(t => t.name);
+    ziState.tools.search = names.find(n => /search_companies$/.test(n)) || ziState.tools.search;
+    ziState.tools.enrich = names.find(n => /enrich_company_signals$/.test(n)) || ziState.tools.enrich;
+  } catch (e) { return; }
+  ziState.mcp = mcp;
+  document.getElementById('btnZi').classList.remove('hidden');
+  render();
+}
+
+async function ziCall(tool, input) {
+  const res = await ziState.mcp.callTool(ZI_SERVER, tool,
+    { ...input, userIntent: 'Refresh intent signals for accounts on the owner\'s 6sense call-prioritization dashboard.' }, { cache: false });
+  let p = res && res.payload;
+  if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { /* leave as text */ } }
+  return p || {};
+}
+
+function ziErrorText(err) {
+  const code = err && err.code;
+  switch (code) {
+    case 'needs_reauth': return 'ZoomInfo sign-in expired. Reconnect it in claude.ai Settings → Connectors.';
+    case 'server_not_connected': return 'ZoomInfo is not connected. Add it in claude.ai Settings → Connectors.';
+    case 'selection_required': return 'Choose which ZoomInfo connection this page should use, then try again.';
+    case 'not_in_manifest': return 'ZoomInfo is turned off for this page. Allow it in the page\'s permissions, then try again.';
+    case 'approval_required': return 'ZoomInfo needs your approval. Click the button again and choose Allow.';
+    case 'blocked_by_policy': return 'Your organization blocks this ZoomInfo tool.';
+    case 'server_unavailable': return 'ZoomInfo did not answer. Try again in a minute.';
+    case 'tool_error': return 'ZoomInfo returned an error: ' + String(err.message || '').slice(0, 140);
+    default: return 'ZoomInfo refresh failed' + (code ? ' (' + code + ')' : '') + '. Nothing was changed.';
+  }
+}
+
+function chunk(list, n) { const out = []; for (let i = 0; i < list.length; i += n) out.push(list.slice(i, i + n)); return out; }
+
+// Returns { pulled: [...accounts], needCredits: [...accounts], noMatch: [...accounts] }
+async function ziRefresh(list, allowCredits) {
+  const result = { pulled: [], needCredits: [], noMatch: [] };
+  // 1. find ZoomInfo ids by website for accounts that have none (free)
+  const needId = list.filter(a => !(a.zi && a.zi.company_id) && a.website);
+  const groups = [];
+  let cur = [];
+  for (const a of needId) {
+    const w = 'https://www.' + domainOf(a.website);
+    if ((cur.concat(w).join(',')).length > 480) { groups.push(cur); cur = []; }
+    cur.push(w);
+  }
+  if (cur.length) groups.push(cur);
+  for (const g of groups) {
+    const p = await ziCall(ziState.tools.search, { companyWebsite: g.join(','), underManagement: true, pageSize: 50 });
+    for (const rec of (p.data || [])) {
+      const at = rec.attributes || {};
+      const a = needId.find(x => domainOf(x.website) === domainOf(at.website || ''));
+      if (a && !(a.zi && a.zi.company_id)) {
+        a.zi = { ...(a.zi || {}), company_id: String(rec.id), name: at.name || a.company,
+          location: [at.city, at.state, at.country && at.country !== 'United States' ? at.country : ''].filter(Boolean).join(', '),
+          employees: at.employeeCount ? String(at.employeeCount) : '', intent: (a.zi && a.zi.intent) || [] };
+      }
+    }
+  }
+  needId.filter(a => !(a.zi && a.zi.company_id)).forEach(a => result.noMatch.push(a));
+  // 2. check management status (free)
+  const withId = list.filter(a => a.zi && a.zi.company_id);
+  const managed = new Set();
+  for (const g of chunk(withId, 50)) {
+    const p = await ziCall(ziState.tools.search, { companyIdList: g.map(a => Number(a.zi.company_id)), underManagement: true, pageSize: 50 });
+    for (const rec of (p.data || [])) if (rec.attributes && rec.attributes.managementStatus && rec.attributes.managementStatus.underManagement) managed.add(String(rec.id));
+  }
+  const toPull = withId.filter(a => allowCredits || managed.has(a.zi.company_id));
+  withId.filter(a => !toPull.includes(a)).forEach(a => result.needCredits.push(a));
+  // 3. pull intent, 10 companies per call
+  for (const g of chunk(toPull, 10)) {
+    const p = await ziCall(ziState.tools.enrich, { zoominfoCompanyIds: g.map(a => Number(a.zi.company_id)), signalTypes: ['INTENT'] });
+    for (const r of (p.results || [])) {
+      const id = String(r.company && r.company.zoominfoCompanyId);
+      const a = g.find(x => x.zi.company_id === id);
+      if (!a || r.status === 'error') continue;
+      a.zi.intent = (r.signals || []).filter(x => !x.signalType || /intent/i.test(x.signalType)).map(x => ({
+        topic: (x.details || {}).topic, category: (x.details || {}).category, score: (x.details || {}).signalScore,
+        audience: (x.details || {}).audienceStrength, date: String(x.date || '').slice(0, 10) })).filter(t => t.topic);
+      a.zi.pulled_on = TODAY;
+      delete a.zi.skipped;
+      result.pulled.push(a);
+    }
+  }
+  return result;
+}
+
+async function ziRun(list, { allowCredits = false, single = null } = {}) {
+  if (ziState.busy || !ziCanRefresh()) return;
+  ziState.busy = true;
+  const btn = document.getElementById('btnZi');
+  btn.disabled = true;
+  if (single) { ziState.working.add(single.company); renderTable(); }
+  setSaveState('', single ? `ZoomInfo: checking ${single.company}…` : `ZoomInfo: checking ${list.length} accounts…`);
+  try {
+    const r = await ziRefresh(list, allowCredits);
+    if (single) {
+      if (r.needCredits.includes(single)) ziState.confirm.add(single.company); else ziState.confirm.delete(single.company);
+    } else {
+      r.needCredits.forEach(a => { a.zi.skipped = a.zi.skipped || 'Not pulled: not under management in ZoomInfo, so it would cost credits.'; });
+    }
+    const parts = [`${r.pulled.length} updated`];
+    if (r.needCredits.length) parts.push(single ? 'needs credits' : `${r.needCredits.length} skipped (would cost credits)`);
+    if (r.noMatch.length) parts.push(`${r.noMatch.length} not found in ZoomInfo`);
+    if (r.pulled.length || (!single && r.needCredits.length)) {
+      persist();                                       // shares the update (the page reloads once saved)
+      setSaveState('', 'ZoomInfo: ' + parts.join(' · ') + '. Sharing…');
+    } else {
+      setSaveState(r.needCredits.length ? '' : 'ok', 'ZoomInfo: ' + parts.join(' · '));
+    }
+  } catch (err) {
+    setSaveState('err', ziErrorText(err));
+  } finally {
+    ziState.busy = false;
+    btn.disabled = false;
+    if (single) ziState.working.delete(single.company);
+    render();
+  }
+}
+
+document.getElementById('btnZi').addEventListener('click', () =>
+  ziRun(accounts.filter(a => 'AB'.includes(tierLetter(a)))));
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-zi]');
+  if (!b) return;
+  e.stopPropagation();
+  const a = byName(b.dataset.zi);
+  if (a) ziRun([a], { allowCredits: ziState.confirm.has(a.company), single: a });
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Init

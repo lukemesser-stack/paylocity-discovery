@@ -34,6 +34,10 @@ Each account can carry a `zi` block: `{company_id, name, location, employees, pu
 - Accounts not under management are skipped and marked `skipped`, so no credits are spent without asking.
 - The dashboard shows a "ZoomInfo:" line under Why now and a ZoomInfo section in the account detail. Accounts get a **✓ Confirmed** badge (and a filter card) when a ZoomInfo topic matches a 6sense keyword, Bombora surge topic or page visit on the same theme.
 - ZoomInfo doesn't change the score.
+- **Refresh from the page (owner only):** on the shared claude.ai page, **↻ ZoomInfo** in the header refreshes all Call today and This week accounts. Each account's ZoomInfo section has its own **↻ Refresh ZoomInfo intent** button.
+  - The page calls the owner's ZoomInfo connector (`mcp` capability: `search_companies` and `enrich_company_signals`). It checks management status first, which is free.
+  - Refresh-all only pulls free accounts. On a single account that would cost credits, the button asks for a second click.
+  - Results are saved to the page, so read-only viewers see them without needing ZoomInfo themselves.
 
 The scoring rules are written twice, once in the script and once in the template. If you change one, change the other.
 
