@@ -108,6 +108,8 @@ def merge_into(dst, src):
             dst[f] = src[f]
     names = set(dst.get("aliases", [])) | {src["company"]} | set(src.get("aliases", []))
     dst["aliases"] = sorted(names - {dst["company"]})
+    if (src.get("six_qa_on") or "") > (dst.get("six_qa_on") or ""):
+        dst["six_qa_on"] = src["six_qa_on"]
     if (src.get("worked_on") or "") > (dst.get("worked_on") or ""):
         dst["worked_on"] = src["worked_on"]
     if src.get("notes") and src["notes"] not in (dst.get("notes") or ""):
@@ -135,6 +137,13 @@ def clean(account):
         a[f] = int(a.get(f) or 0)
     for f in ("stage", "fit", "reach", "website"):
         a[f] = (a.get(f) or "").strip()
+
+    # 6sense tags qualified accounts with a trailing "6QA" after the name. Keep it as a flag, not part of the name.
+    m = re.search(r"\s+6QA$", a["company"], re.I)
+    if m:
+        a["company"] = a["company"][: m.start()].strip()
+        flagged = max(a.get("activity_dates") or a.get("dates") or [""]) or None
+        a["six_qa_on"] = max(filter(None, [a.get("six_qa_on"), flagged]), default=None)
 
     # Empty filenames break the dashboard's "already loaded" check.
     a["source_files"] = sorted({s for s in a["source_files"] if s})
@@ -318,7 +327,7 @@ def main():
     order = ["company", "priority", "stage", "fit", "reach", "website", "signal_count", "web_visits",
              "competitor_keywords", "keywords", "contacts", "form_fills", "decoded_urls",
              "activity_date", "email_date", "_latest_date", "dates", "activity_dates", "source_files",
-             "aliases", "possible_duplicate_of", "worked_on", "notes"]
+             "aliases", "possible_duplicate_of", "six_qa_on", "worked_on", "notes"]
     out = {a["company"]: {**{k: a[k] for k in order if k in a}, **{k: v for k, v in a.items() if k not in order}}
            for a in ranked}
 

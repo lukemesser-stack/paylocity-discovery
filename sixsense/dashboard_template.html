@@ -145,6 +145,7 @@
   .flag.new { background: var(--green-dim); color: var(--green); }
   .flag.dup { background: var(--yellow-dim); color: var(--yellow); }
   .flag.worked { background: var(--d-dim); color: var(--text-2); }
+  .flag.qa { background: var(--a-dim); color: var(--a); letter-spacing: .3px; }
   .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
   .badge.stage { background: var(--accent-dim); color: var(--accent); }
   .badge.strong { background: var(--green-dim); color: var(--green); }
@@ -363,6 +364,13 @@ function clean(src) {
     a[f] = Array.isArray(a[f]) ? a[f].slice() : [];
   for (const f of ['signal_count', 'web_visits']) a[f] = parseInt(a[f], 10) || 0;
   for (const f of ['stage', 'fit', 'reach', 'website', 'company']) a[f] = String(a[f] || '').trim();
+  // 6sense tags qualified accounts with a trailing "6QA". Keep it as a flag, not part of the name.
+  const qa = a.company.match(/\s+6QA$/i);
+  if (qa) {
+    a.company = a.company.slice(0, qa.index).trim();
+    const flagged = maxStr([...(a.activity_dates || []), ...(a.dates || [])].filter(isISO)) || null;
+    if (flagged && flagged > (a.six_qa_on || '')) a.six_qa_on = flagged;
+  }
   a.source_files = uniqSorted(a.source_files);
   a.decoded_urls = dedupeUrls(a.decoded_urls);
   a.dates = uniqSorted(a.dates.filter(isISO));
@@ -480,6 +488,7 @@ function reasons(a) {
   const ad = a.decoded_urls.find(u => age(u) <= 30 && AD_LANDING_PAGES.some(x => pagePath(u.decoded || u.raw).includes(x)));
   if (hand) out.push({ t: 'hot', s: `Visited ${pagePath(hand.decoded || hand.raw)} ${fmtDate(hand.date)}` });
   else if (ad) out.push({ t: '', s: `Ad landing page ${fmtDate(ad.date)}` });
+  if (a.six_qa_on) out.push({ t: 'hot', s: `6sense Qualified Account (6QA) since ${fmtDate(a.six_qa_on)}` });
   if (a.competitor_keywords.length) out.push({ t: 'hot', s: `Researching ${a.competitor_keywords.join(', ')}` });
   const kws = a.keywords.filter(k => !a.competitor_keywords.includes(k)).slice(0, 3);
   if (kws.length) out.push({ t: '', s: kws.join(' · ') });
@@ -546,6 +555,7 @@ function mergeInto(ex, inc, mode) {
   for (const f of ['email_date', 'activity_date', '_latest_date']) if ((inc[f] || '') > (ex[f] || '')) ex[f] = inc[f];
   ex.aliases = union(ex.aliases, [...(inc.aliases || []), inc.company]).filter(n => n !== ex.company);
   ex.possible_duplicate_of = union(ex.possible_duplicate_of, inc.possible_duplicate_of);
+  if ((inc.six_qa_on || '') > (ex.six_qa_on || '')) ex.six_qa_on = inc.six_qa_on;
   if ((inc.worked_on || '') > (ex.worked_on || '')) ex.worked_on = inc.worked_on;
   if (!ex.notes && inc.notes) ex.notes = inc.notes;
 }
@@ -624,7 +634,7 @@ const CARDS = {
 
 function matchesSearch(a, q) {
   if (!q) return true;
-  const hay = [a.company, a.website, ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
+  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
     ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw)), ...(a.contacts || []).map(c => (c.name || '') + ' ' + (c.title || '')), a.notes || ''].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
 }
@@ -710,7 +720,7 @@ function renderFocus() {
       <div class="fcard-top">
         <div>
           <div class="fcard-name" data-jump="${esc(a.company)}">${esc(a.company)}</div>
-          <div class="fcard-meta">${esc(a.stage || '?')} · ${esc(a.fit || '?')} fit${newSinceWorked(a) ? ' · <span class="flag new">new activity</span>' : ''}</div>
+          <div class="fcard-meta">${a.six_qa_on ? '<span class="flag qa">6QA</span> ' : ''}${esc(a.stage || '?')} · ${esc(a.fit || '?')} fit${newSinceWorked(a) ? ' · <span class="flag new">new activity</span>' : ''}</div>
         </div>
         <span class="score ${L} num">${p.score}</span>
       </div>
@@ -753,6 +763,7 @@ function rowHtml(a) {
   const p = a.priority, L = tierLetter(a);
   const worked = isISO(a.worked_on);
   const flags = [
+    a.six_qa_on ? `<span class="flag qa" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
     newSinceWorked(a) ? '<span class="flag new">new since worked</span>' : '',
     worked && !newSinceWorked(a) ? `<span class="flag worked">worked ${fmtDate(a.worked_on)}</span>` : '',
     a.possible_duplicate_of.length ? `<span class="flag dup" title="Possible duplicate of ${esc(a.possible_duplicate_of.join(', '))}">dup?</span>` : '',
