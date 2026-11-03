@@ -305,7 +305,7 @@
   <section id="importPanel" class="panel hidden" aria-label="Import">
     <div class="drop" id="drop" tabindex="0" role="button">
       <div class="drop-title">Drop 6sense alert emails (.msg / .eml / .txt) or a JSON update file</div>
-      <div class="drop-hint">Or click to browse. Emails already loaded are detected (by file name and activity date) and skipped. Re-loading a JSON file never double-counts.</div>
+      <div class="drop-hint">Or click to browse. Emails already loaded are detected (by activity date and the accounts in them) and skipped. Re-loading a JSON file never double-counts.</div>
       <input type="file" id="fileInput" multiple accept=".msg,.eml,.txt,.json" hidden>
     </div>
     <div class="log" id="log"></div>
@@ -1300,13 +1300,12 @@ document.getElementById('restoreInput').addEventListener('change', async e => {
 });
 
 function loadedFiles() { return new Set(accounts.flatMap(a => a.source_files)); }
-function loadedActivityDates() { return new Set(accounts.flatMap(a => a.activity_dates)); }
 function stagedFiles() { return new Set(staged.flatMap(s => s.files || [])); }
 
 async function handleFiles(fileList) {
   const files = Array.from(fileList || []);
   if (!files.length) return;
-  const known = loadedFiles(), knownDates = loadedActivityDates();
+  const known = loadedFiles();
   for (const f of files) {
     try {
       if (/\.json$/i.test(f.name)) {
@@ -1317,18 +1316,28 @@ async function handleFiles(fileList) {
         log('ok', `✓ ${esc(f.name)}: ${n} accounts (JSON, safe to re-load)`);
         continue;
       }
-      if (known.has(f.name) || stagedFiles().has(f.name)) { log('warn', `⚠ ${esc(f.name)}: already loaded, skipped`); continue; }
+      // Outlook saves every alert under the same name ("Luke's 6sense Hot Accounts_ Email Alerts.msg"),
+      // so the file name alone can't tell emails apart. Each email is keyed by name + activity date,
+      // and it only counts as a duplicate when every account in it already has that day's activity.
       const text = /\.msg$/i.test(f.name) ? msgToText(await f.arrayBuffer()) : await f.text();
       const parsed = parseSixsenseText(text, f.name);
+      const fileKey = parsed.activityDate ? `${f.name} (${parsed.activityDate})` : f.name;
+      if (known.has(fileKey) || stagedFiles().has(fileKey)) { log('warn', `⚠ ${esc(f.name)}: this email${parsed.activityDate ? ` (activity ${fmtDate(parsed.activityDate)})` : ''} is already loaded, skipped`); continue; }
       if (!parsed.accounts.length) { log('warn', `~ ${esc(f.name)}: no 6sense accounts found${parsed.activityDate ? '' : ' (no "Activities on" date)'}`); continue; }
-      const dupDate = parsed.activityDate && (knownDates.has(parsed.activityDate) || staged.some(s => s.activityDate === parsed.activityDate));
+      parsed.accounts.forEach(a => { a.source_files = [fileKey]; });
+      const hasDay = a => {
+        const ex = findExisting({ company: a.company, aliases: [], website: a.website });
+        const inStage = staged.some(s => s.activityDate === parsed.activityDate && s.data[a.company]);
+        return inStage || !!(ex && (ex.activity_dates || []).includes(parsed.activityDate));
+      };
+      const dupDate = !!parsed.activityDate && parsed.accounts.every(hasDay);
       const data = Object.fromEntries(parsed.accounts.map(a => [a.company, a]));
       const names = parsed.accounts.map(a => a.company);
       if (dupDate) {
-        log('warn', `⚠ ${esc(f.name)}: activity date ${fmtDate(parsed.activityDate)} is already loaded, so this looks like a duplicate email. Skipped. (${names.length} accounts: ${esc(names.slice(0, 4).join(', '))}${names.length > 4 ? '…' : ''})`);
+        log('warn', `⚠ ${esc(f.name)}: every account in this email already has activity on ${fmtDate(parsed.activityDate)}, so it looks like a duplicate. Skipped. (${names.length} accounts: ${esc(names.slice(0, 4).join(', '))}${names.length > 4 ? '…' : ''})`);
         continue;
       }
-      staged.push({ name: f.name, mode: 'increment', data, files: [f.name], activityDate: parsed.activityDate });
+      staged.push({ name: f.name, mode: 'increment', data, files: [fileKey], activityDate: parsed.activityDate });
       const isNew = names.filter(n => !findExisting({ company: n, aliases: [], website: data[n].website }));
       log('ok', `✓ ${esc(f.name)}: activity ${fmtDate(parsed.activityDate) || '?'} · ${names.length} accounts (${isNew.length} new): ${esc(names.slice(0, 5).join(', '))}${names.length > 5 ? '…' : ''}`);
     } catch (err) {
