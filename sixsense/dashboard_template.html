@@ -156,6 +156,9 @@
   .trig-row a { color: var(--accent); text-decoration: none; }
   a.li { color: var(--text); font-weight: 600; text-decoration: underline; text-decoration-color: var(--linkedin); text-underline-offset: 2px; white-space: nowrap; }
   a.li:hover { color: var(--accent); }
+  .flag.hist { background: var(--accent-dim); color: var(--accent); }
+  .hist-btn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .hist-text { font-size: 12px; white-space: pre-wrap; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; }
   .acc { display: inline-block; font-size: 10px; font-weight: 700; color: var(--text-2); border: 1px solid var(--border-bright); border-radius: 3px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; font-variant-numeric: tabular-nums; }
   .acc.low { color: var(--yellow); border-color: var(--yellow-dim); }
   .person.low { opacity: .6; }
@@ -625,6 +628,10 @@ function reasons(a) {
   triggers(a).filter(t => t.kind !== 'Hiring surge').slice(0, 2).forEach(t => out.push({ t: 'hot',
     s: '🔔 ' + (t.text.length > 110 ? t.text.slice(0, 107).replace(/\s+\S*$/, '') + '…' : t.text),
     html: t.kind === 'New leader' ? '🔔 ' + leaderHtml(t) : null }));
+  if (a.past_process) {
+    const n = String(a.history_note || '').replace(/\s+/g, ' ').trim();
+    out.push({ t: 'hot', s: '★ Past sales process' + (n ? ': ' + (n.length > 90 ? n.slice(0, 87).replace(/\s+\S*$/, '') + '…' : n) : '') });
+  }
   // only pages recent enough to be a reason to call now (urls are sorted newest first)
   const age = u => (isISO(u.date) ? daysBetween(TODAY, u.date) : 999);
   const hand = a.decoded_urls.find(u => age(u) <= 90 && HAND_RAISE_PAGES.some(x => pagePath(u.decoded || u.raw).includes(x)));
@@ -710,6 +717,8 @@ function mergeInto(ex, inc, mode) {
   if (inc.zi && (inc.zi.pulled_on || '') >= ((ex.zi && ex.zi.pulled_on) || '')) ex.zi = inc.zi;
   if ((inc.worked_on || '') > (ex.worked_on || '')) ex.worked_on = inc.worked_on;
   if (!ex.notes && inc.notes) ex.notes = inc.notes;
+  if (inc.past_process) { ex.past_process = true; if ((inc.past_process_on || '') > (ex.past_process_on || '')) ex.past_process_on = inc.past_process_on; }
+  if (!ex.history_note && inc.history_note) ex.history_note = inc.history_note;
 }
 
 // mode 'snapshot': a cumulative JSON (re-loading is a no-op). mode 'increment': one newly parsed email.
@@ -781,6 +790,7 @@ const CARDS = {
   B:       { label: 'This week', unit: 'Tier B · score 45–64', color: 'var(--b)', test: a => tierLetter(a) === 'B' },
   heating: { label: 'Heating up', unit: 'more active days than prior 30', color: 'var(--green)', test: a => a.priority.trend === 'heating up' && a.priority.active_days_30d >= 2 },
   active7: { label: 'Active 7 days', unit: 'any 6sense activity this week', color: 'var(--accent-2)', test: a => a.priority.days_since_activity != null && a.priority.days_since_activity <= 7 },
+  hist:    { label: 'Past sales process', unit: 'accounts you\'ve worked before', color: 'var(--accent)', test: a => !!a.past_process },
   trig:    { label: 'Trigger events', unit: 'new leaders & exec changes', color: 'var(--b)', test: a => hasLeaderTrigger(a) },
   zi:      { label: 'ZoomInfo confirmed', unit: 'ZoomInfo intent matches 6sense', color: 'var(--green)', test: a => ziConfirmed(a).length > 0 },
   comp:    { label: 'Competitor research', unit: 'ADP, Rippling, Paycor…', color: 'var(--comp)', test: a => a.competitor_keywords.length > 0 },
@@ -788,7 +798,7 @@ const CARDS = {
 
 function matchesSearch(a, q) {
   if (!q) return true;
-  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', ...buyers(a).map(p => p.name + ' ' + p.title), ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
+  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', a.past_process ? 'past deal past sales process ' + (a.history_note || '') : '', ...buyers(a).map(p => p.name + ' ' + p.title), ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
     ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw)), ...(a.contacts || []).map(c => (c.name || '') + ' ' + (c.title || '')), a.notes || ''].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
 }
@@ -874,7 +884,7 @@ function renderFocus() {
       <div class="fcard-top">
         <div>
           <div class="fcard-name" data-jump="${esc(a.company)}">${esc(a.company)}</div>
-          <div class="fcard-meta">${a.six_qa_on ? '<span class="flag qa">6QA</span> ' : ''}${hasLeaderTrigger(a) ? '<span class="flag trig">🔔 Trigger</span> ' : ''}${ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo agrees: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span> ` : ''}${a.zi && a.zi.note ? '<span class="flag warn">check fit</span> ' : ''}${esc(a.stage || '?')} · ${esc(a.fit || '?')} fit${newSinceWorked(a) ? ' · <span class="flag new">new activity</span>' : ''}</div>
+          <div class="fcard-meta">${a.past_process ? `<span class="flag hist" title="${esc(a.history_note || 'Previous sales process')}">★ Past deal</span> ` : ''}${a.six_qa_on ? '<span class="flag qa">6QA</span> ' : ''}${hasLeaderTrigger(a) ? '<span class="flag trig">🔔 Trigger</span> ' : ''}${ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo agrees: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span> ` : ''}${a.zi && a.zi.note ? '<span class="flag warn">check fit</span> ' : ''}${esc(a.stage || '?')} · ${esc(a.fit || '?')} fit${newSinceWorked(a) ? ' · <span class="flag new">new activity</span>' : ''}</div>
         </div>
         <span class="score ${L} num">${p.score}</span>
       </div>
@@ -919,6 +929,7 @@ function rowHtml(a) {
   const worked = isISO(a.worked_on);
   const flags = [
     a.six_qa_on ? `<span class="flag qa" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
+    a.past_process ? `<span class="flag hist" title="${esc(a.history_note || 'Previous sales process')}">★ Past deal</span>` : '',
     hasLeaderTrigger(a) ? `<span class="flag trig" title="${esc(triggers(a).map(t => t.text).join(' | '))}">🔔 Trigger</span>` : '',
     ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo intent agrees with 6sense: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span>` : '',
     a.zi && a.zi.note ? `<span class="flag warn" title="${esc(a.zi.note)}">check fit</span>` : '',
@@ -1003,6 +1014,12 @@ function detailHtml(a) {
         ${contacts ? `<div class="dblock"><div class="dlabel">Known contacts</div><div style="font-size:12px">${contacts}</div></div>` : ''}
         ${a.aliases.length ? `<div class="dblock"><div class="dlabel">Also appears as</div><div class="muted">${esc(a.aliases.join(' · '))}</div></div>` : ''}
         ${a.possible_duplicate_of.length ? `<div class="dblock"><div class="dlabel">Possible duplicate of</div><div class="muted">${esc(a.possible_duplicate_of.join(' · '))}. Confirm, then add to ALIASES in optimize_sixsense.py.</div></div>` : ''}
+        <div class="dblock"><div class="dlabel">Previous sales process${a.past_process && a.past_process_on ? ' · marked ' + fmtDate(a.past_process_on) : ''}</div>
+          ${share.mode === 'reader'
+            ? (a.past_process ? `<div class="hist-text">${a.history_note ? esc(a.history_note) : '<span class="muted">Marked as a past sales process. No details added yet.</span>'}</div>` : '<div class="muted">No previous sales process.</div>')
+            : `<button class="btn sm hist-btn ${a.past_process ? 'on' : ''}" data-hist="${esc(a.company)}">${a.past_process ? '★ Past sales process (click to remove)' : '☆ Mark as past sales process'}</button>
+               ${a.past_process ? `<textarea class="notes" style="margin-top:6px" id="hist-${esc(slug(a.company))}" data-histnote="${esc(a.company)}" placeholder="Sales history for your SDR: when you engaged, who you worked with, why it stalled or was lost, competitor they chose, contract or renewal timing…">${esc(a.history_note || '')}</textarea>` : ''}`}
+        </div>
         <div class="dblock"><div class="dlabel">Notes</div>
           <textarea class="notes" id="notes-${esc(slug(a.company))}" data-notes="${esc(a.company)}" ${share.mode === 'reader' ? 'readonly' : ''} placeholder="${share.mode === 'reader' ? 'No notes yet' : 'Call notes, next step, who you spoke with…'}">${esc(a.notes || '')}</textarea>
           <div class="muted" style="margin-top:4px">${isISO(a.worked_on) ? 'Last worked ' + fmtDate(a.worked_on) : 'Not worked yet'}</div></div>
@@ -1057,20 +1074,37 @@ document.addEventListener('click', e => {
   }
 });
 
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-hist]');
+  if (!b || share.mode === 'reader') return;
+  e.stopPropagation();
+  const a = byName(b.dataset.hist);
+  if (!a) return;
+  if (a.past_process) {
+    // keep the note text so re-marking brings it back
+    a.past_process = false;
+  } else {
+    a.past_process = true;
+    a.past_process_on = TODAY;
+  }
+  persist();
+  render();
+});
+
 let notesTimer;
 document.addEventListener('input', e => {
-  const ta = e.target.closest('textarea[data-notes]');
+  const ta = e.target.closest('textarea[data-notes], textarea[data-histnote]');
   if (!ta) return;
-  const a = byName(ta.dataset.notes);
+  const a = byName(ta.dataset.notes || ta.dataset.histnote);
   if (!a) return;
-  a.notes = ta.value;
+  if (ta.dataset.histnote) a.history_note = ta.value; else a.notes = ta.value;
   clearTimeout(notesTimer);
   setSaveState('', 'Saving…');
   if (share.mode === 'writer') { setSaveState('', 'Unsaved note: click outside the box to share it'); return; }
   notesTimer = setTimeout(persist, 500);
 });
 document.addEventListener('change', e => {
-  if (e.target.closest('textarea[data-notes]') && share.mode === 'writer') schedulePublish(0);
+  if (e.target.closest('textarea[data-notes], textarea[data-histnote]') && share.mode === 'writer') schedulePublish(0);
 });
 
 function clearFilters(rerender = true) {
@@ -1111,11 +1145,11 @@ document.getElementById('btnSave').addEventListener('click', () => {
 });
 document.getElementById('btnCsv').addEventListener('click', () => {
   const cell = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
+  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Past sales process', 'Sales history', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
   sortList(filtered()).forEach((a, i) => {
     const p = a.priority;
     rows.push([i + 1, a.company, p.score, p.tier, p.action, a.stage, a.fit, p.last_activity, p.days_since_activity, p.active_days_30d, p.trend,
-      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), buyers(a).map(p => `${p.name} (${p.title}, accuracy ${p.accuracy}) ${liUrl(p.name, a)}`).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
+      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), a.past_process ? 'Yes' : '', a.history_note || '', buyers(a).map(p => `${p.name} (${p.title}, accuracy ${p.accuracy}) ${liUrl(p.name, a)}`).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
   });
   download(`6sense_call_list_${TODAY}.csv`, rows.map(r => r.map(cell).join(',')).join('\r\n'), 'text/csv');
 });

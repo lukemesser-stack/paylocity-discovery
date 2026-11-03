@@ -57,6 +57,11 @@ Each account can carry a `zi` block: `{company_id, name, location, employees, pu
 - Every person shows ZoomInfo's **accuracy score** (70–99). Under 80 is dimmed with a "check LinkedIn first" hint.
 - The ZoomInfo refresh buttons and email auto-refresh re-run this search. Activity tracking stays in Salesforce.
 
+## Previous sales process (owner, manual)
+- In an account's detail, **☆ Mark as past sales process** sets `past_process: true` and `past_process_on`. A **Sales history** box (`history_note`) appears for details to pass to the SDR.
+- The account then shows a **★ Past deal** badge (the note shows on hover), a "★ Past sales process: …" line in Why now, and a filter card. Search covers the note, and the CSV has two columns for it.
+- Read-only viewers see the note but can't edit it. Removing the mark keeps the note, so re-marking brings it back. The Python script preserves these fields.
+
 ## Cost
 - The page's buttons, email auto-refresh and LinkedIn links run in the browser against ZoomInfo directly. They use **no AI tokens** and only free ZoomInfo calls (search, plus enrichment of companies already under management).
 - Asking Claude in chat to refresh or republish does use tokens. Use the page buttons for day-to-day work, and start a fresh session for dashboard changes.
