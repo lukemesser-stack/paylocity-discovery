@@ -156,6 +156,13 @@
   .trig-row a { color: var(--accent); text-decoration: none; }
   a.li { color: var(--text); font-weight: 600; text-decoration: underline; text-decoration-color: var(--linkedin); text-underline-offset: 2px; white-space: nowrap; }
   a.li:hover { color: var(--accent); }
+  .acc { display: inline-block; font-size: 10px; font-weight: 700; color: var(--text-2); border: 1px solid var(--border-bright); border-radius: 3px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; font-variant-numeric: tabular-nums; }
+  .acc.low { color: var(--yellow); border-color: var(--yellow-dim); }
+  .person.low { opacity: .6; }
+  .buyer-row { display: grid; grid-template-columns: 74px 1fr; gap: 8px; font-size: 12px; margin-bottom: 4px; align-items: baseline; }
+  .buyer-row .g { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-dim); }
+  .buyer-row .t { color: var(--text-2); }
+  .co-buyer { font-size: 11px; color: var(--text-2); margin: 2px 0 0 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
   .li-badge { display: inline-block; font-size: 9px; font-weight: 800; line-height: 13px; background: var(--linkedin); color: #fff; border-radius: 3px; padding: 0 3px; margin-left: 4px; vertical-align: 1px; text-decoration: none; }
   .zi-row { display: grid; grid-template-columns: 72px 1fr auto; gap: 10px; font-size: 12px; align-items: baseline; }
   .zi-row .d { color: var(--text-dim); }
@@ -565,15 +572,46 @@ function triggers(a) {
     if (!g) continue;
     out.push({ kind: 'New leader', hot: p.window_days <= 90 || g !== 'Executive', group: g,
       linkedin: 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(`${p.name} ${a.zi.name || a.company}`),
-      person: p.name, title: p.title, window: p.window_days <= 90 ? '90 days' : '6 months',
+      person: p.name, title: p.title, window: p.window_days <= 90 ? '90 days' : '6 months', accuracy: p.accuracy, acct: a,
       text: `New ${p.title}: ${p.name} (started in the last ${p.window_days <= 90 ? '90 days' : '6 months'})`, date: null });
   }
   const order = { 'Leadership change': 0, 'New leader': 1, 'Vendor clue': 2, 'Hiring surge': 3 };
   const seen = new Set();
   return out.filter(t => !seen.has(t.text) && seen.add(t.text)).sort((x, y) => order[x.kind] - order[y.kind]);
 }
+// ── Who to call: likeliest buyers from ZoomInfo (free search, names and titles only) ──
+const NOT_BUYER = /financial services|financial institutions|inventory|assistant to|executive assistant|planning & transformation|delivery/i;
+function buyerRole(title) {
+  const t = String(title || '');
+  if (NOT_BUYER.test(t)) return null;
+  if (/chief people|\bchro\b|chief human resources|benefits director|((vp|vice president|svp|senior vp|director|head)\b.*(human resource|people|\bhr\b))|((human resource|\bhr\b).*\bdirector)/i.test(t)) return { group: 'HR', rank: 1 };
+  if (/payroll/i.test(t)) return { group: 'Payroll', rank: /associate|assistant|specialist|clerk/i.test(t) ? 3 : 2 };
+  if (/(manager|generalist).*(human resource|\bhr\b)|(human resource|\bhr\b).*manager/i.test(t)) return { group: 'HR', rank: 2 };
+  if (/\bcfo\b|chief financial|controller|((vp|vice president|director|head)\b.*financ)|finance director/i.test(t)) return { group: 'Finance', rank: /assistant|associate/i.test(t) ? 4 : 3 };
+  if (/\bceo\b|chief executive|president|\bcoo\b|chief operating|chief operations|owner|founder/i.test(t)) return { group: 'Executive', rank: 5 };
+  return null;
+}
+function liUrl(name, a) { return 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(`${name} ${(a.zi && a.zi.name) || a.company}`); }
+function personHtml(p, a) {
+  const low = p.accuracy != null && p.accuracy < 80;
+  return `<span class="person ${low ? 'low' : ''}"><a class="li" href="${esc(liUrl(p.name, a))}" target="_blank" rel="noopener" title="Find ${esc(p.name)} on LinkedIn">${esc(p.name)}<span class="li-badge">in</span></a>${p.accuracy != null ? `<span class="acc ${low ? 'low' : ''}" title="ZoomInfo accuracy: how likely this person is still there and reachable${low ? '. Under 80, so check LinkedIn first.' : ''}">${p.accuracy}</span>` : ''}</span>`;
+}
+function buyers(a) {
+  if (!a.zi || !Array.isArray(a.zi.people)) return [];
+  const newIds = new Set((a.zi.new_leaders || []).map(p => p.person_id));
+  const ranked = a.zi.people.map(p => ({ ...p, role: buyerRole(p.title), isNew: newIds.has(p.person_id) }))
+    .filter(p => p.role)
+    .sort((x, y) => (x.role.rank - (x.isNew ? 0.5 : 0)) - (y.role.rank - (y.isNew ? 0.5 : 0)) || (y.accuracy || 0) - (x.accuracy || 0));  // new leaders first within a role
+  const pick = [], seenGroups = new Set();
+  for (const g of ['HR', 'Payroll', 'Finance']) { const p = ranked.find(x => x.role.group === g); if (p) { pick.push(p); seenGroups.add(g); } }
+  if (pick.length < 3) { const e = ranked.find(x => x.role.group === 'Executive'); if (e) pick.push(e); }
+  for (const p of ranked) { if (pick.length >= 3) break; if (!pick.includes(p) && p.role.group !== 'Executive') pick.push(p); }
+  return pick.slice(0, 3);
+}
+function shortTitle(t) { return String(t || '').replace(/Vice President/g, 'VP').replace(/Human Resources?/g, 'HR').replace(/Chief Financial Officer/g, 'CFO').replace(/Chief Executive Officer/g, 'CEO').replace(/Chief Operating Officer/g, 'COO').replace(/Director,\s*/g, 'Dir. '); }
+
 function leaderHtml(t) {
-  return `New ${esc(t.title)}: <a class="li" href="${esc(t.linkedin)}" target="_blank" rel="noopener" title="Find ${esc(t.person)} on LinkedIn">${esc(t.person)}<span class="li-badge">in</span></a> (started in the last ${t.window})`;
+  return `New ${esc(t.title)}: ${personHtml({ name: t.person, accuracy: t.accuracy }, t.acct)} (started in the last ${t.window})`;
 }
 function hasLeaderTrigger(a) { return triggers(a).some(t => t.kind === 'Leadership change' || t.kind === 'New leader'); }
 
@@ -750,7 +788,7 @@ const CARDS = {
 
 function matchesSearch(a, q) {
   if (!q) return true;
-  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
+  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', ...buyers(a).map(p => p.name + ' ' + p.title), ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
     ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw)), ...(a.contacts || []).map(c => (c.name || '') + ' ' + (c.title || '')), a.notes || ''].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
 }
@@ -842,6 +880,7 @@ function renderFocus() {
       </div>
       <span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>
       <div class="reasons">${reasons(a).slice(0, 3).map(r => `<span>${r.html || esc(r.s)}</span>`).join('')}</div>
+      ${buyers(a).length ? `<div class="reasons"><span>👤 Call: ${buyers(a).slice(0, 2).map(p => `${personHtml(p, a)} <span style="color:var(--text-dim)">${esc(shortTitle(p.title))}</span>`).join(' · ')}</span></div>` : ''}
       <div class="fcard-actions">
         ${share.mode === 'reader' ? '' : `<button class="work-btn" data-work="${esc(a.company)}">✓ Worked</button>`}
         ${a.website ? `<a class="btn sm" href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener">Website ↗</a>` : ''}
@@ -893,6 +932,7 @@ function rowHtml(a) {
     <td>
       <div class="co"><span class="caret">▶</span>${esc(a.company)} ${flags}</div>
       ${a.website ? `<div class="co-sub"><a href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener" data-stop>${esc(domainOf(a.website))}</a></div>` : ''}
+      ${buyers(a).length ? `<div class="co-buyer">👤 ${personHtml(buyers(a)[0], a)} <span>${esc(shortTitle(buyers(a)[0].title))}</span></div>` : ''}
     </td>
     <td class="col-sf"><div class="sf"><span class="badge stage">${esc(a.stage || '?')}</span><span class="badge ${esc((a.fit || 'weak').toLowerCase())}">${esc(a.fit || '?')}</span></div></td>
     <td class="when"><div class="num">${p.last_activity ? fmtDate(p.last_activity) : '—'} ${trend}</div><div class="ago">${agoText(p.days_since_activity)}</div>${spark(a)}</td>
@@ -941,6 +981,9 @@ function detailHtml(a) {
         <div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
           ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>
         <div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>
+        ${buyers(a).length ? `<div class="dblock"><div class="dlabel">Who to call · ZoomInfo${a.zi.people_on ? ' · ' + fmtDate(a.zi.people_on) : ''}</div>
+          ${buyers(a).map(p => `<div class="buyer-row"><span class="g">${esc(p.role.group)}</span><span>${personHtml(p, a)}${p.isNew ? ' 🔔' : ''} <span class="t">${esc(p.title)}</span></span></div>`).join('')}
+          <div class="muted" style="margin-top:2px">Number = ZoomInfo accuracy (99 best). Under 80 is dimmed: check LinkedIn first. Phone and email are in ZoomInfo.</div></div>` : ''}
         ${triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events · ZoomInfo${a.zi.triggers_on ? ' · checked ' + fmtDate(a.zi.triggers_on) : ''}</div>
           ${triggers(a).map(t => `<div class="trig-row"><span class="d num">${t.date ? fmtDate(t.date) : (t.kind === 'New leader' ? 'recent' : '')}</span><span><span class="k">${esc(t.kind)}</span> · ${t.kind === 'New leader' ? leaderHtml(t) : esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}
           ${(a.zi.new_leaders || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. Click a name to search LinkedIn for that person at this company. The right person is usually the first result. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : ''}
@@ -1068,11 +1111,11 @@ document.getElementById('btnSave').addEventListener('click', () => {
 });
 document.getElementById('btnCsv').addEventListener('click', () => {
   const cell = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
+  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
   sortList(filtered()).forEach((a, i) => {
     const p = a.priority;
     rows.push([i + 1, a.company, p.score, p.tier, p.action, a.stage, a.fit, p.last_activity, p.days_since_activity, p.active_days_30d, p.trend,
-      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
+      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), buyers(a).map(p => `${p.name} (${p.title}, accuracy ${p.accuracy}) ${liUrl(p.name, a)}`).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
   });
   download(`6sense_call_list_${TODAY}.csv`, rows.map(r => r.map(cell).join(',')).join('\r\n'), 'text/csv');
 });
@@ -1587,7 +1630,7 @@ async function ziRefresh(list, allowCredits) {
           for (const rec of (p.data || [])) {
             const at = rec.attributes || {};
             const m = leaders.get(String((at.company || {}).id));
-            if (m) m.set(String(rec.id), { name: [at.firstName, at.lastName].filter(Boolean).join(' '), title: at.jobTitle || '', person_id: String(rec.id), window_days: days });
+            if (m) m.set(String(rec.id), { name: [at.firstName, at.lastName].filter(Boolean).join(' '), title: at.jobTitle || '', person_id: String(rec.id), window_days: days, accuracy: at.contactAccuracyScore });
           }
           const total = ((p.meta || {}).totalResults) || 0;
           if (page * 100 >= total) break;
@@ -1595,6 +1638,24 @@ async function ziRefresh(list, allowCredits) {
       }
     }
     for (const a of result.pulled) { a.zi.new_leaders = [...leaders.get(a.zi.company_id).values()]; a.zi.triggers_on = TODAY; }
+    // likeliest buyers (any start date)
+    const buyerTitles = ['Chief People Officer', 'CHRO', 'VP Human Resources', 'Vice President Human Resources', 'HR Director', 'Director of Human Resources',
+      'Head of Human Resources', 'Human Resources Manager', 'HR Manager', 'People Operations', 'Payroll Manager', 'Payroll Director', 'Payroll Supervisor',
+      'CFO', 'Chief Financial Officer', 'Controller', 'VP Finance', 'Director of Finance', 'CEO', 'President', 'COO', 'Chief Operating Officer'];
+    const people = new Map(result.pulled.map(a => [a.zi.company_id, new Map()]));
+    for (const g of chunk(result.pulled, 50)) {
+      for (let page = 1; page <= 5; page++) {
+        const p = await ziCall(ziState.tools.contacts, { companyIdList: g.map(a => Number(a.zi.company_id)), jobTitleList: buyerTitles,
+          pageSize: 100, page, sort: '-contactAccuracyScore' });
+        for (const rec of (p.data || [])) {
+          const at = rec.attributes || {};
+          const m = people.get(String((at.company || {}).id));
+          if (m) m.set(String(rec.id), { name: [at.firstName, at.lastName].filter(Boolean).join(' '), title: at.jobTitle || '', person_id: String(rec.id), accuracy: at.contactAccuracyScore });
+        }
+        if (page * 100 >= (((p.meta || {}).totalResults) || 0)) break;
+      }
+    }
+    for (const a of result.pulled) { a.zi.people = [...people.get(a.zi.company_id).values()]; a.zi.people_on = TODAY; }
   }
   return result;
 }

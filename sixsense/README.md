@@ -50,6 +50,13 @@ Each account can carry a `zi` block: `{company_id, name, location, employees, pu
 - **Hiring surge:** shown in the account detail only.
 - Each new leader's **name is a link** (with a blue **in** badge) that searches LinkedIn for their name plus the company name, in Why now, the Call today cards and the account detail. There's no ZoomInfo credit or API call. An exact profile URL would come from `enrich_contacts` with `externalUrls`, which costs about 1 ZoomInfo credit per person, so it isn't built in.
 
+## Who to call (ZoomInfo)
+`zi.people` (`[{name, title, person_id, accuracy}]`) comes from a free `search_contacts` on HR, payroll, finance and executive titles, run with no start-date filter and sorted by accuracy.
+- The dashboard picks up to 3 buyers per account: the best **HR** leader, then **Payroll**, then **Finance** (CFO, Controller or VP Finance). An **Executive** fills in when one of those is missing. Non-buyer titles (Inventory Controller, "Financial Services" practice roles, assistants) are skipped, and new leaders rank first within their role.
+- They appear as 👤 under the company name in the table, as "Call:" on the Call today cards, and in a "Who to call" section in the account detail. Each name is a LinkedIn search link.
+- Every person shows ZoomInfo's **accuracy score** (70–99). Under 80 is dimmed with a "check LinkedIn first" hint.
+- The ZoomInfo refresh buttons and email auto-refresh re-run this search. Activity tracking stays in Salesforce.
+
 ## Cost
 - The page's buttons, email auto-refresh and LinkedIn links run in the browser against ZoomInfo directly. They use **no AI tokens** and only free ZoomInfo calls (search, plus enrichment of companies already under management).
 - Asking Claude in chat to refresh or republish does use tokens. Use the page buttons for day-to-day work, and start a fresh session for dashboard changes.
