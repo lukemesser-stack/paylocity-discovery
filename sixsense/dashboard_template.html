@@ -23,6 +23,7 @@
     --green: #22c55e; --green-dim: rgba(34,197,94,0.12);
     --yellow: #eab308; --yellow-dim: rgba(234,179,8,0.12);
     --comp: #f97316; --comp-dim: rgba(249,115,22,0.13);
+    --linkedin: #0a66c2;
     --radius: 10px; --radius-sm: 6px;
     --font: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   }
@@ -153,6 +154,9 @@
   .trig-row .d { color: var(--text-dim); }
   .trig-row .k { font-weight: 700; color: var(--b); }
   .trig-row a { color: var(--accent); text-decoration: none; }
+  a.li { color: var(--text); font-weight: 600; text-decoration: underline; text-decoration-color: var(--linkedin); text-underline-offset: 2px; white-space: nowrap; }
+  a.li:hover { color: var(--accent); }
+  .li-badge { display: inline-block; font-size: 9px; font-weight: 800; line-height: 13px; background: var(--linkedin); color: #fff; border-radius: 3px; padding: 0 3px; margin-left: 4px; vertical-align: 1px; text-decoration: none; }
   .zi-row { display: grid; grid-template-columns: 72px 1fr auto; gap: 10px; font-size: 12px; align-items: baseline; }
   .zi-row .d { color: var(--text-dim); }
   .zi-row .s { font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -561,11 +565,15 @@ function triggers(a) {
     if (!g) continue;
     out.push({ kind: 'New leader', hot: p.window_days <= 90 || g !== 'Executive', group: g,
       linkedin: 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(`${p.name} ${a.zi.name || a.company}`),
+      person: p.name, title: p.title, window: p.window_days <= 90 ? '90 days' : '6 months',
       text: `New ${p.title}: ${p.name} (started in the last ${p.window_days <= 90 ? '90 days' : '6 months'})`, date: null });
   }
   const order = { 'Leadership change': 0, 'New leader': 1, 'Vendor clue': 2, 'Hiring surge': 3 };
   const seen = new Set();
   return out.filter(t => !seen.has(t.text) && seen.add(t.text)).sort((x, y) => order[x.kind] - order[y.kind]);
+}
+function leaderHtml(t) {
+  return `New ${esc(t.title)}: <a class="li" href="${esc(t.linkedin)}" target="_blank" rel="noopener" title="Find ${esc(t.person)} on LinkedIn">${esc(t.person)}<span class="li-badge">in</span></a> (started in the last ${t.window})`;
 }
 function hasLeaderTrigger(a) { return triggers(a).some(t => t.kind === 'Leadership change' || t.kind === 'New leader'); }
 
@@ -576,7 +584,9 @@ function reasons(a) {
     const t = p.days_since_activity <= 14 ? 'hot' : '';
     out.push({ t, s: `Active ${agoText(p.days_since_activity)}` + (p.active_days_30d ? ` · ${p.active_days_30d} active day${p.active_days_30d === 1 ? '' : 's'} in 30d` : '') + (p.trend === 'heating up' && p.active_days_30d >= 2 ? ' ↑' : '') });
   }
-  triggers(a).filter(t => t.kind !== 'Hiring surge').slice(0, 2).forEach(t => out.push({ t: 'hot', s: '🔔 ' + (t.text.length > 110 ? t.text.slice(0, 107).replace(/\s+\S*$/, '') + '…' : t.text) }));
+  triggers(a).filter(t => t.kind !== 'Hiring surge').slice(0, 2).forEach(t => out.push({ t: 'hot',
+    s: '🔔 ' + (t.text.length > 110 ? t.text.slice(0, 107).replace(/\s+\S*$/, '') + '…' : t.text),
+    html: t.kind === 'New leader' ? '🔔 ' + leaderHtml(t) : null }));
   // only pages recent enough to be a reason to call now (urls are sorted newest first)
   const age = u => (isISO(u.date) ? daysBetween(TODAY, u.date) : 999);
   const hand = a.decoded_urls.find(u => age(u) <= 90 && HAND_RAISE_PAGES.some(x => pagePath(u.decoded || u.raw).includes(x)));
@@ -831,7 +841,7 @@ function renderFocus() {
         <span class="score ${L} num">${p.score}</span>
       </div>
       <span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>
-      <div class="reasons">${reasons(a).slice(0, 3).map(r => `<span>${esc(r.s)}</span>`).join('')}</div>
+      <div class="reasons">${reasons(a).slice(0, 3).map(r => `<span>${r.html || esc(r.s)}</span>`).join('')}</div>
       <div class="fcard-actions">
         ${share.mode === 'reader' ? '' : `<button class="work-btn" data-work="${esc(a.company)}">✓ Worked</button>`}
         ${a.website ? `<a class="btn sm" href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener">Website ↗</a>` : ''}
@@ -886,7 +896,7 @@ function rowHtml(a) {
     </td>
     <td class="col-sf"><div class="sf"><span class="badge stage">${esc(a.stage || '?')}</span><span class="badge ${esc((a.fit || 'weak').toLowerCase())}">${esc(a.fit || '?')}</span></div></td>
     <td class="when"><div class="num">${p.last_activity ? fmtDate(p.last_activity) : '—'} ${trend}</div><div class="ago">${agoText(p.days_since_activity)}</div>${spark(a)}</td>
-    <td class="col-why"><div class="why">${reasons(a).map(r => `<span class="${r.t}">${esc(r.s)}</span>`).join('')}</div></td>
+    <td class="col-why"><div class="why">${reasons(a).map(r => `<span class="${r.t}">${r.html || esc(r.s)}</span>`).join('')}</div></td>
     <td><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span></td>
     <td>${share.mode === 'reader' ? '' : `<button class="work-btn ${a.worked_on === TODAY ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${a.worked_on === TODAY ? '✓ Worked' : 'Worked?'}</button>`}</td>
   </tr>`;
@@ -932,8 +942,8 @@ function detailHtml(a) {
           ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>
         <div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>
         ${triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events · ZoomInfo${a.zi.triggers_on ? ' · checked ' + fmtDate(a.zi.triggers_on) : ''}</div>
-          ${triggers(a).map(t => `<div class="trig-row"><span class="d num">${t.date ? fmtDate(t.date) : (t.kind === 'New leader' ? 'recent' : '')}</span><span><span class="k">${esc(t.kind)}</span> · ${esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}${t.linkedin ? ` <a href="${esc(t.linkedin)}" target="_blank" rel="noopener" title="Search LinkedIn for this person at this company">LinkedIn ↗</a>` : ''}</span></div>`).join('')}
-          ${(a.zi.new_leaders || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. LinkedIn ↗ opens a LinkedIn search for the name and company, usually with the right person first. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : ''}
+          ${triggers(a).map(t => `<div class="trig-row"><span class="d num">${t.date ? fmtDate(t.date) : (t.kind === 'New leader' ? 'recent' : '')}</span><span><span class="k">${esc(t.kind)}</span> · ${t.kind === 'New leader' ? leaderHtml(t) : esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}
+          ${(a.zi.new_leaders || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. Click a name to search LinkedIn for that person at this company. The right person is usually the first result. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : ''}
         ${a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel">ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>
           ${!a.zi ? '<div class="muted">Not pulled yet.</div>' : `
           <div class="muted" style="margin-bottom:4px">${esc(a.zi.name)}${a.zi.location ? ' · ' + esc(a.zi.location) : ''}${a.zi.employees ? ' · ' + esc(a.zi.employees) + ' employees' : ''}</div>
