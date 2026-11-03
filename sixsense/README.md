@@ -42,6 +42,14 @@ Each account can carry a `zi` block: `{company_id, name, location, employees, pu
   - Only free accounts are pulled, and at most once a day per account.
   - If ZoomInfo fails, the email data still saves and the import log shows the reason.
 
+## Trigger events (ZoomInfo)
+`zi.scoops` (`[{date, summary, types, link}]`) and `zi.new_leaders` (`[{name, title, person_id, window_days}]`) feed a **🔔 Trigger** badge, the top of Why now, a Trigger events filter card and a detail section.
+- **Leadership change:** ZoomInfo Scoops of type Executive Move, New Hire, Promotion, Management Move or Left Company, from the last 120 days.
+- **New leader:** a free `search_contacts` by `positionStartDateMin`, run twice (180 days, then 90 days) for CEO/President/COO, CFO/Controller/Finance, HR/People/Talent/Benefits and Payroll titles. Practice titles like "Financial Services" are excluded. It returns names and titles only, with no contact details.
+- **Vendor clue:** the host of a Scoop's job-post link, e.g. `recruitingbypaycor.com`, means they likely use Paycor.
+- **Hiring surge:** shown in the account detail only.
+- Refresh buttons and email auto-refresh pull Scoops in the same free call as intent, then run the leader search. Triggers don't change the score.
+
 The scoring rules are written twice, once in the script and once in the template. If you change one, change the other.
 
 Re-running is safe: the output is the same each time, and a `.bak` copy of the previous file is kept. The JSON is still a flat `{company: account}` dict, so the dashboard keeps working.
