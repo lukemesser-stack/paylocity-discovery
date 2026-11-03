@@ -560,6 +560,7 @@ function triggers(a) {
     const g = leaderGroup(p.title);
     if (!g) continue;
     out.push({ kind: 'New leader', hot: p.window_days <= 90 || g !== 'Executive', group: g,
+      linkedin: 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(`${p.name} ${a.zi.name || a.company}`),
       text: `New ${p.title}: ${p.name} (started in the last ${p.window_days <= 90 ? '90 days' : '6 months'})`, date: null });
   }
   const order = { 'Leadership change': 0, 'New leader': 1, 'Vendor clue': 2, 'Hiring surge': 3 };
@@ -931,8 +932,8 @@ function detailHtml(a) {
           ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>
         <div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>
         ${triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events · ZoomInfo${a.zi.triggers_on ? ' · checked ' + fmtDate(a.zi.triggers_on) : ''}</div>
-          ${triggers(a).map(t => `<div class="trig-row"><span class="d num">${t.date ? fmtDate(t.date) : (t.kind === 'New leader' ? 'recent' : '')}</span><span><span class="k">${esc(t.kind)}</span> · ${esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}
-          ${(a.zi.new_leaders || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. Look up their phone and email in ZoomInfo before calling.</div>' : ''}</div>` : ''}
+          ${triggers(a).map(t => `<div class="trig-row"><span class="d num">${t.date ? fmtDate(t.date) : (t.kind === 'New leader' ? 'recent' : '')}</span><span><span class="k">${esc(t.kind)}</span> · ${esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}${t.linkedin ? ` <a href="${esc(t.linkedin)}" target="_blank" rel="noopener" title="Search LinkedIn for this person at this company">LinkedIn ↗</a>` : ''}</span></div>`).join('')}
+          ${(a.zi.new_leaders || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. LinkedIn ↗ opens a LinkedIn search for the name and company, usually with the right person first. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : ''}
         ${a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel">ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>
           ${!a.zi ? '<div class="muted">Not pulled yet.</div>' : `
           <div class="muted" style="margin-bottom:4px">${esc(a.zi.name)}${a.zi.location ? ' · ' + esc(a.zi.location) : ''}${a.zi.employees ? ' · ' + esc(a.zi.employees) + ' employees' : ''}</div>
@@ -1061,7 +1062,7 @@ document.getElementById('btnCsv').addEventListener('click', () => {
   sortList(filtered()).forEach((a, i) => {
     const p = a.priority;
     rows.push([i + 1, a.company, p.score, p.tier, p.action, a.stage, a.fit, p.last_activity, p.days_since_activity, p.active_days_30d, p.trend,
-      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), triggers(a).map(t => t.text).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
+      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
   });
   download(`6sense_call_list_${TODAY}.csv`, rows.map(r => r.map(cell).join(',')).join('\r\n'), 'text/csv');
 });
