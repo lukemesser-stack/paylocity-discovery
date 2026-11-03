@@ -57,6 +57,12 @@ Each account can carry a `zi` block: `{company_id, name, location, employees, pu
 - Every person shows ZoomInfo's **accuracy score** (70–99). Under 80 is dimmed with a "check LinkedIn first" hint.
 - The ZoomInfo refresh buttons and email auto-refresh re-run this search. Activity tracking stays in Salesforce.
 
+## Company snapshot, payroll vendor and news (ZoomInfo)
+- **Snapshot** (`zi.firmo`) comes from `enrich_companies`, which is free for companies under management. It covers industry, employees, revenue range, HQ, locations, founding year, type and a one-line description. It shows as a line under the company name and on the call cards, plus a Company snapshot section in the detail view.
+- **Payroll vendor** (`zi.payroll_tech.vendors`) comes from free `search_companies` calls filtered by ZoomInfo tech-product ids (`PAYROLL_TECH` in the template) for ADP, Paychex, Paycor, UKG, Paycom, Paylocity, isolved and Dayforce. Vendor clues from job-post links are added too. It shows as a 💼 chip and a "Payroll: …" Why now line marked "confirm in Salesforce". A Paylocity hit shows a "may already be a client" warning.
+- **News** (`zi.news`) comes from `enrich_company_signals` NEWS in the same call as intent. Only items from the last 12 months that mention the company by name are kept. The latest item from the last 60 days goes in Why now, and up to 4 items with links in the detail view. Acquisition news becomes a 🔔 Acquisition trigger.
+- All three are refreshed by the ZoomInfo buttons and email auto-refresh. They don't change the score.
+
 ## Previous sales process (owner, manual)
 - In an account's detail, **☆ Mark as past sales process** sets `past_process: true` and `past_process_on`. A **Sales history** box (`history_note`) appears for details to pass to the SDR.
 - The account then shows a **★ Past deal** badge (the note shows on hover), a "★ Past sales process: …" line in Why now, and a filter card. Search covers the note, and the CSV has two columns for it.

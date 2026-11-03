@@ -185,6 +185,18 @@
   .flag.hist { background: var(--accent-dim); color: var(--accent); }
   .hist-btn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
   .hist-text { font-size: 12px; white-space: pre-wrap; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; }
+  .flag.vendor { background: var(--a-dim); color: var(--a); box-shadow: inset 0 0 0 1px var(--a-line); }
+  .flag.client { background: var(--yellow-dim); color: var(--yellow); }
+  .co-firmo { font-size: 11px; color: var(--text-2); margin: 1px 0 0 16px; font-family: var(--serif); }
+  .snap { display: grid; grid-template-columns: 96px 1fr; gap: 2px 10px; font-size: 12px; }
+  .snap dt { color: var(--text-dim); }
+  .snap dd { margin: 0; color: var(--text); }
+  .about { font-family: var(--serif); font-size: 13px; color: var(--text-2); margin-top: 6px; line-height: 1.45; }
+  .news-row { display: grid; grid-template-columns: 72px 1fr; gap: 10px; font-size: 12px; margin-bottom: 5px; }
+  .news-row .d { color: var(--text-dim); }
+  .news-row a { color: var(--text); font-weight: 600; text-decoration: none; }
+  .news-row a:hover { color: var(--accent); text-decoration: underline; }
+  .news-row .src { color: var(--text-dim); font-size: 11px; }
   .acc { display: inline-block; font-size: 10px; font-weight: 700; color: var(--text-2); border: 1px solid var(--border-bright); border-radius: 3px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; font-variant-numeric: tabular-nums; }
   .acc.low { color: var(--yellow); border-color: var(--yellow-dim); }
   .person.low { opacity: .6; }
@@ -600,6 +612,9 @@ function triggers(a) {
     const v = VENDOR_HOSTS.find(([re]) => re.test(host));
     if (v) out.push({ kind: 'Vendor clue', hot: true, text: `Likely uses ${v[1]}: their job posts are hosted on ${host}`, date: sc.date, link: sc.link });
   }
+  for (const n of newsItems(a, 365)) {
+    if (MNA.test(n.title + ' ' + (n.summary || ''))) out.push({ kind: 'Acquisition', hot: true, text: n.title, date: n.date, link: n.url });
+  }
   for (const p of (a.zi.new_leaders || [])) {
     const g = leaderGroup(p.title);
     if (!g) continue;
@@ -608,10 +623,31 @@ function triggers(a) {
       person: p.name, title: p.title, window: p.window_days <= 90 ? '90 days' : '6 months', accuracy: p.accuracy, acct: a,
       text: `New ${p.title}: ${p.name} (started in the last ${p.window_days <= 90 ? '90 days' : '6 months'})`, date: null });
   }
-  const order = { 'Leadership change': 0, 'New leader': 1, 'Vendor clue': 2, 'Hiring surge': 3 };
+  const order = { 'Acquisition': 0, 'Leadership change': 1, 'New leader': 2, 'Vendor clue': 3, 'Hiring surge': 4 };
   const seen = new Set();
   return out.filter(t => !seen.has(t.text) && seen.add(t.text)).sort((x, y) => order[x.kind] - order[y.kind]);
 }
+// ── Company snapshot, payroll vendor, news (ZoomInfo; display only, not part of the score) ──
+function firmoLine(a) {
+  const f = a.zi && a.zi.firmo;
+  if (!f) return '';
+  return [f.sub_industry || f.industry, f.employees ? Number(f.employees).toLocaleString() + ' employees' : '', f.revenue_range, f.hq].filter(Boolean).join(' · ');
+}
+function payrollVendors(a) {
+  const out = new Map();
+  for (const v of ((a.zi && a.zi.payroll_tech && a.zi.payroll_tech.vendors) || [])) out.set(v, 'ZoomInfo tech stack');
+  for (const t of triggers(a)) if (t.kind === 'Vendor clue') { const m = t.text.match(/Likely uses ([^:]+):/); if (m && !out.has(m[1])) out.set(m[1], 'job-post site'); }
+  return [...out.entries()].map(([name, source]) => ({ name, source }));
+}
+function newsItems(a, days = 365) {
+  if (!a.zi || !Array.isArray(a.zi.news)) return [];
+  const names = [a.company, a.zi.name, String(a.zi.name || '').split(/\s+/).slice(0, 2).join(' ')].filter(x => x && x.length >= 3);
+  const mentions = n => names.some(nm => new RegExp('\\b' + nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(n.title + ' ' + (n.summary || '')));
+  return a.zi.news.filter(n => isISO(n.date) && daysBetween(TODAY, n.date) <= days && mentions(n))
+    .sort((x, y) => y.date.localeCompare(x.date));
+}
+const MNA = /\b(acquires|acquired|acquisition of|to acquire|merger|merges with|agrees to buy|bought by|sale to|sells to)\b/i;
+
 // ── Who to call: likeliest buyers from ZoomInfo (free search, names and titles only) ──
 const NOT_BUYER = /financial services|financial institutions|inventory|assistant to|executive assistant|planning & transformation|delivery/i;
 function buyerRole(title) {
@@ -646,7 +682,7 @@ function shortTitle(t) { return String(t || '').replace(/Vice President/g, 'VP')
 function leaderHtml(t) {
   return `New ${esc(t.title)}: ${personHtml({ name: t.person, accuracy: t.accuracy }, t.acct)} (started in the last ${t.window})`;
 }
-function hasLeaderTrigger(a) { return triggers(a).some(t => t.kind === 'Leadership change' || t.kind === 'New leader'); }
+function hasLeaderTrigger(a) { return triggers(a).some(t => t.kind === 'Leadership change' || t.kind === 'New leader' || t.kind === 'Acquisition'); }
 
 // Plain-English "why now" bullets (display only, not part of the score)
 function reasons(a) {
@@ -662,6 +698,11 @@ function reasons(a) {
     const n = String(a.history_note || '').replace(/\s+/g, ' ').trim();
     out.push({ t: 'hot', s: '★ Past sales process' + (n ? ': ' + (n.length > 90 ? n.slice(0, 87).replace(/\s+\S*$/, '') + '…' : n) : '') });
   }
+  const pv = payrollVendors(a);
+  if (pv.some(v => /paylocity/i.test(v.name))) out.push({ t: 'hot', s: '⚠ ZoomInfo detects Paylocity: may already be a client. Check Salesforce before calling.' });
+  else if (pv.length) out.push({ t: 'hot', s: `💼 Payroll: ${pv.map(v => v.name).join(' / ')} (${pv.map(v => v.source).filter((x, i, arr) => arr.indexOf(x) === i).join(', ')}; confirm in Salesforce)` });
+  const fresh = newsItems(a, 60).filter(n => !MNA.test(n.title + ' ' + (n.summary || '')));
+  if (fresh.length) out.push({ t: '', s: `📰 ${fresh[0].title.length > 90 ? fresh[0].title.slice(0, 87).replace(/\s+\S*$/, '') + '…' : fresh[0].title} (${fmtDate(fresh[0].date)})` });
   // only pages recent enough to be a reason to call now (urls are sorted newest first)
   const age = u => (isISO(u.date) ? daysBetween(TODAY, u.date) : 999);
   const hand = a.decoded_urls.find(u => age(u) <= 90 && HAND_RAISE_PAGES.some(x => pagePath(u.decoded || u.raw).includes(x)));
@@ -828,7 +869,7 @@ const CARDS = {
 
 function matchesSearch(a, q) {
   if (!q) return true;
-  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', a.past_process ? 'past deal past sales process ' + (a.history_note || '') : '', ...buyers(a).map(p => p.name + ' ' + p.title), ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
+  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', firmoLine(a), ...payrollVendors(a).map(v => v.name), ...newsItems(a).map(n => n.title), a.past_process ? 'past deal past sales process ' + (a.history_note || '') : '', ...buyers(a).map(p => p.name + ' ' + p.title), ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
     ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw)), ...(a.contacts || []).map(c => (c.name || '') + ' ' + (c.title || '')), a.notes || ''].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
 }
@@ -914,7 +955,8 @@ function renderFocus() {
       <div class="fcard-top">
         <div>
           <div class="fcard-name" data-jump="${esc(a.company)}">${esc(a.company)}</div>
-          <div class="fcard-meta">${a.past_process ? `<span class="flag hist" title="${esc(a.history_note || 'Previous sales process')}">★ Past deal</span> ` : ''}${a.six_qa_on ? '<span class="flag qa">6QA</span> ' : ''}${hasLeaderTrigger(a) ? '<span class="flag trig">🔔 Trigger</span> ' : ''}${ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo agrees: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span> ` : ''}${a.zi && a.zi.note ? '<span class="flag warn">check fit</span> ' : ''}${esc(a.stage || '?')} · ${esc(a.fit || '?')} fit${newSinceWorked(a) ? ' · <span class="flag new">new activity</span>' : ''}</div>
+          ${firmoLine(a) ? `<div class="fcard-meta" style="font-family:var(--serif)">${esc(firmoLine(a))}</div>` : ''}
+          <div class="fcard-meta">${payrollVendors(a).length ? `<span class="flag vendor">💼 ${esc(payrollVendors(a).map(v => v.name).join(' / '))}</span> ` : ''}${a.past_process ? `<span class="flag hist" title="${esc(a.history_note || 'Previous sales process')}">★ Past deal</span> ` : ''}${a.six_qa_on ? '<span class="flag qa">6QA</span> ' : ''}${hasLeaderTrigger(a) ? '<span class="flag trig">🔔 Trigger</span> ' : ''}${ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo agrees: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span> ` : ''}${a.zi && a.zi.note ? '<span class="flag warn">check fit</span> ' : ''}${esc(a.stage || '?')} · ${esc(a.fit || '?')} fit${newSinceWorked(a) ? ' · <span class="flag new">new activity</span>' : ''}</div>
         </div>
         <span class="score ${L} num">${p.score}</span>
       </div>
@@ -959,6 +1001,7 @@ function rowHtml(a) {
   const worked = isISO(a.worked_on);
   const flags = [
     a.six_qa_on ? `<span class="flag qa" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
+    payrollVendors(a).length ? `<span class="flag ${payrollVendors(a).some(v => /paylocity/i.test(v.name)) ? 'client' : 'vendor'}" title="Payroll/HR vendor: ${esc(payrollVendors(a).map(v => v.name + ' (' + v.source + ')').join(', '))}. Confirm in Salesforce.">💼 ${esc(payrollVendors(a).map(v => v.name).join(' / '))}</span>` : '',
     a.past_process ? `<span class="flag hist" title="${esc(a.history_note || 'Previous sales process')}">★ Past deal</span>` : '',
     hasLeaderTrigger(a) ? `<span class="flag trig" title="${esc(triggers(a).map(t => t.text).join(' | '))}">🔔 Trigger</span>` : '',
     ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo intent agrees with 6sense: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span>` : '',
@@ -973,6 +1016,7 @@ function rowHtml(a) {
     <td>
       <div class="co"><span class="caret">▶</span>${esc(a.company)} ${flags}</div>
       ${a.website ? `<div class="co-sub"><a href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener" data-stop>${esc(domainOf(a.website))}</a></div>` : ''}
+      ${firmoLine(a) ? `<div class="co-firmo">${esc(firmoLine(a))}</div>` : ''}
       ${buyers(a).length ? `<div class="co-buyer">👤 ${personHtml(buyers(a)[0], a)} <span>${esc(shortTitle(buyers(a)[0].title))}</span></div>` : ''}
     </td>
     <td class="col-sf"><div class="sf"><span class="badge stage">${esc(a.stage || '?')}</span><span class="badge ${esc((a.fit || 'weak').toLowerCase())}">${esc(a.fit || '?')}</span></div></td>
@@ -1019,6 +1063,16 @@ function detailHtml(a) {
         <div class="dblock muted">${a.signal_count} signals · ${a.web_visits} web visits · reach ${esc(a.reach || '?')}${a.source_files.length ? ` · ${a.source_files.length} source email${a.source_files.length === 1 ? '' : 's'}` : ''}</div>
       </div>
       <div>
+        ${a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel">Company snapshot · ZoomInfo</div>
+          <dl class="snap">
+            <dt>Industry</dt><dd>${esc(a.zi.firmo.industry)}${a.zi.firmo.sub_industry ? ' · ' + esc(a.zi.firmo.sub_industry) : ''}</dd>
+            <dt>Employees</dt><dd>${a.zi.firmo.employees ? Number(a.zi.firmo.employees).toLocaleString() : '—'}</dd>
+            <dt>Revenue</dt><dd>${esc(a.zi.firmo.revenue_range || '—')}</dd>
+            <dt>HQ</dt><dd>${esc(a.zi.firmo.hq || '—')}${a.zi.firmo.locations ? ` · ${a.zi.firmo.locations} location${a.zi.firmo.locations === 1 ? '' : 's'}` : ''}</dd>
+            <dt>Founded</dt><dd>${esc(a.zi.firmo.founded || '—')} · ${esc(a.zi.firmo.type || '')}</dd>
+            <dt>Payroll / HR</dt><dd>${payrollVendors(a).length ? esc(payrollVendors(a).map(v => v.name + ' (' + v.source + ')').join(', ')) + (a.zi.payroll_tech && a.zi.payroll_tech.evidence ? '<br><span class="muted">' + esc(a.zi.payroll_tech.evidence) + '</span>' : '') : '<span class="muted">Not detected in ZoomInfo. Check Salesforce.</span>'}</dd>
+          </dl>
+          ${a.zi.firmo.about ? `<div class="about">${esc(a.zi.firmo.about)}</div>` : ''}</div>` : ''}
         <div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
           ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>
         <div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>
@@ -1028,6 +1082,8 @@ function detailHtml(a) {
         ${triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events · ZoomInfo${a.zi.triggers_on ? ' · checked ' + fmtDate(a.zi.triggers_on) : ''}</div>
           ${triggers(a).map(t => `<div class="trig-row"><span class="d num">${t.date ? fmtDate(t.date) : (t.kind === 'New leader' ? 'recent' : '')}</span><span><span class="k">${esc(t.kind)}</span> · ${t.kind === 'New leader' ? leaderHtml(t) : esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}
           ${(a.zi.new_leaders || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. Click a name to search LinkedIn for that person at this company. The right person is usually the first result. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : ''}
+        ${newsItems(a).length ? `<div class="dblock"><div class="dlabel">Recent news · last 12 months</div>
+          ${newsItems(a).slice(0, 4).map(n => `<div class="news-row"><span class="d num">${fmtDate(n.date)}</span><span><a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">${esc(n.title)}</a> <span class="src">${esc(String(n.source || '').replace(/^www\./, ''))}</span></span></div>`).join('')}</div>` : ''}
         ${a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel">ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>
           ${!a.zi ? '<div class="muted">Not pulled yet.</div>' : `
           <div class="muted" style="margin-bottom:4px">${esc(a.zi.name)}${a.zi.location ? ' · ' + esc(a.zi.location) : ''}${a.zi.employees ? ' · ' + esc(a.zi.employees) + ' employees' : ''}</div>
@@ -1175,11 +1231,11 @@ document.getElementById('btnSave').addEventListener('click', () => {
 });
 document.getElementById('btnCsv').addEventListener('click', () => {
   const cell = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Past sales process', 'Sales history', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
+  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Industry', 'Employees', 'Revenue', 'HQ', 'Payroll vendor', 'Recent news', 'Past sales process', 'Sales history', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
   sortList(filtered()).forEach((a, i) => {
     const p = a.priority;
     rows.push([i + 1, a.company, p.score, p.tier, p.action, a.stage, a.fit, p.last_activity, p.days_since_activity, p.active_days_30d, p.trend,
-      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), a.past_process ? 'Yes' : '', a.history_note || '', buyers(a).map(p => `${p.name} (${p.title}, accuracy ${p.accuracy}) ${liUrl(p.name, a)}`).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
+      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), (a.zi && a.zi.firmo && a.zi.firmo.sub_industry) || '', (a.zi && a.zi.firmo && a.zi.firmo.employees) || '', (a.zi && a.zi.firmo && a.zi.firmo.revenue_range) || '', (a.zi && a.zi.firmo && a.zi.firmo.hq) || '', payrollVendors(a).map(v => v.name).join(' / '), newsItems(a).slice(0, 2).map(n => `${n.date} ${n.title} ${n.url}`).join('; '), a.past_process ? 'Yes' : '', a.history_note || '', buyers(a).map(p => `${p.name} (${p.title}, accuracy ${p.accuracy}) ${liUrl(p.name, a)}`).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
   });
   download(`6sense_call_list_${TODAY}.csv`, rows.map(r => r.map(cell).join(',')).join('\r\n'), 'text/csv');
 });
@@ -1574,7 +1630,13 @@ async function publishNow() {
 // are under management (free) unless the owner confirms the credit cost.
 // ═══════════════════════════════════════════════════════════════════════════
 const ZI_SERVER = 'ZoomInfo';
-const ziState = { mcp: null, tools: { search: 'search_companies', enrich: 'enrich_company_signals', contacts: 'search_contacts' }, busy: false, confirm: new Set(), working: new Set() };
+const PAYROLL_TECH = {   // ZoomInfo tech-product ids (lookup, Nov 2026)
+  'ADP': ['19351', '128821', '56741', '91563', '30526', '56630', '130544', '25745', '56737', '106349', '106341', '56784', '106344', '16350', '57028', '1329', '106360'],
+  'Paychex': ['58917', '8799', '76751'], 'Paycor': ['58145', '65892'],
+  'UKG': ['116202', '128325', '60381', '127999', '130174', '130173'], 'Paycom': ['23448'], 'Paylocity': ['8803'],
+  'isolved': ['59035'], 'Dayforce': ['131193'],
+};
+const ziState = { mcp: null, tools: { search: 'search_companies', enrich: 'enrich_company_signals', contacts: 'search_contacts', firmo: 'enrich_companies' }, busy: false, confirm: new Set(), working: new Set() };
 function ziCanRefresh() { return share.mode === 'writer' && !!ziState.mcp; }
 
 function ziButtonHtml(a) {
@@ -1596,6 +1658,7 @@ async function initZi() {
     ziState.tools.search = names.find(n => /search_companies$/.test(n)) || ziState.tools.search;
     ziState.tools.enrich = names.find(n => /enrich_company_signals$/.test(n)) || ziState.tools.enrich;
     ziState.tools.contacts = names.find(n => /search_contacts$/.test(n)) || null;
+    ziState.tools.firmo = names.find(n => /enrich_companies$/.test(n)) || null;
   } catch (e) { return; }
   ziState.mcp = mcp;
   document.getElementById('btnZi').classList.remove('hidden');
@@ -1664,7 +1727,7 @@ async function ziRefresh(list, allowCredits) {
   withId.filter(a => !toPull.includes(a)).forEach(a => result.needCredits.push(a));
   // 3. pull intent, 10 companies per call
   for (const g of chunk(toPull, 10)) {
-    const p = await ziCall(ziState.tools.enrich, { zoominfoCompanyIds: g.map(a => Number(a.zi.company_id)), signalTypes: ['INTENT', 'SCOOP'] });
+    const p = await ziCall(ziState.tools.enrich, { zoominfoCompanyIds: g.map(a => Number(a.zi.company_id)), signalTypes: ['INTENT', 'SCOOP', 'NEWS'] });
     for (const r of (p.results || [])) {
       const id = String(r.company && r.company.zoominfoCompanyId);
       const a = g.find(x => x.zi.company_id === id);
@@ -1675,6 +1738,10 @@ async function ziRefresh(list, allowCredits) {
       a.zi.scoops = (r.signals || []).filter(x => /scoop/i.test(x.signalType || '')).map(x => ({
         date: String(x.date || '').slice(0, 10), summary: x.summary || '', link: (x.details || {}).link || '',
         types: ((x.details || {}).types || []).map(t => t.type).filter(Boolean) })).filter(x => x.summary);
+      a.zi.news = (r.signals || []).filter(x => /news/i.test(x.signalType || '')).map(x => ({
+        date: String(x.date || '').slice(0, 10), title: (x.details || {}).title || '', summary: String(x.summary || '').slice(0, 280),
+        url: (x.details || {}).url || '', source: (x.details || {}).domain || '' })).filter(n => n.title);
+      a.zi.news_on = TODAY;
       a.zi.pulled_on = TODAY;
       delete a.zi.skipped;
       result.pulled.push(a);
@@ -1720,6 +1787,33 @@ async function ziRefresh(list, allowCredits) {
       }
     }
     for (const a of result.pulled) { a.zi.people = [...people.get(a.zi.company_id).values()]; a.zi.people_on = TODAY; }
+  }
+  // 5. company snapshot (free: these companies are under management) and payroll vendor from tech stack (free search)
+  if (result.pulled.length) {
+    if (ziState.tools.firmo) {
+      for (const g of chunk(result.pulled, 10)) {
+        const p = await ziCall(ziState.tools.firmo, { companies: g.map(a => ({ companyId: String(a.zi.company_id) })),
+          requiredFields: ['name', 'primaryIndustry', 'employeeCount', 'revenueRange', 'city', 'state', 'foundedYear', 'type', 'description', 'locationCount'] });
+        for (const rec of Object.values(p || {})) {
+          const dd = rec && rec.data; if (!dd) continue;
+          const a = g.find(x => x.zi.company_id === String(dd.id)); if (!a) continue;
+          const ind = Array.isArray(dd.primaryIndustry) ? dd.primaryIndustry : [dd.industry];
+          a.zi.firmo = { industry: ind[0] || '', sub_industry: ind[1] || '', employees: dd.employeeCount || null,
+            revenue_range: String(dd.revenueRange || '').replace(/\$(\d+) mil\. - \$(\d+) mil\./, '$$$1M–$$$2M'), hq: [dd.city, dd.state].filter(Boolean).join(', '),
+            founded: dd.foundedYear || '', type: dd.type ? dd.type.charAt(0) + dd.type.slice(1).toLowerCase() : '', locations: dd.locationCount || null,
+            about: String(dd.description || '').split(/(?<=\.)\s/)[0].slice(0, 220), on: TODAY };
+        }
+      }
+    }
+    const ids = result.pulled.map(a => Number(a.zi.company_id));
+    const found = new Map(result.pulled.map(a => [a.zi.company_id, []]));
+    for (const [vendor, tags] of Object.entries(PAYROLL_TECH)) {
+      for (const g of chunk(ids, 50)) {
+        const p = await ziCall(ziState.tools.search, { companyIdList: g, techAttributeTagIdList: tags, pageSize: 50 });
+        for (const rec of (p.data || [])) if (found.has(String(rec.id))) found.get(String(rec.id)).push(vendor);
+      }
+    }
+    for (const a of result.pulled) a.zi.payroll_tech = { ...(a.zi.payroll_tech || {}), vendors: found.get(a.zi.company_id).sort(), on: TODAY };
   }
   return result;
 }
