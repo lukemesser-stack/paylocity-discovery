@@ -296,7 +296,7 @@
     <span class="share-badge hidden" id="shareBadge"></span>
     <span class="save-state" id="saveState">Ready</span>
     <button class="btn primary" id="btnImport">⬆ Add emails / JSON</button>
-    <button class="btn hidden" id="btnZi" title="Refresh ZoomInfo intent for every Call today and This week account. Only pulls accounts that are free (under management) in ZoomInfo.">↻ ZoomInfo</button>
+    <button class="btn hidden" id="btnZi" title="Refresh ZoomInfo intent for every Call today, This week and Heating up account. Only pulls accounts that are free (under management) in ZoomInfo.">↻ ZoomInfo</button>
     <button class="btn" id="btnCsv" title="Download the rows currently shown as a CSV call list">⬇ Call list CSV</button>
     <button class="btn" id="btnSave" title="Download everything (incl. worked / notes) as JSON">💾 Save JSON</button>
   </div>
@@ -337,6 +337,7 @@
       <button class="chip" data-tier="B">B · This week</button>
       <button class="chip" data-tier="C">C · Nurture</button>
       <button class="chip" data-tier="D">D · Monitor</button>
+      <span id="sigChips" style="display:contents"></span>
       <select id="fStage" aria-label="Stage">
         <option value="">Any stage</option><option>Purchase</option><option>Decision</option><option>Consideration</option><option>Awareness</option><option>Target</option>
       </select>
@@ -853,7 +854,7 @@ function setSaveState(cls, text) {
 // ═══════════════════════════════════════════════════════════════════════════
 // UI state
 // ═══════════════════════════════════════════════════════════════════════════
-const ui = { q: '', tiers: new Set(), stage: '', fit: '', hideWorked: true, card: '', sort: 'score', dir: -1, open: new Set() };
+const ui = { q: '', tiers: new Set(), signals: new Set(), stage: '', fit: '', hideWorked: true, sort: 'score', dir: -1, open: new Set() };
 
 function loadPrefs() {
   try {
@@ -874,15 +875,17 @@ function isWorkedRecently(a) {
 }
 function newSinceWorked(a) { return isISO(a.worked_on) && a.priority.last_activity && a.priority.last_activity > a.worked_on; }
 
+// Accounts ZoomInfo pulls cover (refresh-all button and email auto-refresh): Call today, This week, Heating up.
+function ziTarget(a) { return 'AB'.includes(tierLetter(a)) || CARDS.heating.test(a); }
 const CARDS = {
-  A:       { label: 'Call today', unit: 'Tier A · score 65+', color: 'var(--a)', test: a => tierLetter(a) === 'A' },
-  B:       { label: 'This week', unit: 'Tier B · score 45–64', color: 'var(--b)', test: a => tierLetter(a) === 'B' },
+  A:       { tier: 'A', label: 'Call today', unit: 'Tier A · score 65+', color: 'var(--a)', test: a => tierLetter(a) === 'A' },
+  B:       { tier: 'B', label: 'This week', unit: 'Tier B · score 45–64', color: 'var(--b)', test: a => tierLetter(a) === 'B' },
   heating: { label: 'Heating up', unit: 'more active days than prior 30', color: 'var(--green)', test: a => a.priority.trend === 'heating up' && a.priority.active_days_30d >= 2 },
   active7: { label: 'Active 7 days', unit: 'any 6sense activity this week', color: 'var(--accent-2)', test: a => a.priority.days_since_activity != null && a.priority.days_since_activity <= 7 },
-  hist:    { label: 'Past sales process', unit: 'accounts you\'ve worked before', color: 'var(--accent)', test: a => !!a.past_process },
+  hist:    { chip: 'Past sales', label: 'Past sales process', unit: 'accounts you\'ve worked before', color: 'var(--accent)', test: a => !!a.past_process },
   trig:    { label: 'Trigger events', unit: 'new leaders & exec changes', color: 'var(--b)', test: a => hasLeaderTrigger(a) },
   zi:      { label: 'ZoomInfo confirmed', unit: 'ZoomInfo intent matches 6sense', color: 'var(--green)', test: a => ziConfirmed(a).length > 0 },
-  comp:    { label: 'Competitor research', unit: 'ADP, Rippling, Paycor…', color: 'var(--comp)', test: a => a.competitor_keywords.length > 0 },
+  comp:    { chip: 'Competitor', label: 'Competitor research', unit: 'ADP, Rippling, Paycor…', color: 'var(--comp)', test: a => a.competitor_keywords.length > 0 },
 };
 
 function matchesSearch(a, q) {
@@ -897,7 +900,7 @@ function filtered() {
     (!ui.tiers.size || ui.tiers.has(tierLetter(a))) &&
     (!ui.stage || a.stage === ui.stage) &&
     (!ui.fit || a.fit === ui.fit) &&
-    (!ui.card || CARDS[ui.card].test(a)) &&
+    [...ui.signals].every(k => CARDS[k].test(a)) &&
     (!ui.hideWorked || !isWorkedRecently(a)) &&
     matchesSearch(a, ui.q));
 }
@@ -948,11 +951,20 @@ function renderHeader() {
   document.title = `Target Now · ${fmtDate(TODAY)}`;
 }
 
+// Stat cards and filter chips are the same filters: tier cards (A, B) map to the tier chips,
+// the rest to signal chips. Tiers combine with OR; signals narrow (AND), e.g. This week + Heating up.
+function cardOn(k) { const t = CARDS[k].tier; return t ? ui.tiers.has(t) : ui.signals.has(k); }
+function cardOnly(k) { return cardOn(k) && ui.tiers.size + ui.signals.size === 1; }
+function renderSignalChips() {
+  document.getElementById('sigChips').innerHTML = Object.entries(CARDS).filter(([, c]) => !c.tier)
+    .map(([k, c]) => `<button class="chip ${ui.signals.has(k) ? 'on' : ''}" data-sig="${k}" title="${esc(c.unit)}">${esc(c.chip || c.label)}</button>`).join('');
+}
 function renderStats() {
   const el = document.getElementById('stats');
   el.innerHTML = Object.entries(CARDS).map(([k, c]) => {
     const n = accounts.filter(c.test).length;
-    return `<button class="stat ${ui.card === k ? 'on' : ''}" data-card="${k}" aria-pressed="${ui.card === k}">
+    const on = cardOn(k);
+    return `<button class="stat ${on ? 'on' : ''}" data-card="${k}" aria-pressed="${on}" title="Show only these accounts (click again to clear)">
       <span class="stat-label"><i style="background:${c.color}"></i>${c.label}</span>
       <span class="stat-value num">${n}</span>
       <span class="stat-unit">${c.unit}</span></button>`;
@@ -1009,8 +1021,10 @@ function renderTable() {
     th.classList.toggle('asc', th.dataset.sort === ui.sort && ui.dir === 1);
   });
   document.querySelectorAll('.chip[data-tier]').forEach(c => c.classList.toggle('on', ui.tiers.has(c.dataset.tier)));
+  renderSignalChips();
+  document.querySelectorAll('.stat[data-card]').forEach(c => { const on = cardOn(c.dataset.card); c.classList.toggle('on', on); c.setAttribute('aria-pressed', on); });
   document.getElementById('fHideWorked').classList.toggle('on', ui.hideWorked);
-  const anyFilter = ui.q || ui.tiers.size || ui.stage || ui.fit || ui.card;
+  const anyFilter = ui.q || ui.tiers.size || ui.signals.size || ui.stage || ui.fit;
   document.getElementById('fClear').classList.toggle('hidden', !anyFilter);
 }
 
@@ -1163,9 +1177,20 @@ document.addEventListener('click', e => {
     return;
   }
   const card = t.closest('[data-card]');
-  if (card) { ui.card = ui.card === card.dataset.card ? '' : card.dataset.card; renderStats(); renderTable(); return; }
+  if (card) {
+    // A card shows just its accounts: it replaces any tier/signal filter (click again to clear).
+    const k = card.dataset.card, wasOnly = cardOnly(k);
+    ui.tiers.clear(); ui.signals.clear();
+    if (!wasOnly) { if (CARDS[k].tier) ui.tiers.add(CARDS[k].tier); else ui.signals.add(k); }
+    renderTable();
+    const bar = document.querySelector('.toolbar');
+    if (!wasOnly && bar && bar.getBoundingClientRect().top > window.innerHeight - 240) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
   const tier = t.closest('.chip[data-tier]');
   if (tier) { const k = tier.dataset.tier; ui.tiers.has(k) ? ui.tiers.delete(k) : ui.tiers.add(k); renderTable(); return; }
+  const sig = t.closest('.chip[data-sig]');
+  if (sig) { const k = sig.dataset.sig; ui.signals.has(k) ? ui.signals.delete(k) : ui.signals.add(k); renderTable(); return; }
   const th = t.closest('th[data-sort]');
   if (th) {
     const k = th.dataset.sort;
@@ -1214,7 +1239,7 @@ document.addEventListener('change', e => {
 });
 
 function clearFilters(rerender = true) {
-  ui.q = ''; ui.tiers.clear(); ui.stage = ''; ui.fit = ''; ui.card = '';
+  ui.q = ''; ui.tiers.clear(); ui.signals.clear(); ui.stage = ''; ui.fit = '';
   document.getElementById('q').value = '';
   document.getElementById('fStage').value = '';
   document.getElementById('fFit').value = '';
@@ -1387,11 +1412,11 @@ async function applyStaged() {
   const jumped = accounts.filter(a => before.has(a.company) && a.priority.score - before.get(a.company) >= 10).map(a => a.company);
   log('ok', `✓ Applied: ${added} new accounts, ${merged} updated.${jumped.length ? ' Big movers: ' + esc(jumped.slice(0, 5).join(', ')) : ''}`);
 
-  // Auto ZoomInfo: accounts from these files that now rank Call today / This week (free accounts only, once a day)
-  const targets = [...touched].filter(a => 'AB'.includes(tierLetter(a)) && !(a.zi && a.zi.pulled_on === TODAY && !a.zi.skipped));
+  // Auto ZoomInfo: accounts from these files that now rank Call today / This week or are heating up (free accounts only, once a day)
+  const targets = [...touched].filter(a => ziTarget(a) && !(a.zi && a.zi.pulled_on === TODAY && !a.zi.skipped));
   if (ziCanRefresh() && targets.length && !ziState.busy) {
     ziState.busy = true;
-    log('info', `Checking ZoomInfo for ${targets.length} Call today / This week account${targets.length === 1 ? '' : 's'}: ${esc(targets.map(a => a.company).slice(0, 6).join(', '))}${targets.length > 6 ? '…' : ''}`);
+    log('info', `Checking ZoomInfo for ${targets.length} Call today / This week / Heating up account${targets.length === 1 ? '' : 's'}: ${esc(targets.map(a => a.company).slice(0, 6).join(', '))}${targets.length > 6 ? '…' : ''}`);
     setSaveState('', 'ZoomInfo: checking new hot accounts…');
     try {
       const r = await ziRefresh(targets, false);
@@ -1569,7 +1594,7 @@ function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 const SESSION_UI_KEY = 'sixsense_ui_session';
 function saveSessionUi() {
   try {
-    sessionStorage.setItem(SESSION_UI_KEY, JSON.stringify({ q: ui.q, tiers: [...ui.tiers], stage: ui.stage, fit: ui.fit, card: ui.card,
+    sessionStorage.setItem(SESSION_UI_KEY, JSON.stringify({ q: ui.q, tiers: [...ui.tiers], signals: [...ui.signals], stage: ui.stage, fit: ui.fit,
       hideWorked: ui.hideWorked, sort: ui.sort, dir: ui.dir, open: [...ui.open], y: window.scrollY }));
   } catch (e) { /* ignore */ }
 }
@@ -1578,9 +1603,10 @@ function restoreSessionUi() {
     const s = JSON.parse(sessionStorage.getItem(SESSION_UI_KEY) || 'null');
     if (!s) return;
     sessionStorage.removeItem(SESSION_UI_KEY);
-    Object.assign(ui, { q: s.q || '', stage: s.stage || '', fit: s.fit || '', card: s.card || '', hideWorked: s.hideWorked !== false,
+    Object.assign(ui, { q: s.q || '', stage: s.stage || '', fit: s.fit || '', hideWorked: s.hideWorked !== false,
       sort: s.sort || 'score', dir: s.dir || -1 });
     ui.tiers = new Set(s.tiers || []); ui.open = new Set(s.open || []);
+    ui.signals = new Set((s.signals || (s.card ? [s.card] : [])).filter(k => CARDS[k] && !CARDS[k].tier));
     document.getElementById('q').value = ui.q;
     document.getElementById('fStage').value = ui.stage;
     document.getElementById('fFit').value = ui.fit;
@@ -1881,7 +1907,7 @@ async function ziRun(list, { allowCredits = false, single = null } = {}) {
 }
 
 document.getElementById('btnZi').addEventListener('click', () =>
-  ziRun(accounts.filter(a => 'AB'.includes(tierLetter(a)))));
+  ziRun(accounts.filter(ziTarget)));
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-zi]');
   if (!b) return;

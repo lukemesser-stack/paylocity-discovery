@@ -14,7 +14,8 @@
 
 ## Dashboard (`dashboard_template.html`)
 - **Call today** cards: the top tier-A accounts, each with a next step and why it ranks there.
-- **Stat cards are filters**: Call today, This week, Heating up, Active 7 days, Competitor research.
+- **Stat cards are filters**: clicking a card shows only its accounts in the table (click again to clear). The filter row has a matching button for every card: A · Call today, B · This week, C · Nurture, D · Monitor, Heating up, Active 7 days, Past sales, Trigger events, ZoomInfo confirmed, Competitor. The card and its button light up together.
+  - Buttons can be combined. Tiers add together (A + B = everything to call this week), and the other buttons narrow the list (B · This week + Heating up = this-week accounts that are heating up).
 - **Search** (press `/`) covers company, keywords, pages visited and your notes. You can also filter by tier, stage and fit.
 - **✓ Worked**: marks an account as contacted today. It drops off the list for 7 days, and comes back early (tagged *new since worked*) if 6sense records new activity.
 - **Notes** per account, saved in the browser and included in 💾 Save JSON. The Python script keeps `worked_on` and `notes` too.
@@ -28,17 +29,17 @@ The run also writes `6SENSE_Update_File_share.html`. That's the same dashboard, 
 - Anyone else with the link gets a read-only copy: the same ranking, reasons, pages and notes, plus the CSV export.
 - To push a fresh JSON run, ask Claude to republish `_share.html` to the same link, or just drop the JSON on the shared page.
 
-## ZoomInfo intent (Call today + This week only)
+## ZoomInfo intent (Call today, This week and Heating up)
 Each account can carry a `zi` block: `{company_id, name, location, employees, pulled_on, intent: [{topic, category, score, audience, date}], skipped?, note?}`.
 - It's pulled through the ZoomInfo connector. Match accounts by website with `search_companies` (free), then call `enrich_company_signals` with `signalTypes: ["INTENT"]`, which is free for companies already under management.
 - Accounts not under management are skipped and marked `skipped`, so no credits are spent without asking.
 - The dashboard shows a "ZoomInfo:" line under Why now and a ZoomInfo section in the account detail. Accounts get a **✓ Confirmed** badge (and a filter card) when a ZoomInfo topic matches a 6sense keyword, Bombora surge topic or page visit on the same theme.
 - ZoomInfo doesn't change the score.
-- **Refresh from the page (owner only):** on the shared claude.ai page, **↻ ZoomInfo** in the header refreshes all Call today and This week accounts. Each account's ZoomInfo section has its own **↻ Refresh ZoomInfo intent** button.
+- **Refresh from the page (owner only):** on the shared claude.ai page, **↻ ZoomInfo** in the header refreshes all Call today, This week and Heating up accounts. Each account's ZoomInfo section has its own **↻ Refresh ZoomInfo intent** button.
   - The page calls the owner's ZoomInfo connector (`mcp` capability: `search_companies` and `enrich_company_signals`). It checks management status first, which is free.
   - Refresh-all only pulls free accounts. On a single account that would cost credits, the button asks for a second click.
   - Results are saved to the page, so read-only viewers see them without needing ZoomInfo themselves.
-- **Automatic on import:** when the owner applies new 6sense emails, every account from those emails that now ranks Call today or This week gets its ZoomInfo intent refreshed before the page saves.
+- **Automatic on import:** when the owner applies new 6sense emails, every account from those emails that now ranks Call today or This week, or is heating up, gets its ZoomInfo intent refreshed before the page saves.
   - Only free accounts are pulled, and at most once a day per account.
   - If ZoomInfo fails, the email data still saves and the import log shows the reason.
 
