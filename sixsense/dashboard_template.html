@@ -191,6 +191,8 @@
   .snap { display: grid; grid-template-columns: 96px 1fr; gap: 2px 10px; font-size: 12px; }
   .snap dt { color: var(--text-dim); }
   .snap dd { margin: 0; color: var(--text); }
+  .snap dd a, .careers a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  .snap dd a:hover, .careers a:hover { text-decoration: underline; }
   .about { font-family: var(--serif); font-size: 13px; color: var(--text-2); margin-top: 6px; line-height: 1.45; }
   .news-row { display: grid; grid-template-columns: 72px 1fr; gap: 10px; font-size: 12px; margin-bottom: 5px; }
   .news-row .d { color: var(--text-dim); }
@@ -639,6 +641,22 @@ function payrollVendors(a) {
   for (const t of triggers(a)) if (t.kind === 'Vendor clue') { const m = t.text.match(/Likely uses ([^:]+):/); if (m && !out.has(m[1])) out.set(m[1], 'job-post site'); }
   return [...out.entries()].map(([name, source]) => ({ name, source }));
 }
+// Careers: a real job-board link from ZoomInfo job-post Scoops when there is one, plus a free web search
+// for the careers page (no ZoomInfo call, no credits). Display only.
+function careersHtml(a) {
+  const name = (a.zi && a.zi.name) || a.company;
+  const domain = String(a.website || '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');
+  const posts = ((a.zi && a.zi.scoops) || []).filter(sc => /^https?:\/\//.test(sc.link || '') && /open position|hiring/i.test((sc.types || []).join(' ')))
+    .sort((x, y) => String(y.date || '').localeCompare(String(x.date || '')));
+  const out = [];
+  if (posts[0]) {
+    const host = posts[0].link.match(/^https?:\/\/([^/]+)/)[1].replace(/^www\./, '');
+    out.push(`<a href="${esc(posts[0].link)}" target="_blank" rel="noopener">Latest job post ↗</a> <span class="muted">on ${esc(host)}${posts[0].date ? ' · ' + fmtDate(posts[0].date) : ''}</span>`);
+  }
+  const q = `${name} careers jobs${domain ? ' ' + domain : ''}`;
+  out.push(`<a href="https://www.google.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">Find careers page ↗</a>`);
+  return out.join('<br>');
+}
 function newsItems(a, days = 365) {
   if (!a.zi || !Array.isArray(a.zi.news)) return [];
   const names = [a.company, a.zi.name, String(a.zi.name || '').split(/\s+/).slice(0, 2).join(' ')].filter(x => x && x.length >= 3);
@@ -1070,9 +1088,11 @@ function detailHtml(a) {
             <dt>Revenue</dt><dd>${esc(a.zi.firmo.revenue_range || '—')}</dd>
             <dt>HQ</dt><dd>${esc(a.zi.firmo.hq || '—')}${a.zi.firmo.locations ? ` · ${a.zi.firmo.locations} location${a.zi.firmo.locations === 1 ? '' : 's'}` : ''}</dd>
             <dt>Founded</dt><dd>${esc(a.zi.firmo.founded || '—')} · ${esc(a.zi.firmo.type || '')}</dd>
+            <dt>Careers</dt><dd>${careersHtml(a)}</dd>
             <dt>Payroll / HR</dt><dd>${payrollVendors(a).length ? esc(payrollVendors(a).map(v => v.name + ' (' + v.source + ')').join(', ')) + (a.zi.payroll_tech && a.zi.payroll_tech.evidence ? '<br><span class="muted">' + esc(a.zi.payroll_tech.evidence) + '</span>' : '') : '<span class="muted">Not detected in ZoomInfo. Check Salesforce.</span>'}</dd>
           </dl>
-          ${a.zi.firmo.about ? `<div class="about">${esc(a.zi.firmo.about)}</div>` : ''}</div>` : ''}
+          ${a.zi.firmo.about ? `<div class="about">${esc(a.zi.firmo.about)}</div>` : ''}</div>`
+          : `<div class="dblock"><div class="dlabel">Careers</div><div class="careers" style="font-size:12px">${careersHtml(a)}</div></div>`}
         <div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
           ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>
         <div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>
