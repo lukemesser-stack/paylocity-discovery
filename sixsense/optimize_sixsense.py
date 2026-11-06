@@ -110,6 +110,12 @@ def merge_into(dst, src):
     dst["aliases"] = sorted(names - {dst["company"]})
     if src.get("zi") and (src["zi"].get("pulled_on") or "") >= ((dst.get("zi") or {}).get("pulled_on") or ""):
         dst["zi"] = src["zi"]
+    if src.get("bf"):   # BenefitFlow: newest pull wins, revealed contacts are kept from both
+        revealed = {**((dst.get("bf") or {}).get("revealed") or {}), **(src["bf"].get("revealed") or {})}
+        if (src["bf"].get("pulled_on") or "") >= ((dst.get("bf") or {}).get("pulled_on") or ""):
+            dst["bf"] = dict(src["bf"])
+        if revealed:
+            dst["bf"]["revealed"] = revealed
     if (src.get("six_qa_on") or "") > (dst.get("six_qa_on") or ""):
         dst["six_qa_on"] = src["six_qa_on"]
     if src.get("past_process"):
@@ -338,7 +344,7 @@ def main():
 
     # field order: the things you look at first, then the history
     order = ["company", "priority", "stage", "fit", "reach", "website", "signal_count", "web_visits",
-             "competitor_keywords", "keywords", "surge_topics", "zi", "contacts", "form_fills", "decoded_urls",
+             "competitor_keywords", "keywords", "surge_topics", "zi", "bf", "contacts", "form_fills", "decoded_urls",
              "activity_date", "email_date", "_latest_date", "dates", "activity_dates", "source_files",
              "aliases", "possible_duplicate_of", "six_qa_on", "past_process", "past_process_on", "history_note", "worked_on", "notes"]
     out = {a["company"]: {**{k: a[k] for k in order if k in a}, **{k: v for k, v in a.items() if k not in order}}

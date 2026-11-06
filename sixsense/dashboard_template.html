@@ -213,6 +213,12 @@
   .zi-row.off { opacity: .45; }
   .zi-row .cat { color: var(--text-dim); font-size: 11px; }
   .zi-btn { margin-top: 6px; }
+  .rev { font-size: 11px; margin-left: 6px; white-space: nowrap; }
+  .rev a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .rev a:hover { text-decoration: underline; }
+  .src-tag { font-size: 10px; color: var(--text-dim); margin-left: 4px; }
+  .bf-more summary { cursor: pointer; font-size: 12px; color: var(--accent); margin-top: 4px; }
+  .renew-soon { color: var(--a); font-weight: 700; }
   .zi-btn.confirm { border-color: var(--yellow); color: var(--yellow); }
   .btn:disabled { opacity: .5; cursor: wait; }
   .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
@@ -297,6 +303,7 @@
     <span class="save-state" id="saveState">Ready</span>
     <button class="btn primary" id="btnImport">⬆ Add emails / JSON</button>
     <button class="btn hidden" id="btnZi" title="Refresh ZoomInfo intent for every Call today, This week and Heating up account. Only pulls accounts that are free (under management) in ZoomInfo.">↻ ZoomInfo</button>
+    <button class="btn hidden" id="btnBf" title="Refresh BenefitFlow (renewal, broker, carrier, contacts) for every Call today, This week and Heating up account. Free searches only: no credits.">↻ BenefitFlow</button>
     <button class="btn" id="btnCsv" title="Download the rows currently shown as a CSV call list">⬇ Call list CSV</button>
     <button class="btn" id="btnSave" title="Download everything (incl. worked / notes) as JSON">💾 Save JSON</button>
   </div>
@@ -459,6 +466,7 @@ function clean(src) {
   [...a.keywords, ...a.competitor_keywords].forEach(k => { if (COMPETITORS.includes(String(k).trim().toLowerCase())) comp.add(k); });
   a.competitor_keywords = Array.from(comp).sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase()));
   a.keywords = uniqSorted(a.keywords);
+  if (!a.bf || typeof a.bf !== 'object') delete a.bf;
   if (!a.zi || typeof a.zi !== 'object') delete a.zi;
   else a.zi = { ...a.zi, intent: Array.isArray(a.zi.intent) ? a.zi.intent : [] };
   a.surge_topics = dedupeObjects(a.surge_topics.filter(t => t && t.topic)).sort((x, y) => (y.date || '').localeCompare(x.date || ''));
@@ -603,9 +611,11 @@ const VENDOR_HOSTS = [
 ];
 const EXEC_SCOOP = /executive move|new hire|promotion|management move|left company|lateral move/i;
 function triggers(a) {
-  if (!a.zi) return [];
   const out = [];
   const recent = d => !isISO(d) || daysBetween(TODAY, d) <= 120;
+  if (bfRenewingSoon(a)) out.push({ kind: 'Renewal', hot: true, text: bfRenewalText(a) + (a.bf.broker ? ` · broker ${a.bf.broker}` : '') + (a.bf.carrier ? ` · ${a.bf.carrier}` : ''), date: null });
+  for (const x of bfSignals(a)) if (x.trigger) out.push({ kind: x.kind, hot: true, text: x.label + (isISO(x.date) ? ` (BenefitFlow, ${fmtDate(x.date)})` : ' (BenefitFlow)'), date: x.date });
+  if (!a.zi) return out;
   for (const sc of (a.zi.scoops || [])) {
     if (!recent(sc.date)) continue;
     const types = (sc.types || []).join(' ');
@@ -626,10 +636,52 @@ function triggers(a) {
       person: p.name, title: p.title, window: p.window_days <= 90 ? '90 days' : '6 months', accuracy: p.accuracy, acct: a,
       text: `New ${p.title}: ${p.name} (started in the last ${p.window_days <= 90 ? '90 days' : '6 months'})`, date: null });
   }
-  const order = { 'Acquisition': 0, 'Leadership change': 1, 'New leader': 2, 'Vendor clue': 3, 'Hiring surge': 4 };
+  const order = { 'Renewal': 0, 'Acquisition': 1, 'Leadership change': 2, 'New leader': 3, 'Broker change': 4, 'Carrier switch': 5, 'Vendor clue': 6, 'Hiring surge': 7 };
   const seen = new Set();
-  return out.filter(t => !seen.has(t.text) && seen.add(t.text)).sort((x, y) => order[x.kind] - order[y.kind]);
+  return out.filter(t => !seen.has(t.text) && seen.add(t.text)).sort((x, y) => (order[x.kind] ?? 9) - (order[y.kind] ?? 9));
 }
+// ── BenefitFlow: benefits renewal, broker, carrier, signals, contacts (display only, not part of the score) ──
+const BF_SIGNALS = {
+  broker_change: { kind: 'Broker change', label: 'Changed benefits broker', trigger: true },
+  carrier_switch: { kind: 'Carrier switch', label: 'Switched insurance carrier', trigger: true },
+  merger_acquisition: { kind: 'Acquisition', label: 'Merger or acquisition (BenefitFlow)', trigger: true },
+  health_pepm_yoy_change: { label: 'Health cost per employee changed year over year' },
+  benefit_change_detected: { label: 'Benefits plan changed' },
+  funding_event: { label: 'Raised investment funding' },
+  contact_job_change: { label: 'A contact there changed jobs' },
+  job_openings_surge: { label: 'Surge in job openings' },
+  linkedin_headcount_growth: { label: 'Headcount growing' },
+  plan_participation_change: { label: 'Benefit plan participation changed' },
+  sentiment_spike: { label: 'Spike in employee reviews' },
+  recordkeeper_change: { label: '401(k) recordkeeper changed' },
+  employer_contribution_trend: { label: '401(k) employer contribution trend' },
+  late_filing: { label: 'Late benefit plan filing' },
+};
+const BF_VENDORS = [[/\badp\b/i, 'ADP'], [/paychex/i, 'Paychex'], [/paycor/i, 'Paycor'], [/paylocity/i, 'Paylocity'], [/paycom/i, 'Paycom'],
+  [/insperity/i, 'Insperity (PEO)'], [/justworks/i, 'Justworks (PEO)'], [/trinet/i, 'TriNet (PEO)'], [/isolved/i, 'isolved'], [/\bukg\b|ultimate software/i, 'UKG'],
+  [/gusto/i, 'Gusto'], [/rippling/i, 'Rippling'], [/vensure/i, 'Vensure (PEO)'], [/oasis/i, 'Oasis (PEO)']];
+function bfRenewal(a) {   // next benefits renewal (renewals repeat every year)
+  const r = a.bf && a.bf.renewal;
+  if (!isISO(r)) return null;
+  const y = +TODAY.slice(0, 4);
+  let d = `${y}${r.slice(4)}`;
+  if (d < TODAY) d = `${y + 1}${r.slice(4)}`;
+  return { date: d, days: daysBetween(d, TODAY) };
+}
+function bfRenewingSoon(a, days = 90) { const r = bfRenewal(a); return !!r && r.days <= days; }
+function bfSignals(a) {
+  return ((a.bf && a.bf.signals) || []).filter(x => BF_SIGNALS[x.type])
+    .map(x => ({ ...BF_SIGNALS[x.type], type: x.type, date: x.at, count: x.count }))
+    .filter(x => !isISO(x.date) || daysBetween(TODAY, x.date) <= 548)
+    .sort((x, y) => String(y.date || '').localeCompare(String(x.date || '')));
+}
+function bfRenewalText(a) {
+  const r = bfRenewal(a);
+  if (!r) return '';
+  const when = r.days <= 0 ? 'today' : r.days < 60 ? `in ${r.days} days` : `in ${Math.round(r.days / 30.4)} months`;
+  return `Benefits renew ${fmtDate(r.date)} (${when})`;
+}
+
 // ── Company snapshot, payroll vendor, news (ZoomInfo; display only, not part of the score) ──
 function firmoLine(a) {
   const f = a.zi && a.zi.firmo;
@@ -640,6 +692,11 @@ function payrollVendors(a) {
   const out = new Map();
   for (const v of ((a.zi && a.zi.payroll_tech && a.zi.payroll_tech.vendors) || [])) out.set(v, 'ZoomInfo tech stack');
   for (const t of triggers(a)) if (t.kind === 'Vendor clue') { const m = t.text.match(/Likely uses ([^:]+):/); if (m && !out.has(m[1])) out.set(m[1], 'job-post site'); }
+  if (a.bf) for (const [nm, src] of [[a.bf.peo, 'PEO on benefit filings'], [a.bf.secondary_broker, 'benefit filings']]) {
+    const v = nm && BF_VENDORS.find(([re]) => re.test(nm));
+    if (v && !out.has(v[1])) out.set(v[1], src);
+    else if (nm && src.startsWith('PEO') && !v) out.set(nm + ' (PEO)', src);
+  }
   return [...out.entries()].map(([name, source]) => ({ name, source }));
 }
 // Careers: a real job-board link from ZoomInfo job-post Scoops when there is one, plus a free web search
@@ -679,17 +736,36 @@ function buyerRole(title) {
   if (/\bceo\b|chief executive|president|\bcoo\b|chief operating|chief operations|owner|founder/i.test(t)) return { group: 'Executive', rank: 5 };
   return null;
 }
-function liUrl(name, a) { return 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(`${name} ${(a.zi && a.zi.name) || a.company}`); }
+function liUrl(name, a, p) {
+  if (p && /^linkedin\.com\/in\//i.test(p.bf_id || '')) return 'https://www.' + p.bf_id;   // BenefitFlow ids are exact profile URLs
+  return 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(`${name} ${(a.zi && a.zi.name) || a.company}`); }
 function personHtml(p, a) {
   const low = p.accuracy != null && p.accuracy < 80;
-  return `<span class="person ${low ? 'low' : ''}"><a class="li" href="${esc(liUrl(p.name, a))}" target="_blank" rel="noopener" title="Find ${esc(p.name)} on LinkedIn">${esc(p.name)}<span class="li-badge">in</span></a>${p.accuracy != null ? `<span class="acc ${low ? 'low' : ''}" title="ZoomInfo accuracy: how likely this person is still there and reachable${low ? '. Under 80, so check LinkedIn first.' : ''}">${p.accuracy}</span>` : ''}</span>`;
+  const exact = /^linkedin\.com\/in\//i.test(p.bf_id || '');
+  const rv = p.bf_id && a.bf && a.bf.revealed && a.bf.revealed[p.bf_id];
+  return `<span class="person ${low ? 'low' : ''}"><a class="li" href="${esc(liUrl(p.name, a, p))}" target="_blank" rel="noopener" title="${exact ? 'Open ' + esc(p.name) + '\'s LinkedIn profile' : 'Find ' + esc(p.name) + ' on LinkedIn'}">${esc(p.name)}<span class="li-badge">in</span></a>${p.accuracy != null ? `<span class="acc ${low ? 'low' : ''}" title="ZoomInfo accuracy: how likely this person is still there and reachable${low ? '. Under 80, so check LinkedIn first.' : ''}">${p.accuracy}</span>` : ''}${rv ? revealedHtml(rv) : ''}</span>`;
+}
+function revealedHtml(rv) {
+  return `<span class="rev">${rv.email ? `<a href="mailto:${esc(rv.email)}" title="${esc(rv.email)}">✉ ${esc(rv.email)}</a>` : ''}${rv.email && rv.phone ? ' · ' : ''}${rv.phone ? `<a href="tel:${esc(String(rv.phone).replace(/[^\d+]/g, ''))}">☎ ${esc(rv.phone)}</a>` : ''}${!rv.email && !rv.phone ? '<span class="muted">no email or phone on file</span>' : ''}</span>`;
+}
+// Everyone we know at the account: ZoomInfo people + BenefitFlow contacts, merged by name.
+function allPeople(a) {
+  const key = n => String(n || '').toLowerCase().replace(/[^a-z ]+/g, '').replace(/\s+/g, ' ').trim();
+  const out = new Map();
+  const newIds = new Set(((a.zi && a.zi.new_leaders) || []).map(p => p.person_id));
+  for (const p of ((a.zi && a.zi.people) || [])) out.set(key(p.name), { ...p, isNew: newIds.has(p.person_id), src: 'ZoomInfo' });
+  for (const p of ((a.bf && a.bf.people) || [])) {
+    const k = key(p.name), ex = out.get(k);
+    const bf = { bf_id: p.id, hasEmail: !!p.hasEmail, hasPhone: !!p.hasPhone };
+    if (ex) Object.assign(ex, bf, { src: 'ZoomInfo + BenefitFlow' });
+    else out.set(k, { name: p.name, title: p.title, ...bf, src: 'BenefitFlow' });
+  }
+  return [...out.values()].map(p => ({ ...p, role: buyerRole(p.title) }));
 }
 function buyers(a) {
-  if (!a.zi || !Array.isArray(a.zi.people)) return [];
-  const newIds = new Set((a.zi.new_leaders || []).map(p => p.person_id));
-  const ranked = a.zi.people.map(p => ({ ...p, role: buyerRole(p.title), isNew: newIds.has(p.person_id) }))
-    .filter(p => p.role)
-    .sort((x, y) => (x.role.rank - (x.isNew ? 0.5 : 0)) - (y.role.rank - (y.isNew ? 0.5 : 0)) || (y.accuracy || 0) - (x.accuracy || 0));  // new leaders first within a role
+  const reach = p => (p.bf_id && a.bf && a.bf.revealed && a.bf.revealed[p.bf_id] ? 6 : 0) + (p.hasEmail || p.hasPhone ? 3 : 0) + (p.accuracy || 85);
+  const ranked = allPeople(a).filter(p => p.role)
+    .sort((x, y) => (x.role.rank - (x.isNew ? 0.5 : 0)) - (y.role.rank - (y.isNew ? 0.5 : 0)) || reach(y) - reach(x));  // new leaders first within a role
   const pick = [], seenGroups = new Set();
   for (const g of ['HR', 'Payroll', 'Finance']) { const p = ranked.find(x => x.role.group === g); if (p) { pick.push(p); seenGroups.add(g); } }
   if (pick.length < 3) { const e = ranked.find(x => x.role.group === 'Executive'); if (e) pick.push(e); }
@@ -701,7 +777,7 @@ function shortTitle(t) { return String(t || '').replace(/Vice President/g, 'VP')
 function leaderHtml(t) {
   return `New ${esc(t.title)}: ${personHtml({ name: t.person, accuracy: t.accuracy }, t.acct)} (started in the last ${t.window})`;
 }
-function hasLeaderTrigger(a) { return triggers(a).some(t => t.kind === 'Leadership change' || t.kind === 'New leader' || t.kind === 'Acquisition'); }
+function hasLeaderTrigger(a) { return triggers(a).some(t => ['Leadership change', 'New leader', 'Acquisition', 'Broker change', 'Carrier switch'].includes(t.kind)); }
 
 // Plain-English "why now" bullets (display only, not part of the score)
 function reasons(a) {
@@ -713,6 +789,8 @@ function reasons(a) {
   triggers(a).filter(t => t.kind !== 'Hiring surge').slice(0, 2).forEach(t => out.push({ t: 'hot',
     s: '🔔 ' + (t.text.length > 110 ? t.text.slice(0, 107).replace(/\s+\S*$/, '') + '…' : t.text),
     html: t.kind === 'New leader' ? '🔔 ' + leaderHtml(t) : null }));
+  const rn = bfRenewal(a);
+  if (rn && rn.days > 90 && rn.days <= 180) out.push({ t: '', s: '📅 ' + bfRenewalText(a) + (a.bf.broker ? ` · broker ${a.bf.broker}` : '') });
   if (a.past_process) {
     const n = String(a.history_note || '').replace(/\s+/g, ' ').trim();
     out.push({ t: 'hot', s: '★ Past sales process' + (n ? ': ' + (n.length > 90 ? n.slice(0, 87).replace(/\s+\S*$/, '') + '…' : n) : '') });
@@ -805,6 +883,11 @@ function mergeInto(ex, inc, mode) {
   ex.possible_duplicate_of = union(ex.possible_duplicate_of, inc.possible_duplicate_of);
   if ((inc.six_qa_on || '') > (ex.six_qa_on || '')) ex.six_qa_on = inc.six_qa_on;
   if (inc.zi && (inc.zi.pulled_on || '') >= ((ex.zi && ex.zi.pulled_on) || '')) ex.zi = inc.zi;
+  if (inc.bf) {   // newest pull wins; revealed contacts are kept from both
+    const rv = { ...((ex.bf && ex.bf.revealed) || {}), ...(inc.bf.revealed || {}) };
+    if ((inc.bf.pulled_on || '') >= ((ex.bf && ex.bf.pulled_on) || '')) ex.bf = { ...inc.bf };
+    if (Object.keys(rv).length) ex.bf.revealed = rv;
+  }
   if ((inc.worked_on || '') > (ex.worked_on || '')) ex.worked_on = inc.worked_on;
   if (!ex.notes && inc.notes) ex.notes = inc.notes;
   if (inc.past_process) { ex.past_process = true; if ((inc.past_process_on || '') > (ex.past_process_on || '')) ex.past_process_on = inc.past_process_on; }
@@ -883,14 +966,15 @@ const CARDS = {
   heating: { label: 'Heating up', unit: 'more active days than prior 30', color: 'var(--green)', test: a => a.priority.trend === 'heating up' && a.priority.active_days_30d >= 2 },
   active7: { label: 'Active 7 days', unit: 'any 6sense activity this week', color: 'var(--accent-2)', test: a => a.priority.days_since_activity != null && a.priority.days_since_activity <= 7 },
   hist:    { chip: 'Past sales', label: 'Past sales process', unit: 'accounts you\'ve worked before', color: 'var(--accent)', test: a => !!a.past_process },
-  trig:    { label: 'Trigger events', unit: 'new leaders & exec changes', color: 'var(--b)', test: a => hasLeaderTrigger(a) },
+  trig:    { label: 'Trigger events', unit: 'new leaders, exec moves, M&A, broker changes', color: 'var(--b)', test: a => hasLeaderTrigger(a) },
+  renew:   { chip: 'Renewing ≤ 90 days', label: 'Renewing soon', unit: 'benefits renew in the next 90 days', color: 'var(--stage)', test: a => bfRenewingSoon(a) },
   zi:      { label: 'ZoomInfo confirmed', unit: 'ZoomInfo intent matches 6sense', color: 'var(--green)', test: a => ziConfirmed(a).length > 0 },
   comp:    { chip: 'Competitor', label: 'Competitor research', unit: 'ADP, Rippling, Paycor…', color: 'var(--comp)', test: a => a.competitor_keywords.length > 0 },
 };
 
 function matchesSearch(a, q) {
   if (!q) return true;
-  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', firmoLine(a), ...payrollVendors(a).map(v => v.name), ...newsItems(a).map(n => n.title), a.past_process ? 'past deal past sales process ' + (a.history_note || '') : '', ...buyers(a).map(p => p.name + ' ' + p.title), ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
+  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', firmoLine(a), ...payrollVendors(a).map(v => v.name), ...newsItems(a).map(n => n.title), a.past_process ? 'past deal past sales process ' + (a.history_note || '') : '', a.bf ? [a.bf.broker, a.bf.carrier, a.bf.peo, a.bf.secondary_broker, bfRenewingSoon(a) ? 'renewal renewing' : ''].join(' ') : '', ...buyers(a).map(p => p.name + ' ' + p.title), ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
     ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw)), ...(a.contacts || []).map(c => (c.name || '') + ' ' + (c.title || '')), a.notes || ''].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
 }
@@ -1035,6 +1119,7 @@ function rowHtml(a) {
     a.six_qa_on ? `<span class="flag qa" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
     payrollVendors(a).length ? `<span class="flag ${payrollVendors(a).some(v => /paylocity/i.test(v.name)) ? 'client' : 'vendor'}" title="Payroll/HR vendor: ${esc(payrollVendors(a).map(v => v.name + ' (' + v.source + ')').join(', '))}. Confirm in Salesforce.">💼 ${esc(payrollVendors(a).map(v => v.name).join(' / '))}</span>` : '',
     a.past_process ? `<span class="flag hist" title="${esc(a.history_note || 'Previous sales process')}">★ Past deal</span>` : '',
+    bfRenewingSoon(a) ? `<span class="flag trig" title="${esc(bfRenewalText(a))}${a.bf.broker ? ' · broker ' + esc(a.bf.broker) : ''}">📅 Renews ${esc(fmtDate(bfRenewal(a).date).replace(/\/\d{4}$/, ''))}</span>` : '',
     hasLeaderTrigger(a) ? `<span class="flag trig" title="${esc(triggers(a).map(t => t.text).join(' | '))}">🔔 Trigger</span>` : '',
     ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo intent agrees with 6sense: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span>` : '',
     a.zi && a.zi.note ? `<span class="flag warn" title="${esc(a.zi.note)}">check fit</span>` : '',
@@ -1107,15 +1192,14 @@ function detailHtml(a) {
           </dl>
           ${a.zi.firmo.about ? `<div class="about">${esc(a.zi.firmo.about)}</div>` : ''}</div>`
           : `<div class="dblock"><div class="dlabel">Careers</div><div class="careers" style="font-size:12px">${careersHtml(a)}</div></div>`}
+        ${benefitsHtml(a)}
         <div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
           ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>
         <div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>
-        ${buyers(a).length ? `<div class="dblock"><div class="dlabel">Who to call · ZoomInfo${a.zi.people_on ? ' · ' + fmtDate(a.zi.people_on) : ''}</div>
-          ${buyers(a).map(p => `<div class="buyer-row"><span class="g">${esc(p.role.group)}</span><span>${personHtml(p, a)}${p.isNew ? ' 🔔' : ''} <span class="t">${esc(p.title)}</span></span></div>`).join('')}
-          <div class="muted" style="margin-top:2px">Number = ZoomInfo accuracy (99 best). Under 80 is dimmed: check LinkedIn first. Phone and email are in ZoomInfo.</div></div>` : ''}
-        ${triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events · ZoomInfo${a.zi.triggers_on ? ' · checked ' + fmtDate(a.zi.triggers_on) : ''}</div>
+        ${whoToCallHtml(a)}
+        ${triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events${a.zi && a.zi.triggers_on ? ' · ZoomInfo checked ' + fmtDate(a.zi.triggers_on) : ''}${a.bf && a.bf.pulled_on && !a.bf.no_match ? ' · BenefitFlow ' + fmtDate(a.bf.pulled_on) : ''}</div>
           ${triggers(a).map(t => `<div class="trig-row"><span class="d num">${t.date ? fmtDate(t.date) : (t.kind === 'New leader' ? 'recent' : '')}</span><span><span class="k">${esc(t.kind)}</span> · ${t.kind === 'New leader' ? leaderHtml(t) : esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}
-          ${(a.zi.new_leaders || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. Click a name to search LinkedIn for that person at this company. The right person is usually the first result. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : ''}
+          ${((a.zi && a.zi.new_leaders) || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. Click a name to search LinkedIn for that person at this company. The right person is usually the first result. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : ''}
         ${newsItems(a).length ? `<div class="dblock"><div class="dlabel">Recent news · last 12 months</div>
           ${newsItems(a).slice(0, 4).map(n => `<div class="news-row"><span class="d num">${fmtDate(n.date)}</span><span><a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">${esc(n.title)}</a> <span class="src">${esc(String(n.source || '').replace(/^www\./, ''))}</span></span></div>`).join('')}</div>` : ''}
         ${a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel">ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>
@@ -1146,6 +1230,51 @@ function detailHtml(a) {
       </div>
     </div>
   </td></tr>`;
+}
+
+function benefitsHtml(a) {
+  const b = a.bf;
+  if (!b && !bfCanRefresh()) return '';
+  const head = `<div class="dlabel">Benefits · BenefitFlow${b && b.pulled_on ? ' · pulled ' + fmtDate(b.pulled_on) : ''}</div>`;
+  if (!b) return `<div class="dblock">${head}<div class="muted">Not pulled yet.</div>${bfButtonHtml(a)}</div>`;
+  if (b.no_match) return `<div class="dblock">${head}<div class="muted">Not found in BenefitFlow${a.website ? ' by website' : ''}. Small or newer companies often have no benefit plan filings.</div>${bfButtonHtml(a)}</div>`;
+  const rn = bfRenewal(a);
+  const row = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : '';
+  const sig = bfSignals(a);
+  return `<div class="dblock">${head}
+    <dl class="snap">
+      ${row('Renewal', rn ? `<span class="${rn.days <= 90 ? 'renew-soon' : ''}">${esc(bfRenewalText(a))}</span>` : '<span class="muted">Not on file</span>')}
+      ${row('Broker', b.broker ? esc(b.broker) + (b.broker_years ? ` · ${b.broker_years} yr${b.broker_years === 1 ? '' : 's'}` : '') + (b.secondary_broker ? `<br><span class="muted">Also on filings: ${esc(b.secondary_broker)}</span>` : '') : '')}
+      ${row('Carrier', b.carrier ? esc(b.carrier) + (b.ancillary ? ` <span class="muted">· ancillary ${esc(b.ancillary)}</span>` : '') : '')}
+      ${row('Funding', esc(b.funding || ''))}
+      ${row('Employees', b.eligible || b.employees ? `${b.eligible ? Number(b.eligible).toLocaleString() + ' benefit-eligible' : ''}${b.eligible && b.employees && b.employees !== b.eligible ? ' of ' + Number(b.employees).toLocaleString() : ''}${!b.eligible && b.employees ? Number(b.employees).toLocaleString() : ''}` : '')}
+      ${row('Plans', esc((b.plan_types || []).join(', ')))}
+      ${row('PEO', b.peo ? `<span class="renew-soon">${esc(b.peo)}</span> <span class="muted">(payroll runs through a PEO)</span>` : '')}
+      ${row('Intent', b.intent ? esc(b.intent) + ' <span class="muted">(BenefitFlow score)</span>' : '')}
+    </dl>
+    ${sig.length ? `<div style="margin-top:6px">${sig.map(x => `<div class="trig-row"><span class="d num">${isISO(x.date) ? fmtDate(x.date) : ''}</span><span>${x.trigger ? `<span class="k">${esc(x.kind)}</span> · ` : ''}${esc(x.label)}</span></div>`).join('')}
+      <div class="muted">Dates on plan-filing signals are the plan year they were filed for.</div></div>` : ''}
+    ${bfButtonHtml(a)}</div>`;
+}
+function revealButtonHtml(a, p) {
+  if (!p.bf_id || (a.bf && a.bf.revealed && a.bf.revealed[p.bf_id]) || !(p.hasEmail || p.hasPhone)) return '';
+  const what = [p.hasEmail ? 'email' : '', p.hasPhone ? 'phone' : ''].filter(Boolean).join(' + ');
+  if (!bfCanReveal()) return `<span class="src-tag">${what} in BenefitFlow</span>`;
+  const id = esc(p.bf_id), co = esc(a.company);
+  if (bfState.working.has(p.bf_id)) return `<button class="btn sm" disabled>Getting…</button>`;
+  if (bfState.confirm.has(p.bf_id)) return `<button class="btn sm zi-btn confirm" style="margin-top:0" data-bfrev="${id}" data-bfco="${co}" title="BenefitFlow charges ${bfState.confirm.get(p.bf_id)} contact credit for this person">Uses ${bfState.confirm.get(p.bf_id)} credit. Click to reveal</button>`;
+  return `<button class="btn sm" data-bfrev="${id}" data-bfco="${co}" title="Free price check first; nothing is spent until you click again">Get ${what}</button>`;
+}
+function whoToCallHtml(a) {
+  const top = buyers(a);
+  if (!top.length) return '';
+  const rest = allPeople(a).filter(p => p.role && !top.some(t => t.name === p.name));
+  const line = p => `<div class="buyer-row"><span class="g">${esc(p.role.group)}</span><span>${personHtml(p, a)}${p.isNew ? ' 🔔' : ''} <span class="t">${esc(p.title)}</span><span class="src-tag">${esc(p.src || '')}</span> ${revealButtonHtml(a, p)}</span></div>`;
+  const srcs = [a.zi && a.zi.people_on ? 'ZoomInfo' : '', a.bf && a.bf.people_on ? 'BenefitFlow' : ''].filter(Boolean).join(' + ');
+  return `<div class="dblock"><div class="dlabel">Who to call${srcs ? ' · ' + srcs : ''}</div>
+    ${top.map(line).join('')}
+    ${rest.length ? `<details class="bf-more"><summary>${rest.length} more HR, finance and exec contact${rest.length === 1 ? '' : 's'}</summary>${rest.map(line).join('')}</details>` : ''}
+    <div class="muted" style="margin-top:2px">Number = ZoomInfo accuracy (99 best); under 80 is dimmed. Names from BenefitFlow link to their exact LinkedIn profile. "Get email/phone" checks the price for free, then asks before spending a BenefitFlow credit.</div></div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1276,11 +1405,11 @@ document.getElementById('btnSave').addEventListener('click', () => {
 });
 document.getElementById('btnCsv').addEventListener('click', () => {
   const cell = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Industry', 'Employees', 'Revenue', 'HQ', 'Payroll vendor', 'Recent news', 'Past sales process', 'Sales history', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
+  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Industry', 'Employees', 'Revenue', 'HQ', 'Payroll vendor', 'Benefits renewal', 'Broker', 'Carrier', 'Recent news', 'Past sales process', 'Sales history', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
   sortList(filtered()).forEach((a, i) => {
     const p = a.priority;
     rows.push([i + 1, a.company, p.score, p.tier, p.action, a.stage, a.fit, p.last_activity, p.days_since_activity, p.active_days_30d, p.trend,
-      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), (a.zi && a.zi.firmo && a.zi.firmo.sub_industry) || '', (a.zi && a.zi.firmo && a.zi.firmo.employees) || '', (a.zi && a.zi.firmo && a.zi.firmo.revenue_range) || '', (a.zi && a.zi.firmo && a.zi.firmo.hq) || '', payrollVendors(a).map(v => v.name).join(' / '), newsItems(a).slice(0, 2).map(n => `${n.date} ${n.title} ${n.url}`).join('; '), a.past_process ? 'Yes' : '', a.history_note || '', buyers(a).map(p => `${p.name} (${p.title}, accuracy ${p.accuracy}) ${liUrl(p.name, a)}`).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
+      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), (a.zi && a.zi.firmo && a.zi.firmo.sub_industry) || '', (a.zi && a.zi.firmo && a.zi.firmo.employees) || '', (a.zi && a.zi.firmo && a.zi.firmo.revenue_range) || '', (a.zi && a.zi.firmo && a.zi.firmo.hq) || '', payrollVendors(a).map(v => v.name).join(' / '), bfRenewal(a) ? bfRenewal(a).date : '', (a.bf && a.bf.broker) || '', (a.bf && a.bf.carrier) || '', newsItems(a).slice(0, 2).map(n => `${n.date} ${n.title} ${n.url}`).join('; '), a.past_process ? 'Yes' : '', a.history_note || '', buyers(a).map(p => { const rv = p.bf_id && a.bf && a.bf.revealed && a.bf.revealed[p.bf_id]; return `${p.name} (${p.title}${p.accuracy != null ? ', accuracy ' + p.accuracy : ''})${rv ? ' ' + [rv.email, rv.phone].filter(Boolean).join(' ') : ''} ${liUrl(p.name, a, p)}`; }).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
   });
   download(`6sense_call_list_${TODAY}.csv`, rows.map(r => r.map(cell).join(',')).join('\r\n'), 'text/csv');
 });
@@ -1432,6 +1561,19 @@ async function applyStaged() {
     }
   } else if (targets.length && !ziCanRefresh() && share.mode === 'writer') {
     log('info', 'ZoomInfo is not available on this page right now, so intent was not refreshed.');
+  }
+  // Auto BenefitFlow: same accounts, free searches only, once a day
+  const bfTargets = [...touched].filter(a => ziTarget(a) && !(a.bf && a.bf.pulled_on === TODAY));
+  if (bfCanRefresh() && bfTargets.length && !bfState.busy) {
+    bfState.busy = true;
+    log('info', `Checking BenefitFlow for ${bfTargets.length} account${bfTargets.length === 1 ? '' : 's'}…`);
+    try {
+      const r = await bfRefresh(bfTargets);
+      const soon = r.pulled.filter(a => bfRenewingSoon(a));
+      log('ok', `✓ BenefitFlow: ${r.pulled.length} updated${soon.length ? ' (renewing soon: ' + esc(soon.map(a => a.company + ' ' + fmtDate(bfRenewal(a).date)).join(' · ')) + ')' : ''}${r.noMatch.length ? ` · ${r.noMatch.length} not found` : ''}`);
+    } catch (err) {
+      log('warn', '⚠ ' + esc(bfErrorText(err)) + ' The email data is still saved.');
+    } finally { bfState.busy = false; }
   }
   persist(); render();
   applyBtn.disabled = false;
@@ -1624,6 +1766,7 @@ async function initShare() {
   try { canEdit = user ? await user.canEdit() : false; } catch (e) { canEdit = false; }
   setShareMode(canEdit ? 'writer' : 'reader');
   initZi();
+  initBf();
 }
 
 function setShareMode(mode) {
@@ -1914,6 +2057,185 @@ document.addEventListener('click', e => {
   e.stopPropagation();
   const a = byName(b.dataset.zi);
   if (a) ziRun([a], { allowCredits: ziState.confirm.has(a.company), single: a });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BenefitFlow (owner only): benefits renewal, broker, carrier, signals and contacts.
+// Searches are free. Revealing a contact's email/phone costs BenefitFlow contact credits,
+// so it always shows a free price check first and needs a second click.
+// ═══════════════════════════════════════════════════════════════════════════
+const BF_SERVER = 'BenefitFlow';
+const bfState = { mcp: null, canReveal: false, busy: false, last: 0, working: new Set(), confirm: new Map(), acctWorking: new Set() };
+function bfCanRefresh() { return share.mode === 'writer' && !!bfState.mcp; }
+function bfCanReveal() { return bfCanRefresh() && bfState.canReveal; }
+function bfButtonHtml(a) {
+  if (!bfCanRefresh()) return '';
+  if (bfState.acctWorking.has(a.company)) return `<button class="btn sm zi-btn" disabled>Checking BenefitFlow…</button>`;
+  return `<button class="btn sm zi-btn" data-bf="${esc(a.company)}">↻ ${a.bf ? 'Refresh' : 'Pull'} BenefitFlow</button>`;
+}
+async function initBf() {
+  if (share.mode !== 'writer') return;
+  const mcp = await window.claude.use('mcp').catch(() => null);
+  if (!mcp) return;
+  try {
+    const lt = await mcp.listTools(BF_SERVER);
+    const srv = (lt.servers || []).find(x => x.server === BF_SERVER);
+    const names = srv ? srv.tools.map(t => t.name) : [];
+    if (!names.includes('search_employers') || !names.includes('search_contacts')) return;   // no BenefitFlow connector here
+    bfState.canReveal = names.includes('get_contact');
+  } catch (e) { return; }
+  bfState.mcp = mcp;
+  document.getElementById('btnBf').classList.remove('hidden');
+  render();
+}
+// BenefitFlow allows 50 calls a minute per user: space calls out.
+async function bfCall(tool, input) {
+  const wait = bfState.last + 1300 - Date.now();
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  bfState.last = Date.now();
+  const res = await bfState.mcp.callTool(BF_SERVER, tool,
+    { ...input, context: 'Sales call-prioritization dashboard: benefits renewal, broker and buyer contacts for target accounts.' }, { cache: false });
+  let p = res && res.payload;
+  if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { /* text */ } }
+  return p || {};
+}
+function bfErrorText(err) {
+  const code = err && err.code;
+  switch (code) {
+    case 'needs_reauth': return 'BenefitFlow sign-in expired. Reconnect it in claude.ai Settings → Connectors.';
+    case 'server_not_connected': return 'BenefitFlow is not connected. Add it in claude.ai Settings → Connectors.';
+    case 'selection_required': return 'Choose which BenefitFlow connection this page should use, then try again.';
+    case 'not_in_manifest': return 'BenefitFlow is turned off for this page. Allow it in the page\'s permissions, then try again.';
+    case 'approval_required': return 'BenefitFlow needs your approval. Click the button again and choose Allow.';
+    case 'blocked_by_policy': return 'Your organization blocks this BenefitFlow tool.';
+    case 'server_unavailable': return 'BenefitFlow did not answer (it may be busy). Try again in a minute.';
+    case 'tool_error': return 'BenefitFlow returned an error: ' + String(err.message || '').slice(0, 140);
+    default: return 'BenefitFlow refresh failed' + (code ? ' (' + code + ')' : '') + '. Nothing was changed.';
+  }
+}
+function bfISO(s) {
+  const m = String(s || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return `${m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+  return isISO(String(s || '').slice(0, 10)) ? String(s).slice(0, 10) : null;
+}
+function bfPick(results, a) {
+  const d = domainOf(a.website);
+  const byDomain = results.find(r => d && domainOf(r.website || '') === d);
+  if (byDomain) return byDomain;
+  const n = normName(a.company);
+  return results.find(r => normName(r.name) === n) || null;
+}
+// Returns { pulled: [...], noMatch: [...] }. Two free searches per account.
+async function bfRefresh(list, onProgress) {
+  const result = { pulled: [], noMatch: [] };
+  let i = 0;
+  for (const a of list) {
+    i++;
+    if (onProgress) onProgress(i, list.length, a);
+    const include = ['partners', 'signals'];
+    let p;
+    if (a.bf && a.bf.employer_id) p = await bfCall('search_employers', { employerMasterId: { include: [a.bf.employer_id] }, include });
+    else if (a.website) p = await bfCall('search_employers', { employerNameSearch: domainOf(a.website), include });
+    else p = await bfCall('search_employers', { employerNameSearch: a.company, include });
+    let rows = p.results || [];
+    let r = (a.bf && a.bf.employer_id && rows.find(x => x.employerId === a.bf.employer_id)) || bfPick(rows, a);
+    if (!r && a.website && !(a.bf && a.bf.employer_id)) {   // website not on file there: try the company name
+      rows = (await bfCall('search_employers', { employerNameSearch: a.company, include })).results || [];
+      r = bfPick(rows, a);
+    }
+    const revealed = (a.bf && a.bf.revealed) || undefined;
+    if (!r) { a.bf = { no_match: true, pulled_on: TODAY, ...(revealed ? { revealed } : {}) }; result.noMatch.push(a); continue; }
+    a.bf = {
+      employer_id: r.employerId, name: r.name || '', hq: r.headquarters || '', website: r.website || '',
+      employees: r.totalEmployees || null, eligible: r.benefitEligibleEmployees || null, industry: r.industry || '',
+      broker: r.broker || '', broker_id: r.brokerId || '', broker_years: r.brokerYearsOfService || null,
+      carrier: r.carrier || '', funding: r.fundingType || '', renewal: bfISO(r.renewalDate), plan_types: r.planTypes || [],
+      intent: r.compositeIntentScore || '', peo: r.peo || '',
+      secondary_broker: (r.secondaryBenefitsBroker && r.secondaryBenefitsBroker.name) || '', ancillary: (r.ancillaryCarrier && r.ancillaryCarrier.name) || '',
+      signals: (r.signals || []).map(x => ({ type: x.signalType, at: String(x.occurredAt || '').slice(0, 10), count: x.count || 1 })),
+      pulled_on: TODAY,
+    };
+    // buyers at the company: names, titles and whether an email/phone exists (free; revealing costs credits)
+    const c = await bfCall('search_contacts', { contactType: 'employer', companyMasterIds: [r.employerId], roles: { include: ['HR', 'Benefits', 'Finance', 'Executive'] } });
+    a.bf.people = (c.results || []).map(x => ({ id: x.contactId, name: x.name, title: x.jobTitle || '', city: x.city || '', state: x.state || '', hasEmail: !!x.hasEmail, hasPhone: !!x.hasPhone }));
+    a.bf.people_on = TODAY;
+    if (revealed) a.bf.revealed = revealed;
+    result.pulled.push(a);
+  }
+  return result;
+}
+async function bfRun(list, single = null) {
+  if (bfState.busy || !bfCanRefresh()) return;
+  bfState.busy = true;
+  const btn = document.getElementById('btnBf');
+  btn.disabled = true;
+  if (single) { bfState.acctWorking.add(single.company); renderTable(); }
+  try {
+    const r = await bfRefresh(list, (i, n, a) => setSaveState('', single ? `BenefitFlow: checking ${a.company}…` : `BenefitFlow: ${i} of ${n} (${a.company})…`));
+    const parts = [`${r.pulled.length} updated`];
+    if (r.noMatch.length) parts.push(`${r.noMatch.length} not found`);
+    persist();
+    setSaveState('', 'BenefitFlow: ' + parts.join(' · ') + '. Sharing…');
+  } catch (err) {
+    setSaveState('err', bfErrorText(err));
+  } finally {
+    bfState.busy = false;
+    btn.disabled = false;
+    if (single) bfState.acctWorking.delete(single.company);
+    render();
+  }
+}
+// Pull an email and a phone number out of a reveal answer, whatever its exact shape.
+function bfContactInfo(obj) {
+  const emails = [], phones = [];
+  const walk = (v, key) => {
+    if (v == null) return;
+    if (typeof v === 'string' || typeof v === 'number') {
+      const t = String(v).trim();
+      if (/email/i.test(key) && /@/.test(t)) emails.push(t);
+      else if (/phone|mobile|direct/i.test(key) && /\d{7,}/.test(t.replace(/\D/g, ''))) phones.push(t);
+      return;
+    }
+    if (Array.isArray(v)) { v.forEach(x => walk(x, key)); return; }
+    if (typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, /^(value|address|number)$/i.test(k) ? key : k);
+  };
+  walk(obj, '');
+  return { email: emails[0] || '', phone: phones[0] || '' };
+}
+async function bfReveal(a, id) {
+  if (!bfCanReveal() || bfState.working.has(id)) return;
+  bfState.working.add(id); renderTable();
+  try {
+    if (!bfState.confirm.has(id)) {
+      const q = await bfCall('get_contact', { contactId: id });          // free price check
+      const cost = Number(q.costInCredits || 0);
+      const already = bfContactInfo(q);
+      if (already.email || already.phone) { a.bf.revealed = { ...(a.bf.revealed || {}), [id]: { ...already, on: TODAY } }; persist(); return; }
+      if (cost > 0) { bfState.confirm.set(id, cost); setSaveState('', `BenefitFlow: revealing this contact costs ${cost} credit. Click again to confirm.`); return; }
+    }
+    const r = await bfCall('get_contact', { contactId: id, confirm: true });
+    bfState.confirm.delete(id);
+    const info = bfContactInfo(r);
+    a.bf.revealed = { ...(a.bf.revealed || {}), [id]: { ...info, on: TODAY } };
+    persist();
+    setSaveState('', info.email || info.phone ? 'BenefitFlow: contact revealed. Sharing…' : 'BenefitFlow: revealed, but no email or phone came back. Sharing…');
+  } catch (err) {
+    setSaveState('err', bfErrorText(err));
+  } finally {
+    bfState.working.delete(id);
+    render();
+  }
+}
+document.getElementById('btnBf').addEventListener('click', () => {
+  const list = accounts.filter(a => ziTarget(a) && !(a.bf && a.bf.pulled_on === TODAY));
+  if (!list.length) { setSaveState('ok', 'BenefitFlow: every Call today, This week and Heating up account is already up to date today.'); return; }
+  bfRun(list);
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-bf]');
+  if (b) { e.stopPropagation(); const a = byName(b.dataset.bf); if (a) bfRun([a], a); return; }
+  const rv = e.target.closest('[data-bfrev]');
+  if (rv) { e.stopPropagation(); const a = byName(rv.dataset.bfco); if (a && a.bf) bfReveal(a, rv.dataset.bfrev); }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

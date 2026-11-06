@@ -14,7 +14,7 @@
 
 ## Dashboard (`dashboard_template.html`)
 - **Call today** cards: the top tier-A accounts, each with a next step and why it ranks there.
-- **Stat cards are filters**: clicking a card shows only its accounts in the table (click again to clear). The filter row has a matching button for every card: A · Call today, B · This week, C · Nurture, D · Monitor, Heating up, Active 7 days, Past sales, Trigger events, ZoomInfo confirmed, Competitor. The card and its button light up together.
+- **Stat cards are filters**: clicking a card shows only its accounts in the table (click again to clear). The filter row has a matching button for every card: A · Call today, B · This week, C · Nurture, D · Monitor, Heating up, Active 7 days, Past sales, Trigger events, Renewing ≤ 90 days, ZoomInfo confirmed, Competitor. The card and its button light up together.
   - Buttons can be combined. Tiers add together (A + B = everything to call this week), and the other buttons narrow the list (B · This week + Heating up = this-week accounts that are heating up).
 - **Search** (press `/`) covers company, keywords, pages visited and your notes. You can also filter by tier, stage and fit.
 - **✓ Worked**: marks an account as contacted today. It drops off the list for 7 days, and comes back early (tagged *new since worked*) if 6sense records new activity.
@@ -64,6 +64,17 @@ Each account can carry a `zi` block: `{company_id, name, location, employees, pu
 - **News** (`zi.news`) comes from `enrich_company_signals` NEWS in the same call as intent. Only items from the last 12 months that mention the company by name are kept. The latest item from the last 60 days goes in Why now, and up to 4 items with links in the detail view. Acquisition news becomes a 🔔 Acquisition trigger.
 - **Careers** (in the snapshot, or on its own when there's no snapshot): a **Latest job post** link when ZoomInfo has an Open Position Scoop with a link (it's often the company's job board, e.g. recruitingbypaycor.com), plus a **Find careers page** web-search link built from the company name and website. Both are free: no ZoomInfo call, no credits.
 - All three are refreshed by the ZoomInfo buttons and email auto-refresh. They don't change the score.
+
+## BenefitFlow: benefits renewal, broker and contacts
+Each account can carry a `bf` block (`employer_id, broker, broker_years, carrier, funding, renewal, eligible, plan_types, peo, secondary_broker, signals, people, revealed, pulled_on`).
+- **Where it comes from:** the owner's BenefitFlow connector. Per account, the page runs one free `search_employers` by website (falling back to the company name) with partners and signals, then one free `search_contacts` for HR, Benefits, Finance and Executive people. `enrich_companies` is not used (it spends enrichment credits).
+- **Benefits section** in the account detail: renewal date (red when 90 days or less away), broker and years with them, other firms on the filings (e.g. ADP), carrier, insured vs. self-funded, benefit-eligible employees, plan lines, PEO, BenefitFlow intent, and BenefitFlow signals.
+- **Triggers:** renewal within 90 days, broker change, carrier switch and M&A become 🔔 triggers. Renewal also gets a 📅 badge, a **Renewing soon** card and a **Renewing ≤ 90 days** filter button. Renewals 3–6 months out show as a plain Why now line.
+- **Payroll vendor:** a PEO or payroll firm on the benefit filings (ADP, Paychex, Insperity…) is added to the 💼 Payroll chip.
+- **Who to call** merges ZoomInfo and BenefitFlow people by name and labels the source. BenefitFlow names link to their exact LinkedIn profile. Extra contacts sit under "N more HR, finance and exec contacts".
+- **Get email/phone** (owner only): the first click is a free price check; if BenefitFlow charges (1 contact credit per person), the button turns yellow and a second click reveals. Contacts your team already unlocked are free and reveal on the first click. Revealed email and phone are saved to the page, so the SDR sees them.
+- **Refresh:** **↻ BenefitFlow** in the header (Call today, This week and Heating up accounts not pulled today), a per-account **↻ Refresh BenefitFlow** button, and automatically for those accounts when emails are imported. Calls are spaced about 1.3 s apart to stay under BenefitFlow's 50-calls-a-minute limit (two calls per account). Daily limit: 500 calls per user.
+- BenefitFlow doesn't change the score.
 
 ## Previous sales process (owner, manual)
 - In an account's detail, **☆ Mark as past sales process** sets `past_process: true` and `past_process_on`. A **Sales history** box (`history_note`) appears for details to pass to the SDR.
