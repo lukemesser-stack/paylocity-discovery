@@ -271,6 +271,14 @@
   .bd-sum b { color: var(--text); font-weight: 600; }
   .filters { display: contents; }
   .m-work { display: none; }
+  /* Desktop table: let long cells wrap so Next step and Worked stay on screen */
+  td.td-co { max-width: 300px; }
+  td.td-co .co { flex-wrap: wrap; row-gap: 3px; }
+  .why { max-width: 300px; }
+  td.td-act .action { white-space: normal; max-width: 200px; }
+  /* Page-visit colors, explained under Pages visited */
+  .page-key { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; color: var(--text-2); margin-top: 6px; }
+  .page-key i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: 0; }
   .pages { font-size: 12px; display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow: auto; }
   .pages div { display: flex; gap: 10px; white-space: nowrap; }
   .pages .d { color: var(--text-dim); min-width: 72px; }
@@ -292,11 +300,19 @@
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
   footer { padding-block: 16px 28px; padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); color: var(--text-dim); font-size: 11px; border-top: 1px solid var(--border); }
 
+  @media (max-width: 1200px) {
+    .col-sf { display: none; }
+  }
+  @media (max-width: 1100px) and (min-width: 1001px) {
+    td.td-co { max-width: 220px; }
+    .why { max-width: 220px; }
+    td.td-act .action { max-width: 150px; }
+  }
   @media (max-width: 1100px) {
     .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .detail-grid { grid-template-columns: 1fr; }
   }
-  @media (max-width: 640px) {
+  @media (max-width: 1000px) {
     .header, .wrap, footer { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
     .header { padding-block: 14px 12px; gap: 10px; }
     .title-sub { display: none; }
@@ -347,6 +363,8 @@
     .why { max-width: none; font-family: var(--font); font-size: 13px; gap: 3px; }
     .why span:nth-child(n+4) { display: none; }
     .action { white-space: normal; font-size: 12px; }
+    td.td-act .action { max-width: none; }
+    td.td-co { max-width: none; }
     .work-btn { padding: 8px 12px; font-size: 12px; }
     .tier-label { font-size: 9px; }
     tbody tr.row td.empty { grid-column: 1 / -1; }
@@ -1269,7 +1287,8 @@ function detailHtml(a) {
   const pages = a.decoded_urls.map(u => {
     const path = pagePath(u.decoded || u.raw);
     const cls = HAND_RAISE_PAGES.some(x => path.includes(x)) ? 'hand' : AD_LANDING_PAGES.some(x => path.includes(x)) ? 'ad' : '';
-    return `<div><span class="d num">${fmtDate(u.date)}</span><a class="${cls}" href="${esc(safeUrl(u.decoded || u.raw))}" target="_blank" rel="noopener" title="${esc(u.decoded || u.raw)}">${esc(path === '/' ? '(homepage)' : path)}</a></div>`;
+    const kind = cls === 'hand' ? 'Asked for us (demo, contact, pricing or quote). Strongest buying signal. ' : cls === 'ad' ? 'Came from an ad or campaign page. ' : 'General browsing. ';
+    return `<div><span class="d num">${fmtDate(u.date)}</span><a class="${cls}" href="${esc(safeUrl(u.decoded || u.raw))}" target="_blank" rel="noopener" title="${esc(kind + (u.decoded || u.raw))}">${esc(path === '/' ? '(homepage)' : path)}</a></div>`;
   }).join('');
 
   const kws = [...a.competitor_keywords.map(k => `<span class="kw comp">${esc(k)}</span>`),
@@ -1300,7 +1319,8 @@ function detailHtml(a) {
           : `<div class="dblock"><div class="dlabel">Careers</div><div class="careers" style="font-size:12px">${careersHtml(a)}</div></div>`)}
         ${sec('s-bf', benefitsHtml(a))}
         ${sec('s-pages', `<div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
-          ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>`)}
+          ${pages ? `<div class="pages">${pages}</div>
+          <div class="page-key"><span><i style="background:var(--a)"></i><b style="color:var(--a)">Red</b> = asked for us: demo, contact, pricing or quote page</span><span><i style="background:var(--b)"></i><b style="color:var(--b)">Gold</b> = came from an ad or campaign page</span><span><i style="background:var(--accent)"></i><b style="color:var(--accent)">Teal</b> = general browsing (homepage, product, resources)</span></div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>`)}
         ${sec('s-kw', `<div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>`)}
         ${sec('s-who', whoToCallHtml(a))}
         ${sec('s-trig', triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events${a.zi && a.zi.triggers_on ? ' · ZoomInfo checked ' + fmtDate(a.zi.triggers_on) : ''}${a.bf && a.bf.pulled_on && !a.bf.no_match ? ' · BenefitFlow ' + fmtDate(a.bf.pulled_on) : ''}</div>
