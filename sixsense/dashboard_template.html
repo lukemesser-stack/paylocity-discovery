@@ -1269,7 +1269,7 @@ function renderWelcome() {
     el.innerHTML = `<h3>Welcome to Target Now</h3>
       <ol>
         <li><b>Add your 6sense emails:</b> drag the alert emails from Outlook to your desktop (they save as .msg files), drop them in the box below, then click <b>✓ Apply</b>. Add each day's email the same way.</li>
-        <li><b>ZoomInfo and BenefitFlow fill in by themselves</b> for Call today, This week and Heating up accounts when you apply emails. The first time, Claude asks you to allow each one for this page: choose Allow. Only free lookups run on their own; anything that costs credits asks you first.</li>
+        <li><b>ZoomInfo and BenefitFlow fill in by themselves</b> for every account in the emails you apply. The first time, Claude asks you to allow each one for this page: choose Allow. Only free lookups run on their own; anything that costs credits asks you first.</li>
         <li><b>Share with your SDR:</b> Share → anyone with the link (view only). They see your ranking, notes and revealed contacts but can't change anything.</li>
       </ol>
       <div class="muted">Tip: mark ✓ Worked after you reach out. The account steps aside for 7 days unless 6sense shows new activity.</div>`;
@@ -1594,11 +1594,11 @@ async function applyStaged() {
   const jumped = accounts.filter(a => before.has(a.company) && a.priority.score - before.get(a.company) >= 10).map(a => a.company);
   log('ok', `✓ Applied: ${added} new accounts, ${merged} updated.${jumped.length ? ' Big movers: ' + esc(jumped.slice(0, 5).join(', ')) : ''}`);
 
-  // Auto ZoomInfo: accounts from these files that now rank Call today / This week or are heating up (free accounts only, once a day)
-  const targets = [...touched].filter(a => ziTarget(a) && !(a.zi && a.zi.pulled_on === TODAY && !a.zi.skipped));
+  // Auto ZoomInfo: every account in these emails, whatever its tier (free accounts only, once a day), highest score first
+  const targets = [...touched].filter(a => !(a.zi && a.zi.pulled_on === TODAY && !a.zi.skipped)).sort((x, y) => y.priority.score - x.priority.score);
   if (ziCanRefresh() && targets.length && !ziState.busy) {
     ziState.busy = true;
-    log('info', `Checking ZoomInfo for ${targets.length} Call today / This week / Heating up account${targets.length === 1 ? '' : 's'}: ${esc(targets.map(a => a.company).slice(0, 6).join(', '))}${targets.length > 6 ? '…' : ''}`);
+    log('info', `Checking ZoomInfo for ${targets.length} account${targets.length === 1 ? '' : 's'} from these emails: ${esc(targets.map(a => a.company).slice(0, 6).join(', '))}${targets.length > 6 ? '…' : ''}`);
     setSaveState('', 'ZoomInfo: checking new hot accounts…');
     try {
       const r = await ziRefresh(targets, false);
@@ -1615,16 +1615,15 @@ async function applyStaged() {
   } else if (targets.length && !ziCanRefresh() && share.mode === 'writer') {
     log('info', 'ZoomInfo is not available on this page right now, so intent was not refreshed.');
   }
-  // Auto BenefitFlow (free searches only): accounts from these emails that rank Call today / This week / Heating up
-  // (once a day), plus a catch-up of every account in those groups with no BenefitFlow data or data over 30 days old.
+  // Auto BenefitFlow (free searches only): every account in these emails, whatever its tier (once a day), plus a catch-up of every Call today, This week and Heating up account with no BenefitFlow data or data over 30 days old.
   const bfStale = a => !(a.bf && isISO(a.bf.pulled_on)) || daysBetween(TODAY, a.bf.pulled_on) > BF_STALE_DAYS;
   const bfTargets = [...new Set([
-    ...[...touched].filter(a => ziTarget(a) && !(a.bf && a.bf.pulled_on === TODAY)),
+    ...[...touched].filter(a => !(a.bf && a.bf.pulled_on === TODAY)).sort((x, y) => y.priority.score - x.priority.score),
     ...accounts.filter(a => ziTarget(a) && bfStale(a)).sort((x, y) => y.priority.score - x.priority.score),
   ])].slice(0, BF_MAX_PER_IMPORT);
   if (bfCanRefresh() && bfTargets.length && !bfState.busy) {
     bfState.busy = true;
-    log('info', `Checking BenefitFlow for ${bfTargets.length} account${bfTargets.length === 1 ? '' : 's'} (new hot accounts plus any not checked in ${BF_STALE_DAYS} days). About ${Math.ceil(bfTargets.length * 2.6 / 60)} min…`);
+    log('info', `Checking BenefitFlow for ${bfTargets.length} account${bfTargets.length === 1 ? '' : 's'} (everything in these emails, plus hot accounts not checked in ${BF_STALE_DAYS} days). About ${Math.ceil(bfTargets.length * 2.6 / 60)} min…`);
     try {
       const r = await bfRefresh(bfTargets);
       const soon = r.pulled.filter(a => bfRenewingSoon(a));

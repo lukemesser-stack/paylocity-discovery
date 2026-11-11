@@ -37,7 +37,7 @@ SETUP
 
 DAY TO DAY
 - Each morning: add the new 6sense email and click Apply. ZoomInfo and BenefitFlow fill
-  in by themselves for Call today, This week and Heating up accounts.
+  in by themselves for every account in the emails you load.
 - Click a card (Call today, Heating up, Renewing soon...) to show just those accounts.
 - Mark "Worked" after you reach out. The account steps aside for 7 days unless
   6sense shows new activity. Keep activity tracking in Salesforce as usual.

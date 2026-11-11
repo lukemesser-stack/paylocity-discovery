@@ -43,7 +43,7 @@ Each account can carry a `zi` block: `{company_id, name, location, employees, pu
   - The page calls the owner's ZoomInfo connector (`mcp` capability: `search_companies` and `enrich_company_signals`). It checks management status first, which is free.
   - Refresh-all only pulls free accounts. On a single account that would cost credits, the button asks for a second click.
   - Results are saved to the page, so read-only viewers see them without needing ZoomInfo themselves.
-- **Automatic on import:** when the owner applies new 6sense emails, every account from those emails that now ranks Call today or This week, or is heating up, gets its ZoomInfo intent refreshed before the page saves.
+- **Automatic on import:** when the owner applies new 6sense emails, every account in those emails gets its ZoomInfo data refreshed before the page saves, whatever its tier (highest score first).
   - Only free accounts are pulled, and at most once a day per account.
   - If ZoomInfo fails, the email data still saves and the import log shows the reason.
 
@@ -77,7 +77,7 @@ Each account can carry a `bf` block (`employer_id, broker, broker_years, carrier
 - **Payroll vendor:** a PEO or payroll firm on the benefit filings (ADP, Paychex, Insperity…) is added to the 💼 Payroll chip.
 - **Who to call** merges ZoomInfo and BenefitFlow people by name and labels the source. BenefitFlow names link to their exact LinkedIn profile. Extra contacts sit under "N more HR, finance and exec contacts".
 - **Get email/phone** (owner only): the first click is a free price check; if BenefitFlow charges (1 contact credit per person), the button turns yellow and a second click reveals. Contacts your team already unlocked are free and reveal on the first click. Revealed email and phone are saved to the page, so the SDR sees them.
-- **Refresh:** **↻ BenefitFlow** in the header (Call today, This week and Heating up accounts not pulled today), a per-account **↻ Refresh BenefitFlow** button, and automatically when emails are imported: every account from the new emails that lands in those groups (once a day), plus a catch-up of every Call today, This week and Heating up account that has no BenefitFlow data or hasn't been checked in 30 days (up to 60 accounts per import, highest score first). Calls are spaced about 1.3 s apart to stay under BenefitFlow's 50-calls-a-minute limit (two calls per account). Daily limit: 500 calls per user.
+- **Refresh:** **↻ BenefitFlow** in the header (Call today, This week and Heating up accounts not pulled today), a per-account **↻ Refresh BenefitFlow** button, and automatically when emails are imported: every account in the new emails, whatever its tier (once a day), plus a catch-up of every Call today, This week and Heating up account that has no BenefitFlow data or hasn't been checked in 30 days (up to 60 accounts per import, highest score first). Calls are spaced about 1.3 s apart to stay under BenefitFlow's 50-calls-a-minute limit (two calls per account). Daily limit: 500 calls per user.
 - BenefitFlow doesn't change the score.
 
 ## Previous sales process (owner, manual)
