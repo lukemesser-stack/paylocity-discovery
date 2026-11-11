@@ -21,6 +21,8 @@
 - **Notes** per account, saved in the browser and included in 💾 Save JSON. The Python script keeps `worked_on` and `notes` too.
 - **Add emails / JSON**: drop 6sense alert `.msg` files (or a JSON update) anywhere on the page. Emails already loaded are skipped: an email counts as a duplicate only when every account in it already has that day's activity. Outlook gives every alert the same file name, so names alone aren't used. Nothing is merged until you click Apply.
 - **⬇ Call list CSV** exports the rows you're currently looking at.
+- **On a phone**, each account is a card (score, company, Why now, next step, ✓ Worked), the stat cards and filter buttons sit in rows you swipe sideways, and an opened account lists its sections in call order: Who to call, Triggers, Notes, Sales history, Benefits, Snapshot, News, Pages, Keywords, ZoomInfo intent, then the score. Text uses one font and three sizes, and iPhone text enlarging is turned off.
+- **Score breakdown** shows one chip per factor (e.g. `Recency 20/25`). Darker green means closer to full points, white means none. A plain line underneath lists full, partial and missing factors. It only displays the score; it doesn't change it.
 - Scores are recalculated against today's date every time you open the page, so the file never goes stale. Add `?today=YYYY-MM-DD` to the URL to see the ranking as of another day.
 
 ## Handing a blank copy to a peer

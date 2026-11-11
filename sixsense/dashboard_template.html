@@ -41,6 +41,7 @@
     --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }   /* stop iPhone from enlarging some text blocks */
   body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; min-height: 100vh; }
   a { color: inherit; }
   button { font: inherit; color: inherit; cursor: pointer; }
@@ -256,12 +257,20 @@
   tr.detail > td { background: var(--surface-3); padding: 16px 20px 18px 36px; border-top: 1px solid var(--border); cursor: default; }
   .detail-grid { display: grid; grid-template-columns: 260px 1fr 1fr; gap: 24px; }
   .dlabel { font-size: 11px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; margin: 0 0 6px; }
-  .dblock + .dblock { margin-top: 14px; }
-  .bd-row { display: grid; grid-template-columns: 92px 1fr 28px; gap: 8px; align-items: center; font-size: 12px; margin-bottom: 4px; }
-  .bd-row span:first-child { color: var(--text-2); }
-  .bd-bar { height: 8px; background: var(--track); border-radius: 999px; overflow: hidden; }
-  .bd-bar i { display: block; height: 100%; background: var(--spark); border-radius: 999px; }
-  .bd-row b { text-align: right; font-weight: 600; }
+  .dblock + .dblock, .dcol > .sec + .sec { margin-top: 14px; }
+  .detail-grid > .dcol { min-width: 0; }
+  /* Score breakdown: one chip per factor, darker green = closer to full points */
+  .bd-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .bd-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; color: var(--text); background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-bright); }
+  .bd-chip b { font-weight: 700; font-variant-numeric: tabular-nums; margin-left: 3px; }
+  .bd-chip.l0 { color: var(--text-dim); }
+  .bd-chip.l1 { background: #e3f6ea; box-shadow: inset 0 0 0 1px #c5ebd3; }
+  .bd-chip.l2 { background: #a9e8c0; box-shadow: none; }
+  .bd-chip.l3 { background: var(--spark); color: #06301c; box-shadow: none; }
+  .bd-sum { font-size: 12px; color: var(--text-2); margin-top: 6px; line-height: 1.45; }
+  .bd-sum b { color: var(--text); font-weight: 600; }
+  .filters { display: contents; }
+  .m-work { display: none; }
   .pages { font-size: 12px; display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow: auto; }
   .pages div { display: flex; gap: 10px; white-space: nowrap; }
   .pages .d { color: var(--text-dim); min-width: 72px; }
@@ -289,8 +298,88 @@
   }
   @media (max-width: 640px) {
     .header, .wrap, footer { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .col-why, .col-sf { display: none; }
+    .header { padding-block: 14px 12px; gap: 10px; }
+    .title-sub { display: none; }
+    .wrap { gap: 16px; padding-block: 14px 32px; }
+
+    /* Stat cards: one swipeable strip instead of two screens of cards */
+    .stats { display: flex; overflow-x: auto; gap: 8px; scroll-snap-type: x proximity; margin: 0 -16px; padding: 2px 16px 6px; scrollbar-width: none; }
+    .stats::-webkit-scrollbar { display: none; }
+    .stats { align-items: flex-start; }
+    .stat { flex: 0 0 128px; padding: 10px 12px; scroll-snap-align: start; }
+    .stat-value { font-size: 24px; }
+    .stat-unit { font-size: 11px; font-family: var(--font); }
+
+    /* Filters: search on its own line, the buttons in one swipeable row */
+    .toolbar { gap: 8px; }
+    .search { flex: 1 1 100%; font-size: 16px; }   /* 16px keeps iPhone from zooming in on tap */
+    .filters { display: flex; gap: 6px; overflow-x: auto; flex-wrap: nowrap; width: 100%; margin: 0 -16px; padding: 0 16px 4px; scrollbar-width: none; width: calc(100% + 32px); }
+    .filters::-webkit-scrollbar { display: none; }
+    .filters > *, .filters #sigChips > * { flex: none; }
+    .count { margin-left: 0; }
+    .chip { padding: 7px 12px; }
+
+    /* Accounts: each one is a card instead of a table row */
+    .table-wrap { background: transparent; box-shadow: none; border: 0; overflow: visible; }
+    table, tbody { display: block; }
+    thead { display: block; background: transparent; }
+    thead tr { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    thead tr::before { content: 'Sort'; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; margin-right: 2px; }
+    th { padding: 4px 10px; border: 1px solid var(--border-bright); border-radius: 999px; background: var(--surface); font-size: 11px; }
+    th:not([data-sort]), th.col-sf { display: none; }
+    tbody tr.row { display: grid; grid-template-columns: 48px minmax(0, 1fr); column-gap: 10px; row-gap: 8px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-top: 10px; }
+    tbody tr.row.open { border-radius: var(--radius) var(--radius) 0 0; background: var(--surface); }
+    tbody tr.row > td { display: block; padding: 0; min-width: 0; }
+    td.td-score { grid-column: 1; grid-row: 1; }
+    td.td-co { grid-column: 2; grid-row: 1; }
+    tbody tr.row > td.col-sf, tbody tr.row > td.td-work { display: none; }
+    tbody tr.row > td.col-why { display: block; grid-column: 1 / -1; }
+    tbody tr.row > td.td-when { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    td.td-when .ago { font-size: 12px; }
+    td.td-when .spark { margin-top: 0; }
+    tbody tr.row > td.td-act { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .m-work { display: block; }
+    .td-act .work-btn { flex: none; }
+    .co { flex-wrap: wrap; font-size: 15px; line-height: 1.3; }
+    .co-sub, .co-firmo, .co-buyer { margin-left: 0; }
+    .co-firmo { font-family: var(--font); font-size: 12px; }
+    .co-buyer { max-width: none; white-space: normal; font-size: 12px; }
+    .why { max-width: none; font-family: var(--font); font-size: 13px; gap: 3px; }
+    .why span:nth-child(n+4) { display: none; }
+    .action { white-space: normal; font-size: 12px; }
+    .work-btn { padding: 8px 12px; font-size: 12px; }
+    .tier-label { font-size: 9px; }
+    tbody tr.row td.empty { grid-column: 1 / -1; }
+
+    /* Account detail: one column, in the order an SDR needs before a call */
+    tr.detail { display: block; }
+    tr.detail > td { display: block; padding: 14px 12px 16px; background: var(--surface-3); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 var(--radius) var(--radius); }
+    .detail-grid { display: flex; flex-direction: column; gap: 18px; }
+    .detail-grid > .dcol { display: contents; }
+    .dcol > .sec + .sec { margin-top: 0; }
+    .sec { min-width: 0; }
+    .s-who { order: 1; } .s-trig { order: 2; } .s-notes { order: 3; } .s-hist { order: 4; } .s-contacts { order: 5; }
+    .s-bf { order: 6; } .s-snap { order: 7; } .s-news { order: 8; } .s-pages { order: 9; } .s-kw { order: 10; }
+    .s-zi { order: 11; } .s-surge { order: 12; } .s-dup { order: 13; } .s-score { order: 14; } .s-weeks { order: 15; } .s-sig { order: 16; }
+
+    /* One font and three sizes in the detail: 11px labels, 13px text, 15px names */
+    .snap, .trig-row, .news-row, .buyer-row, .zi-row, .pages, .about, .muted, .hist-text, .bd-sum, .careers, .rev { font-size: 13px !important; font-family: var(--font) !important; }
+    .notes { font-size: 16px; }
+    .snap { grid-template-columns: 84px minmax(0, 1fr); }
+    .snap dd, .trig-row > span, .news-row > span, .buyer-row > span { min-width: 0; overflow-wrap: anywhere; }
+    .trig-row, .news-row { grid-template-columns: 76px minmax(0, 1fr); }
+    .zi-row { grid-template-columns: 76px minmax(0, 1fr) auto; }
+    .buyer-row { grid-template-columns: 64px minmax(0, 1fr); }
+    .pages div { white-space: normal; }
+    .pages a { overflow-wrap: anywhere; }
+    .timeline, .timeline-axis { max-width: none; }
+    .fcard .reasons, .fcard-meta, .buyer-row .t, .co-sub, .ago, .zi-row .cat, .src-tag { font-family: var(--font) !important; }
+    h2 { flex-wrap: wrap; row-gap: 2px; }
+    h2 small { flex-basis: 100%; }
+    .rev { white-space: normal; overflow-wrap: anywhere; }
+    .person { overflow-wrap: anywhere; }
+    .fcard-meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+    .btn.sm { padding: 7px 11px; font-size: 12px; }
   }
 </style>
 
@@ -346,6 +435,7 @@
     <h2>All accounts <small>click a row for detail · press / to search</small></h2>
     <div class="toolbar">
       <input class="search" id="q" type="search" placeholder="Search company, keyword, page…" autocomplete="off">
+      <div class="filters">
       <button class="chip" data-tier="A">A · Call today</button>
       <button class="chip" data-tier="B">B · This week</button>
       <button class="chip" data-tier="C">C · Nurture</button>
@@ -359,6 +449,7 @@
       </select>
       <button class="chip on" id="fHideWorked" title="Hide accounts you marked worked in the last 7 days, unless they had new activity since">Hide worked</button>
       <button class="chip hidden" id="fClear">✕ Clear filters</button>
+      </div>
       <span class="count num" id="count"></span>
     </div>
   </section>
@@ -1136,18 +1227,18 @@ function rowHtml(a) {
   ].join('');
   const trend = p.trend === 'heating up' && p.active_days_30d >= 2 ? '<span class="trend-up" title="Heating up">↑</span>' : p.trend === 'cooling' ? '<span class="trend-down" title="Cooling">↓</span>' : '';
   return `<tr class="row ${ui.open.has(a.company) ? 'open' : ''} ${isWorkedRecently(a) ? 'worked' : ''}" data-row="${esc(a.company)}">
-    <td><span class="score ${L} num">${p.score}</span><div class="tier-label ${L}">${esc(p.tier.slice(4))}</div></td>
-    <td>
+    <td class="td-score"><span class="score ${L} num">${p.score}</span><div class="tier-label ${L}">${esc(p.tier.slice(4))}</div></td>
+    <td class="td-co">
       <div class="co"><span class="caret">▶</span>${esc(a.company)} ${flags}</div>
       ${a.website ? `<div class="co-sub"><a href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener" data-stop>${esc(domainOf(a.website))}</a></div>` : ''}
       ${firmoLine(a) ? `<div class="co-firmo">${esc(firmoLine(a))}</div>` : ''}
       ${buyers(a).length ? `<div class="co-buyer">👤 ${personHtml(buyers(a)[0], a)} <span>${esc(shortTitle(buyers(a)[0].title))}</span></div>` : ''}
     </td>
     <td class="col-sf"><div class="sf"><span class="badge stage">${esc(a.stage || '?')}</span><span class="badge ${esc((a.fit || 'weak').toLowerCase())}">${esc(a.fit || '?')}</span></div></td>
-    <td class="when"><div class="num">${p.last_activity ? fmtDate(p.last_activity) : '—'} ${trend}</div><div class="ago">${agoText(p.days_since_activity)}</div>${spark(a)}</td>
+    <td class="when td-when"><div class="num">${p.last_activity ? fmtDate(p.last_activity) : '—'} ${trend}</div><div class="ago">${agoText(p.days_since_activity)}</div>${spark(a)}</td>
     <td class="col-why"><div class="why">${reasons(a).map(r => `<span class="${r.t}">${r.html || esc(r.s)}</span>`).join('')}</div></td>
-    <td><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span></td>
-    <td>${share.mode === 'reader' ? '' : `<button class="work-btn ${a.worked_on === TODAY ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${a.worked_on === TODAY ? '✓ Worked' : 'Worked?'}</button>`}</td>
+    <td class="td-act"><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span><span class="m-work">${share.mode === 'reader' ? '' : `<button class="work-btn ${a.worked_on === TODAY ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${a.worked_on === TODAY ? '✓ Worked' : 'Worked?'}</button>`}</span></td>
+    <td class="td-work">${share.mode === 'reader' ? '' : `<button class="work-btn ${a.worked_on === TODAY ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${a.worked_on === TODAY ? '✓ Worked' : 'Worked?'}</button>`}</td>
   </tr>`;
 }
 
@@ -1155,8 +1246,16 @@ function detailHtml(a) {
   const p = a.priority, b = p.breakdown;
   const max = { recency: 25, momentum: 15, stage: 20, fit: 15, pages: 15, volume: 5, competitor: 5, known_contact: 2 };
   const label = { recency: 'Recency', momentum: 'Momentum', stage: 'Stage', fit: 'Fit', pages: 'Pages', volume: 'Volume', competitor: 'Competitor', known_contact: 'Known contact' };
-  const bars = Object.keys(max).map(k =>
-    `<div class="bd-row"><span>${label[k]}</span><div class="bd-bar"><i style="width:${Math.round(100 * (b[k] || 0) / max[k])}%"></i></div><b class="num">${b[k] || 0}</b></div>`).join('');
+  // Display only: shows the points the score already gave, it never changes them.
+  const keys = Object.keys(max);
+  const frac = k => Math.min(1, (b[k] || 0) / max[k]);
+  const level = k => frac(k) >= 1 ? 3 : frac(k) >= 0.5 ? 2 : frac(k) > 0 ? 1 : 0;
+  const bars = `<div class="bd-chips">${keys.map(k =>
+    `<span class="bd-chip l${level(k)}" title="${label[k]}: ${b[k] || 0} of ${max[k]} points">${label[k]}<b>${b[k] || 0}/${max[k]}</b></span>`).join('')}</div>`;
+  const group = test => keys.filter(test).map(k => label[k]).join(', ');
+  const full = group(k => frac(k) >= 1), part = group(k => frac(k) > 0 && frac(k) < 1), none = group(k => !frac(k));
+  const summary = `<div class="bd-sum">${[full && `<b>Full points:</b> ${full}.`, part && `<b>Partly:</b> ${part}.`, none && `<b>Nothing yet:</b> ${none}.`].filter(Boolean).join(' ')}</div>`;
+  const sec = (cls, html) => html && html.trim() ? `<div class="sec ${cls}">${html}</div>` : '';
 
   // 13-week activity heat strip
   const set = [...a.dates, ...a.activity_dates];
@@ -1180,14 +1279,14 @@ function detailHtml(a) {
 
   return `<tr class="detail"><td colspan="7">
     <div class="detail-grid">
-      <div>
-        <div class="dblock"><div class="dlabel">Score breakdown · ${p.score}/100</div>${bars}</div>
-        <div class="dblock"><div class="dlabel">Last 13 weeks</div><div class="timeline">${cells}</div>
-          <div class="timeline-axis"><span>${fmtDate(addDays(TODAY, -90))}</span><span>today</span></div></div>
-        <div class="dblock muted">${a.signal_count} signals · ${a.web_visits} web visits · reach ${esc(a.reach || '?')}${a.source_files.length ? ` · ${a.source_files.length} source email${a.source_files.length === 1 ? '' : 's'}` : ''}</div>
+      <div class="dcol">
+        ${sec('s-score', `<div class="dblock"><div class="dlabel">Score breakdown · ${p.score}/100</div>${bars}${summary}</div>`)}
+        ${sec('s-weeks', `<div class="dblock"><div class="dlabel">Last 13 weeks</div><div class="timeline">${cells}</div>
+          <div class="timeline-axis"><span>${fmtDate(addDays(TODAY, -90))}</span><span>today</span></div></div>`)}
+        ${sec('s-sig', `<div class="dblock muted">${a.signal_count} signals · ${a.web_visits} web visits · reach ${esc(a.reach || '?')}${a.source_files.length ? ` · ${a.source_files.length} source email${a.source_files.length === 1 ? '' : 's'}` : ''}</div>`)}
       </div>
-      <div>
-        ${a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel">Company snapshot · ZoomInfo</div>
+      <div class="dcol">
+        ${sec('s-snap', a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel">Company snapshot · ZoomInfo</div>
           <dl class="snap">
             <dt>Industry</dt><dd>${esc(a.zi.firmo.industry)}${a.zi.firmo.sub_industry ? ' · ' + esc(a.zi.firmo.sub_industry) : ''}</dd>
             <dt>Employees</dt><dd>${a.zi.firmo.employees ? Number(a.zi.firmo.employees).toLocaleString() : '—'}</dd>
@@ -1198,18 +1297,18 @@ function detailHtml(a) {
             <dt>Payroll / HR</dt><dd>${payrollVendors(a).length ? esc(payrollVendors(a).map(v => v.name + ' (' + v.source + ')').join(', ')) + (a.zi.payroll_tech && a.zi.payroll_tech.evidence ? '<br><span class="muted">' + esc(a.zi.payroll_tech.evidence) + '</span>' : '') : '<span class="muted">Not detected in ZoomInfo. Check Salesforce.</span>'}</dd>
           </dl>
           ${a.zi.firmo.about ? `<div class="about">${esc(a.zi.firmo.about)}</div>` : ''}</div>`
-          : `<div class="dblock"><div class="dlabel">Careers</div><div class="careers" style="font-size:12px">${careersHtml(a)}</div></div>`}
-        ${benefitsHtml(a)}
-        <div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
-          ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>
-        <div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>
-        ${whoToCallHtml(a)}
-        ${triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events${a.zi && a.zi.triggers_on ? ' · ZoomInfo checked ' + fmtDate(a.zi.triggers_on) : ''}${a.bf && a.bf.pulled_on && !a.bf.no_match ? ' · BenefitFlow ' + fmtDate(a.bf.pulled_on) : ''}</div>
+          : `<div class="dblock"><div class="dlabel">Careers</div><div class="careers" style="font-size:12px">${careersHtml(a)}</div></div>`)}
+        ${sec('s-bf', benefitsHtml(a))}
+        ${sec('s-pages', `<div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
+          ${pages ? `<div class="pages">${pages}</div>` : '<div class="muted">No Paylocity page visits recorded.</div>'}</div>`)}
+        ${sec('s-kw', `<div class="dblock"><div class="dlabel">Intent keywords</div>${kws || '<span class="muted">None</span>'}</div>`)}
+        ${sec('s-who', whoToCallHtml(a))}
+        ${sec('s-trig', triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events${a.zi && a.zi.triggers_on ? ' · ZoomInfo checked ' + fmtDate(a.zi.triggers_on) : ''}${a.bf && a.bf.pulled_on && !a.bf.no_match ? ' · BenefitFlow ' + fmtDate(a.bf.pulled_on) : ''}</div>
           ${triggers(a).map(t => `<div class="trig-row"><span class="d num">${t.date ? fmtDate(t.date) : (t.kind === 'New leader' ? 'recent' : '')}</span><span><span class="k">${esc(t.kind)}</span> · ${t.kind === 'New leader' ? leaderHtml(t) : esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}
-          ${((a.zi && a.zi.new_leaders) || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. Click a name to search LinkedIn for that person at this company. The right person is usually the first result. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : ''}
-        ${newsItems(a).length ? `<div class="dblock"><div class="dlabel">Recent news · last 12 months</div>
-          ${newsItems(a).slice(0, 4).map(n => `<div class="news-row"><span class="d num">${fmtDate(n.date)}</span><span><a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">${esc(n.title)}</a> <span class="src">${esc(String(n.source || '').replace(/^www\./, ''))}</span></span></div>`).join('')}</div>` : ''}
-        ${a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel">ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>
+          ${((a.zi && a.zi.new_leaders) || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. Click a name to search LinkedIn for that person at this company. The right person is usually the first result. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : '')}
+        ${sec('s-news', newsItems(a).length ? `<div class="dblock"><div class="dlabel">Recent news · last 12 months</div>
+          ${newsItems(a).slice(0, 4).map(n => `<div class="news-row"><span class="d num">${fmtDate(n.date)}</span><span><a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">${esc(n.title)}</a> <span class="src">${esc(String(n.source || '').replace(/^www\./, ''))}</span></span></div>`).join('')}</div>` : '')}
+        ${sec('s-zi', a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel">ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>
           ${!a.zi ? '<div class="muted">Not pulled yet.</div>' : `
           <div class="muted" style="margin-bottom:4px">${esc(a.zi.name)}${a.zi.location ? ' · ' + esc(a.zi.location) : ''}${a.zi.employees ? ' · ' + esc(a.zi.employees) + ' employees' : ''}</div>
           ${a.zi.note ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:4px">${esc(a.zi.note)}</div>` : ''}
@@ -1218,22 +1317,22 @@ function detailHtml(a) {
             : '<div class="muted">No ZoomInfo intent signals right now.</div>'}
           ${ziConfirmed(a).length ? `<div style="font-size:12px;color:var(--green);margin-top:4px">✓ Agrees with 6sense on: ${esc(ziConfirmed(a).join(', '))}</div>` : ''}
           <div class="muted" style="margin-top:4px">Score 60–100 = interest vs. their normal; audience A = largest group researching, E = smallest.</div>`}
-          ${ziCanRefresh() ? ziButtonHtml(a) : ''}</div>` : ''}
-        ${a.surge_topics.length ? `<div class="dblock"><div class="dlabel">Bombora surge topics</div><div class="pages">${a.surge_topics.map(t => `<div><span class="d num">${fmtDate(t.date)}</span><span>${esc(t.topic)}</span></div>`).join('')}</div></div>` : ''}
+          ${ziCanRefresh() ? ziButtonHtml(a) : ''}</div>` : '')}
+        ${sec('s-surge', a.surge_topics.length ? `<div class="dblock"><div class="dlabel">Bombora surge topics</div><div class="pages">${a.surge_topics.map(t => `<div><span class="d num">${fmtDate(t.date)}</span><span>${esc(t.topic)}</span></div>`).join('')}</div></div>` : '')}
       </div>
-      <div>
-        ${contacts ? `<div class="dblock"><div class="dlabel">Known contacts</div><div style="font-size:12px">${contacts}</div></div>` : ''}
-        ${a.aliases.length ? `<div class="dblock"><div class="dlabel">Also appears as</div><div class="muted">${esc(a.aliases.join(' · '))}</div></div>` : ''}
-        ${a.possible_duplicate_of.length ? `<div class="dblock"><div class="dlabel">Possible duplicate of</div><div class="muted">${esc(a.possible_duplicate_of.join(' · '))}. Confirm, then add to ALIASES in optimize_sixsense.py.</div></div>` : ''}
-        <div class="dblock"><div class="dlabel">Previous sales process${a.past_process && a.past_process_on ? ' · marked ' + fmtDate(a.past_process_on) : ''}</div>
+      <div class="dcol">
+        ${sec('s-contacts', contacts ? `<div class="dblock"><div class="dlabel">Known contacts</div><div style="font-size:12px">${contacts}</div></div>` : '')}
+        ${sec('s-dup', (a.aliases.length ? `<div class="dblock"><div class="dlabel">Also appears as</div><div class="muted">${esc(a.aliases.join(' · '))}</div></div>` : '') +
+          (a.possible_duplicate_of.length ? `<div class="dblock"><div class="dlabel">Possible duplicate of</div><div class="muted">${esc(a.possible_duplicate_of.join(' · '))}. Confirm, then add to ALIASES in optimize_sixsense.py.</div></div>` : ''))}
+        ${sec('s-hist', `<div class="dblock"><div class="dlabel">Previous sales process${a.past_process && a.past_process_on ? ' · marked ' + fmtDate(a.past_process_on) : ''}</div>
           ${share.mode === 'reader'
             ? (a.past_process ? `<div class="hist-text">${a.history_note ? esc(a.history_note) : '<span class="muted">Marked as a past sales process. No details added yet.</span>'}</div>` : '<div class="muted">No previous sales process.</div>')
             : `<button class="btn sm hist-btn ${a.past_process ? 'on' : ''}" data-hist="${esc(a.company)}">${a.past_process ? '★ Past sales process (click to remove)' : '☆ Mark as past sales process'}</button>
                ${a.past_process ? `<textarea class="notes" style="margin-top:6px" id="hist-${esc(slug(a.company))}" data-histnote="${esc(a.company)}" placeholder="Sales history for your SDR: when you engaged, who you worked with, why it stalled or was lost, competitor they chose, contract or renewal timing…">${esc(a.history_note || '')}</textarea>` : ''}`}
-        </div>
-        <div class="dblock"><div class="dlabel">Notes</div>
+        </div>`)}
+        ${sec('s-notes', `<div class="dblock"><div class="dlabel">Notes</div>
           <textarea class="notes" id="notes-${esc(slug(a.company))}" data-notes="${esc(a.company)}" ${share.mode === 'reader' ? 'readonly' : ''} placeholder="${share.mode === 'reader' ? 'No notes yet' : 'Call notes, next step, who you spoke with…'}">${esc(a.notes || '')}</textarea>
-          <div class="muted" style="margin-top:4px">${isISO(a.worked_on) ? 'Last worked ' + fmtDate(a.worked_on) : 'Not worked yet'}</div></div>
+          <div class="muted" style="margin-top:4px">${isISO(a.worked_on) ? 'Last worked ' + fmtDate(a.worked_on) : 'Not worked yet'}</div></div>`)}
       </div>
     </div>
   </td></tr>`;
