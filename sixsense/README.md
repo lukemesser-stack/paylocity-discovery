@@ -23,6 +23,10 @@
 - **⬇ Call list CSV** exports the rows you're currently looking at.
 - Scores are recalculated against today's date every time you open the page, so the file never goes stale. Add `?today=YYYY-MM-DD` to the URL to see the ranking as of another day.
 
+## Handing a blank copy to a peer
+`peer_kit/Target_Now_Peer_Kit.zip` holds `Target_Now_Starter.html` (the dashboard with no accounts) and `READ_ME_FIRST.txt`. The peer connects ZoomInfo and BenefitFlow in their own Claude, opens Claude Code, attaches the starter and pastes the prompt from the readme. That publishes their own private copy, using their own connectors. Opened as a plain file, the starter shows the same steps with a Copy prompt button. On an empty dashboard a getting-started panel explains the first steps.
+To rebuild the starter after template changes: `echo '{}' > Target_Now.json && python3 optimize_sixsense.py Target_Now.json`, then copy `Target_Now_share.html` to `peer_kit/Target_Now_Starter.html` and re-zip.
+
 ## Sharing with your SDR
 The run also writes `6SENSE_Update_File_share.html`. That's the same dashboard, published as a claude.ai page.
 - The owner (and anyone you add as an Editor) can click **Worked**, write notes and import emails. Each change saves the page itself, and everyone with the link sees it.

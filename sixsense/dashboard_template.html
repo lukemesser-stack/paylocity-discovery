@@ -219,6 +219,10 @@
   .src-tag { font-size: 10px; color: var(--text-dim); margin-left: 4px; }
   .bf-more summary { cursor: pointer; font-size: 12px; color: var(--accent); margin-top: 4px; }
   .renew-soon { color: var(--a); font-weight: 700; }
+  .welcome h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .welcome ol { margin: 8px 0 0 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+  .welcome .muted { margin-top: 8px; }
+  .prompt-box { margin-top: 6px; width: 100%; min-height: 150px; font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg); border: 1px solid var(--border-bright); border-radius: var(--radius-sm); padding: 8px; resize: vertical; }
   .zi-btn.confirm { border-color: var(--yellow); color: var(--yellow); }
   .btn:disabled { opacity: .5; cursor: wait; }
   .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
@@ -310,6 +314,8 @@
 </header>
 
 <div class="wrap">
+
+  <section id="welcome" class="panel welcome hidden" aria-label="Getting started"></section>
 
   <section id="importPanel" class="panel hidden" aria-label="Import">
     <div class="drop" id="drop" tabindex="0" role="button">
@@ -1016,6 +1022,7 @@ function actionClass(action) { return (action || 'P4').slice(0, 2); }
 function actionText(action) { return (action || '').replace(/^P\d\s+/, ''); }
 
 function render() {
+  renderWelcome();
   renderHeader();
   renderStats();
   renderFocus();
@@ -1232,6 +1239,51 @@ function detailHtml(a) {
   </td></tr>`;
 }
 
+// Getting-started panel, shown only while the dashboard has no accounts.
+// Opened as a file (not on claude.ai): how to turn it into your own live page. On claude.ai: first steps.
+const SETUP_PROMPT = `Publish the attached file Target_Now_Starter.html as a new artifact for me, exactly as it is (do not edit, rewrite or redesign it).
+- Title: Target Now
+- Icon: chart
+- Capabilities (pass exactly this):
+{"artifact":{},"downloads":{},"user":{},"mcp":{"servers":[{"server":"ZoomInfo","tools":["search_companies","enrich_company_signals","search_contacts","enrich_companies"]},{"server":"BenefitFlow","tools":["search_employers","search_contacts","get_contact"]}]}}
+When it is published, give me the link.`;
+function renderWelcome() {
+  const el = document.getElementById('welcome');
+  if (!el) return;
+  if (accounts.length) { el.classList.add('hidden'); return; }
+  const inClaude = !!(window.claude && typeof window.claude.use === 'function');
+  if (!inClaude) {
+    el.innerHTML = `<h3>Set up your own Target Now dashboard (about 5 minutes)</h3>
+      <div class="muted">This file is a blank copy of the dashboard. Publishing it from your own Claude account gives you a private live link that saves itself, uses your own ZoomInfo and BenefitFlow, and can be shared view-only with your SDR.</div>
+      <ol>
+        <li><b>Connect ZoomInfo and BenefitFlow</b> in claude.ai → Settings → Connectors (skip any you already have). Keep their names as <b>ZoomInfo</b> and <b>BenefitFlow</b>.</li>
+        <li><b>Open Claude Code</b> at claude.ai/code and start a new session (no repository needed), <b>attach this file</b> (Target_Now_Starter.html) and <b>paste the prompt below</b>. Approve the publish when Claude asks. <button class="btn sm" id="btnCopyPrompt">Copy prompt</button></li>
+        <li><b>Open the link Claude gives you.</b> That's your dashboard. Click <b>⬆ Add emails</b> and drop in your 6sense alert emails (drag them from Outlook to your desktop first; they save as .msg files), then click <b>✓ Apply</b>.</li>
+        <li><b>Share with your SDR:</b> on the dashboard page, open <b>Share</b> → anyone with the link (view only), and send them the link.</li>
+      </ol>
+      <textarea class="prompt-box" id="promptBox" readonly>${esc(SETUP_PROMPT)}</textarea>
+      <div class="muted">You can also try it right here first: drop emails below and it works in this browser (without ZoomInfo or BenefitFlow, and nothing is shared).</div>`;
+  } else if (share.mode === 'reader') {
+    el.innerHTML = `<h3>Nothing here yet</h3><div class="muted">The owner hasn't loaded any 6sense emails yet. This page updates by itself once they do.</div>`;
+  } else {
+    el.innerHTML = `<h3>Welcome to Target Now</h3>
+      <ol>
+        <li><b>Add your 6sense emails:</b> drag the alert emails from Outlook to your desktop (they save as .msg files), drop them in the box below, then click <b>✓ Apply</b>. Add each day's email the same way.</li>
+        <li><b>ZoomInfo and BenefitFlow fill in by themselves</b> for Call today, This week and Heating up accounts when you apply emails. The first time, Claude asks you to allow each one for this page: choose Allow. Only free lookups run on their own; anything that costs credits asks you first.</li>
+        <li><b>Share with your SDR:</b> Share → anyone with the link (view only). They see your ranking, notes and revealed contacts but can't change anything.</li>
+      </ol>
+      <div class="muted">Tip: mark ✓ Worked after you reach out. The account steps aside for 7 days unless 6sense shows new activity.</div>`;
+  }
+  el.classList.remove('hidden');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#btnCopyPrompt')) return;
+  const box = document.getElementById('promptBox');
+  const done = () => { e.target.textContent = 'Copied ✓'; setTimeout(() => { e.target.textContent = 'Copy prompt'; }, 2000); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(SETUP_PROMPT).then(done, () => { box.select(); document.execCommand('copy'); done(); });
+  else { box.select(); document.execCommand('copy'); done(); }
+});
+
 function benefitsHtml(a) {
   const b = a.bf;
   if (!b && !bfCanRefresh()) return '';
@@ -1428,6 +1480,7 @@ function log(cls, html) {
 
 document.getElementById('btnImport').addEventListener('click', () => {
   const p = document.getElementById('importPanel');
+  if (!accounts.length && !p.classList.contains('hidden')) { document.getElementById('fileInput').click(); return; }
   p.classList.toggle('hidden');
   if (!p.classList.contains('hidden')) p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 });
@@ -1490,7 +1543,7 @@ async function handleFiles(fileList) {
         log('ok', `✓ ${esc(f.name)}: ${n} accounts (JSON, safe to re-load)`);
         continue;
       }
-      // Outlook saves every alert under the same name ("Luke's 6sense Hot Accounts_ Email Alerts.msg"),
+      // Outlook saves every alert under the same name ("<Name>'s 6sense Hot Accounts_ Email Alerts.msg"),
       // so the file name alone can't tell emails apart. Each email is keyed by name + activity date,
       // and it only counts as a duplicate when every account in it already has that day's activity.
       const text = /\.msg$/i.test(f.name) ? msgToText(await f.arrayBuffer()) : await f.text();
