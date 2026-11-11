@@ -25,7 +25,7 @@
 
 ## Handing a blank copy to a peer
 `peer_kit/Target_Now_Peer_Kit.zip` holds `Target_Now_Starter.html` (the dashboard with no accounts), `Target_Now_Setup_Guide.docx` (formatted setup guide) and `READ_ME_FIRST.txt` (plain-text copy). The peer connects ZoomInfo and BenefitFlow in their own Claude, opens Claude Code, attaches the starter and pastes the prompt from the readme. That publishes their own private copy, using their own connectors. Opened as a plain file, the starter shows the same steps with a Copy prompt button. On an empty dashboard a getting-started panel explains the first steps.
-To rebuild the starter after template changes: `echo '{}' > Target_Now.json && python3 optimize_sixsense.py Target_Now.json`, then copy `Target_Now_share.html` to `peer_kit/Target_Now_Starter.html` and re-zip.
+**Only rebuild the peer kit when the owner asks for it.** Dashboard changes don't update it automatically. To rebuild the starter: `echo '{}' > Target_Now.json && python3 optimize_sixsense.py Target_Now.json`, then copy `Target_Now_share.html` to `peer_kit/Target_Now_Starter.html` and re-zip.
 
 ## Sharing with your SDR
 The run also writes `6SENSE_Update_File_share.html`. That's the same dashboard, published as a claude.ai page.
