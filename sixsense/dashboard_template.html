@@ -1562,11 +1562,16 @@ async function applyStaged() {
   } else if (targets.length && !ziCanRefresh() && share.mode === 'writer') {
     log('info', 'ZoomInfo is not available on this page right now, so intent was not refreshed.');
   }
-  // Auto BenefitFlow: same accounts, free searches only, once a day
-  const bfTargets = [...touched].filter(a => ziTarget(a) && !(a.bf && a.bf.pulled_on === TODAY));
+  // Auto BenefitFlow (free searches only): accounts from these emails that rank Call today / This week / Heating up
+  // (once a day), plus a catch-up of every account in those groups with no BenefitFlow data or data over 30 days old.
+  const bfStale = a => !(a.bf && isISO(a.bf.pulled_on)) || daysBetween(TODAY, a.bf.pulled_on) > BF_STALE_DAYS;
+  const bfTargets = [...new Set([
+    ...[...touched].filter(a => ziTarget(a) && !(a.bf && a.bf.pulled_on === TODAY)),
+    ...accounts.filter(a => ziTarget(a) && bfStale(a)).sort((x, y) => y.priority.score - x.priority.score),
+  ])].slice(0, BF_MAX_PER_IMPORT);
   if (bfCanRefresh() && bfTargets.length && !bfState.busy) {
     bfState.busy = true;
-    log('info', `Checking BenefitFlow for ${bfTargets.length} account${bfTargets.length === 1 ? '' : 's'}…`);
+    log('info', `Checking BenefitFlow for ${bfTargets.length} account${bfTargets.length === 1 ? '' : 's'} (new hot accounts plus any not checked in ${BF_STALE_DAYS} days). About ${Math.ceil(bfTargets.length * 2.6 / 60)} min…`);
     try {
       const r = await bfRefresh(bfTargets);
       const soon = r.pulled.filter(a => bfRenewingSoon(a));
@@ -2065,6 +2070,8 @@ document.addEventListener('click', e => {
 // so it always shows a free price check first and needs a second click.
 // ═══════════════════════════════════════════════════════════════════════════
 const BF_SERVER = 'BenefitFlow';
+const BF_STALE_DAYS = 30;        // renewal and broker data come from yearly filings, so monthly is plenty
+const BF_MAX_PER_IMPORT = 60;    // ~120 calls, well inside BenefitFlow's 500 calls a day
 const bfState = { mcp: null, canReveal: false, busy: false, last: 0, working: new Set(), confirm: new Map(), acctWorking: new Set() };
 function bfCanRefresh() { return share.mode === 'writer' && !!bfState.mcp; }
 function bfCanReveal() { return bfCanRefresh() && bfState.canReveal; }
@@ -2122,8 +2129,9 @@ function bfPick(results, a) {
   const d = domainOf(a.website);
   const byDomain = results.find(r => d && domainOf(r.website || '') === d);
   if (byDomain) return byDomain;
+  // Same name only counts when the websites don't disagree (e.g. "IGC" igc.org is not "IGC" igccorporation.com)
   const n = normName(a.company);
-  return results.find(r => normName(r.name) === n) || null;
+  return results.find(r => normName(r.name) === n && (!d || !r.website || domainOf(r.website) === d)) || null;
 }
 // Returns { pulled: [...], noMatch: [...] }. Two free searches per account.
 async function bfRefresh(list, onProgress) {
