@@ -450,11 +450,6 @@
   </section>
 
   <section>
-    <h2 id="focusTitle">Call today</h2>
-    <div class="focus-grid" id="focus"></div>
-  </section>
-
-  <section>
     <h2>All accounts <small>click a row for detail · press / to search</small></h2>
     <div class="toolbar">
       <input class="search" id="q" type="search" placeholder="Search company, keyword, page…" autocomplete="off">
@@ -1164,7 +1159,6 @@ function render() {
   renderWelcome();
   renderHeader();
   renderStats();
-  renderFocus();
   renderTable();
   renderRemoved();
 }
@@ -1212,37 +1206,6 @@ function renderStats() {
       <span class="stat-value num">${n}</span>
       <span class="stat-unit">${c.unit}</span></button>`;
   }).join('');
-}
-
-function renderFocus() {
-  const pool = accounts.filter(a => !isWorkedRecently(a)).sort((x, y) => y.priority.score - x.priority.score);
-  let list = pool.filter(a => tierLetter(a) === 'A');
-  let title = 'Call today';
-  if (!list.length) { list = pool.filter(a => tierLetter(a) === 'B'); title = 'Nothing in tier A: best of this week'; }
-  list = list.slice(0, 6);
-  const remaining = pool.filter(a => tierLetter(a) === 'A').length - list.length;
-  document.getElementById('focusTitle').innerHTML = `${esc(title)} <small>${list.length ? 'top ' + list.length + (remaining > 0 ? ` · ${remaining} more tier A below` : '') + ' · mark ✓ Worked to clear one from this list' : ''}</small>`;
-  document.getElementById('focus').innerHTML = list.length ? list.map(a => {
-    const p = a.priority, L = tierLetter(a);
-    return `<div class="fcard tier-${L}">
-      <div class="fcard-top">
-        <div>
-          <div class="fcard-name" data-jump="${esc(a.company)}">${esc(a.company)}</div>
-          ${firmoLine(a) ? `<div class="fcard-meta" style="font-family:var(--serif)">${esc(firmoLine(a))}</div>` : ''}
-          <div class="fcard-meta">${payrollVendors(a).length ? `<span class="flag vendor">💼 ${esc(payrollVendors(a).map(v => v.name).join(' / '))}</span> ` : ''}${a.past_process ? `<span class="flag hist" title="${esc(a.history_note || 'Previous sales process')}">★ Past deal</span> ` : ''}${a.six_qa_on ? '<span class="flag qa">6QA</span> ' : ''}${hasLeaderTrigger(a) ? '<span class="flag trig">🔔 Trigger</span> ' : ''}${ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo agrees: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span> ` : ''}${a.zi && a.zi.note ? '<span class="flag warn">check fit</span> ' : ''}${esc(a.stage || '?')} · ${esc(a.fit || '?')} fit${newSinceWorked(a) ? ' · <span class="flag new">new activity</span>' : ''}</div>
-        </div>
-        <span class="score ${L} num">${p.score}</span>
-      </div>
-      <span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>
-      <div class="reasons">${reasons(a).slice(0, 3).map(r => `<span>${r.html || esc(r.s)}</span>`).join('')}</div>
-      ${buyers(a).length ? `<div class="reasons"><span>👤 Call: ${buyers(a).slice(0, 2).map(p => `${personHtml(p, a)} <span style="color:var(--text-dim)">${esc(shortTitle(p.title))}</span>`).join(' · ')}</span></div>` : ''}
-      <div class="fcard-actions">
-        ${share.mode === 'reader' ? '' : `<button class="work-btn" data-work="${esc(a.company)}">✓ Worked</button>`}
-        ${a.website ? `<a class="btn sm" href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener">Website ↗</a>` : ''}
-        <button class="btn sm" data-jump="${esc(a.company)}">Details</button>
-      </div>
-    </div>`;
-  }).join('') : `<div class="empty">Nothing to call right now. Everything hot is marked worked. Nice.</div>`;
 }
 
 function spark(a) {

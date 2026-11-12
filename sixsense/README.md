@@ -9,11 +9,11 @@
    ```bash
    python3 optimize_sixsense.py 6SENSE_Update_File.json
    ```
-3. Open `6SENSE_Update_File_dashboard.html` (it's rebuilt on every run with the fresh data). Work the **Call today** cards first, then tier B.
+3. Open `6SENSE_Update_File_dashboard.html` (it's rebuilt on every run with the fresh data). Click the **Call today** stat card first, then **This week**.
    The same ranking is also in `6SENSE_Update_File_target_now.csv` and printed in the terminal.
 
 ## Dashboard (`dashboard_template.html`)
-- **Call today** cards: the top tier-A accounts, each with a next step and why it ranks there.
+- There's no fixed "top 6" block: the stat cards and filters pick what the list shows, ranked by score.
 - **Stat cards are filters**: clicking a card shows only its accounts in the table (click again to clear). The filter row has a matching button for every card: A · Call today, B · This week, C · Nurture, D · Monitor, Heating up, Active 7 days, Past sales, Trigger events, Renewing ≤ 90 days, ZoomInfo confirmed, Competitor. The card and its button light up together.
   - Buttons can be combined. Tiers add together (A + B = everything to call this week), and the other buttons narrow the list (B · This week + Heating up = this-week accounts that are heating up).
 - **Search** (press `/`) covers company, keywords, pages visited and your notes. You can also filter by tier, stage, fit and **last active** (any time, last 7 / 30 / 60 / 90 days, or quiet 90+ days, counted from the last day 6sense saw activity). The last-active filter combines with the other filters and doesn't change the score.
@@ -58,17 +58,17 @@ Each account can carry a `zi` block: `{company_id, name, location, employees, pu
 - **New leader:** a free `search_contacts` by `positionStartDateMin`, run twice (180 days, then 90 days) for CEO/President/COO, CFO/Controller/Finance, HR/People/Talent/Benefits and Payroll titles. Practice titles like "Financial Services" are excluded. It returns names and titles only, with no contact details.
 - **Vendor clue:** the host of a Scoop's job-post link, e.g. `recruitingbypaycor.com`, means they likely use Paycor.
 - **Hiring surge:** shown in the account detail only.
-- Each new leader's **name is a link** (with a blue **in** badge) that searches LinkedIn for their name plus the company name, in Why now, the Call today cards and the account detail. There's no ZoomInfo credit or API call. An exact profile URL would come from `enrich_contacts` with `externalUrls`, which costs about 1 ZoomInfo credit per person, so it isn't built in.
+- Each new leader's **name is a link** (with a blue **in** badge) that searches LinkedIn for their name plus the company name, in Why now and the account detail. There's no ZoomInfo credit or API call. An exact profile URL would come from `enrich_contacts` with `externalUrls`, which costs about 1 ZoomInfo credit per person, so it isn't built in.
 
 ## Who to call (ZoomInfo)
 `zi.people` (`[{name, title, person_id, accuracy}]`) comes from a free `search_contacts` on HR, payroll, finance and executive titles, run with no start-date filter and sorted by accuracy.
 - The dashboard picks up to 3 buyers per account: the best **HR** leader, then **Payroll**, then **Finance** (CFO, Controller or VP Finance). An **Executive** fills in when one of those is missing. Non-buyer titles (Inventory Controller, "Financial Services" practice roles, assistants) are skipped, and new leaders rank first within their role.
-- They appear as 👤 under the company name in the table, as "Call:" on the Call today cards, and in a "Who to call" section in the account detail. Each name is a LinkedIn search link.
+- They appear as 👤 under the company name in the table and in a "Who to call" section in the account detail. Each name is a LinkedIn search link.
 - Every person shows ZoomInfo's **accuracy score** (70–99). Under 80 is dimmed with a "check LinkedIn first" hint.
 - The ZoomInfo refresh buttons and email auto-refresh re-run this search. Activity tracking stays in Salesforce.
 
 ## Company snapshot, payroll vendor and news (ZoomInfo)
-- **Snapshot** (`zi.firmo`) comes from `enrich_companies`, which is free for companies under management. It covers industry, employees, revenue range, HQ, locations, founding year, type and a one-line description. It shows as a line under the company name and on the call cards, plus a Company snapshot section in the detail view.
+- **Snapshot** (`zi.firmo`) comes from `enrich_companies`, which is free for companies under management. It covers industry, employees, revenue range, HQ, locations, founding year, type and a one-line description. It shows as a line under the company name plus a Company snapshot section in the detail view.
 - **Payroll vendor** (`zi.payroll_tech.vendors`) comes from free `search_companies` calls filtered by ZoomInfo tech-product ids (`PAYROLL_TECH` in the template) for ADP, Paychex, Paycor, UKG, Paycom, Paylocity, isolved and Dayforce. Vendor clues from job-post links are added too. It shows as a 💼 chip and a "Payroll: …" Why now line marked "confirm in Salesforce". A Paylocity hit shows a "may already be a client" warning.
 - **News** (`zi.news`) comes from `enrich_company_signals` NEWS in the same call as intent. Only items from the last 12 months that mention the company by name are kept. The latest item from the last 60 days goes in Why now, and up to 4 items with links in the detail view. Acquisition news becomes a 🔔 Acquisition trigger.
 - **Careers** (in the snapshot, or on its own when there's no snapshot): a **Latest job post** link when ZoomInfo has an Open Position Scoop with a link (it's often the company's job board, e.g. recruitingbypaycor.com), plus a **Find careers page** web-search link built from the company name and website. Both are free: no ZoomInfo call, no credits.
