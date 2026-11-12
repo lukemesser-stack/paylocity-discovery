@@ -71,7 +71,7 @@ for fp in sorted(glob.glob(S + '/digests/*.msg')):
     raw, _ = body(fp)
     doms = re.findall(r'd_company-not-found\.png/([^>]+?)\.png>', raw)
     t = re.sub(r'<https?://[^>]+>', '', raw); t = re.sub(r'[ \t ]+', ' ', t)
-    lines = [l.strip() for l in t.split('\n')]; accs = []; cur = None; win = ''
+    lines = [l.strip() for l in t.split('\n') if l.strip() and l.strip() != '\u200c']; accs = []; cur = None; win = ''  # skip blank lines
     for n, s in enumerate(lines):
         if s == 'Target account': cur = {'name': lines[n - 1], 'cat': '', 'items': []}; accs.append(cur); continue
         if cur is None: continue

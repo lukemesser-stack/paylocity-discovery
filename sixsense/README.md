@@ -153,7 +153,7 @@ Change the weights, competitor list, page patterns and aliases in the config blo
 
 **State on 2026-11-12:**
 - 293 accounts: 248 on the prospect list (`book`) and 12 from 6sense that aren't on it. 34 are removed.
-- Four ZoomInfo weekly digests (10/20–11/10) are loaded in `zid`.
+- Seven ZoomInfo weekly digests (9/29–11/10) are loaded in `zid`. The 9/29, 10/6 and 10/13 emails were added through the page's importer after fixing it to skip blank lines between a company name and its "Target account" heading.
 - The blended score is live (6sense base plus up to +20 for ZoomInfo/BenefitFlow, and a floor that keeps a fresh digest signal in This week).
 - The scorecard section was removed at the owner's request.
 

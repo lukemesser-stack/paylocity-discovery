@@ -2875,7 +2875,7 @@ function isZiDigest(text) { return /^\s*Target account\s*$/m.test(text) && /zoom
 function parseZiDigest(raw) {
   const doms = [...String(raw).matchAll(/d_company-not-found\.png\/([^>]+?)\.png>/g)].map(m => m[1].toLowerCase());
   const t = String(raw).replace(/<https?:\/\/[^>]+>/g, '').replace(/[ \t\u00a0]+/g, ' ');
-  const lines = t.split('\n').map(l => l.trim());
+  const lines = t.split('\n').map(l => l.trim()).filter(l => l && l !== '\u200c');   // blank lines sit between a company's name and its "Target account" heading
   const accs = []; let cur = null, win = '';
   lines.forEach((s, n) => {
     if (s === 'Target account') { cur = { name: lines[n - 1], cat: '', items: [] }; accs.push(cur); return; }
