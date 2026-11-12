@@ -420,6 +420,7 @@
     <span class="share-badge hidden" id="shareBadge"></span>
     <span class="save-state" id="saveState">Ready</span>
     <button class="btn primary" id="btnImport">⬆ Add emails / JSON</button>
+    <button class="btn hidden" id="btnZiAll" title="Run ZoomInfo on every account not pulled in the last 7 days, whatever its tier. Free accounts only (under management); the rest are skipped, no credits.">↻ ZoomInfo: all</button>
     <button class="btn hidden" id="btnZi" title="Refresh ZoomInfo intent for every Call today, This week and Heating up account. Only pulls accounts that are free (under management) in ZoomInfo.">↻ ZoomInfo</button>
     <button class="btn hidden" id="btnBf" title="Refresh BenefitFlow (renewal, broker, carrier, contacts) for every Call today, This week and Heating up account. Free searches only: no credits.">↻ BenefitFlow</button>
     <button class="btn" id="btnCsv" title="Download the rows currently shown as a CSV call list">⬇ Call list CSV</button>
@@ -1102,6 +1103,7 @@ const CARDS = {
   trig:    { label: 'Trigger events', unit: 'new leaders, exec moves, M&A, broker changes', color: 'var(--b)', test: a => hasLeaderTrigger(a) },
   renew:   { chip: 'Renewing ≤ 90 days', label: 'Renewing soon', unit: 'benefits renew in the next 90 days', color: 'var(--stage)', test: a => bfRenewingSoon(a) },
   zi:      { label: 'ZoomInfo confirmed', unit: 'ZoomInfo intent matches 6sense', color: 'var(--green)', test: a => ziConfirmed(a).length > 0 },
+  ziint:   { label: 'ZoomInfo intent', unit: 'HR-related ZoomInfo intent in the last 60 days, any tier', color: 'var(--accent)', test: a => ziRecent(a).length > 0 },
   comp:    { chip: 'Competitor', label: 'Competitor research', unit: 'ADP, Rippling, Paycor…', color: 'var(--comp)', test: a => a.competitor_keywords.length > 0 },
 };
 
@@ -1769,10 +1771,13 @@ async function applyStaged() {
   if (hiddenHits.size) log('info', `Kept hidden (you removed ${hiddenHits.size === 1 ? 'it' : 'them'}): ${esc([...hiddenHits].join(', '))}`);
 
   // Auto ZoomInfo: every account in these emails, whatever its tier (free accounts only, once a day), highest score first
-  const targets = [...touched].filter(a => !(a.zi && a.zi.pulled_on === TODAY && !a.zi.skipped)).sort((x, y) => y.priority.score - x.priority.score);
+  const fromEmails = [...touched].filter(a => !(a.zi && a.zi.pulled_on === TODAY && !a.zi.skipped)).sort((x, y) => y.priority.score - x.priority.score);
+  // plus a catch-up: any other account not pulled in the last 7 days, highest score first (free accounts only)
+  const ziCatchUp = accounts.filter(a => !touched.has(a) && ziDue(a)).sort((x, y) => y.priority.score - x.priority.score).slice(0, ZI_MAX_PER_IMPORT);
+  const targets = [...fromEmails, ...ziCatchUp];
   if (ziCanRefresh() && targets.length && !ziState.busy) {
     ziState.busy = true;
-    log('info', `Checking ZoomInfo for ${targets.length} account${targets.length === 1 ? '' : 's'} from these emails: ${esc(targets.map(a => a.company).slice(0, 6).join(', '))}${targets.length > 6 ? '…' : ''}`);
+    log('info', `Checking ZoomInfo for ${fromEmails.length} account${fromEmails.length === 1 ? '' : 's'} from these emails${fromEmails.length ? ': ' + esc(fromEmails.map(a => a.company).slice(0, 6).join(', ')) + (fromEmails.length > 6 ? '…' : '') : ''}${ziCatchUp.length ? `, plus ${ziCatchUp.length} not pulled in the last ${ZI_STALE_DAYS} days` : ''}`);
     setSaveState('', 'ZoomInfo: checking new hot accounts…');
     try {
       const r = await ziRefresh(targets, false);
@@ -2097,6 +2102,7 @@ async function initZi() {
   } catch (e) { return; }
   ziState.mcp = mcp;
   document.getElementById('btnZi').classList.remove('hidden');
+  document.getElementById('btnZiAll').classList.remove('hidden');
   render();
 }
 
@@ -2150,7 +2156,7 @@ async function ziRefresh(list, allowCredits) {
       }
     }
   }
-  needId.filter(a => !(a.zi && a.zi.company_id)).forEach(a => result.noMatch.push(a));
+  needId.filter(a => !(a.zi && a.zi.company_id)).forEach(a => { a.zi_checked_on = TODAY; result.noMatch.push(a); });
   // 2. check management status (free)
   const withId = list.filter(a => a.zi && a.zi.company_id);
   const managed = new Set();
@@ -2159,7 +2165,7 @@ async function ziRefresh(list, allowCredits) {
     for (const rec of (p.data || [])) if (rec.attributes && rec.attributes.managementStatus && rec.attributes.managementStatus.underManagement) managed.add(String(rec.id));
   }
   const toPull = withId.filter(a => allowCredits || managed.has(a.zi.company_id));
-  withId.filter(a => !toPull.includes(a)).forEach(a => result.needCredits.push(a));
+  withId.filter(a => !toPull.includes(a)).forEach(a => { a.zi.checked_on = TODAY; result.needCredits.push(a); });
   // 3. pull intent, 10 companies per call
   for (const g of chunk(toPull, 10)) {
     const p = await ziCall(ziState.tools.enrich, { zoominfoCompanyIds: g.map(a => Number(a.zi.company_id)), signalTypes: ['INTENT', 'SCOOP', 'NEWS'] });
@@ -2252,6 +2258,55 @@ async function ziRefresh(list, allowCredits) {
   }
   return result;
 }
+
+// Coverage: an account is due for ZoomInfo when it hasn't been pulled in ZI_STALE_DAYS days.
+// Accounts ZoomInfo couldn't match by website are retried after ZI_NOMATCH_DAYS.
+const ZI_STALE_DAYS = 7;
+const ZI_NOMATCH_DAYS = 30;
+const ZI_MAX_PER_IMPORT = 40;     // stale catch-up on each email import, highest score first
+const ZI_BATCH = 20;              // accounts per step of "ZoomInfo: all"
+function ziDue(a) {
+  if (a.zi && a.zi.company_id) {
+    const last = maxStr([a.zi.pulled_on, a.zi.checked_on].filter(isISO));
+    return !(last && daysBetween(TODAY, last) < ZI_STALE_DAYS);
+  }
+  if (!a.website) return false;
+  return !(isISO(a.zi_checked_on) && daysBetween(TODAY, a.zi_checked_on) < ZI_NOMATCH_DAYS);
+}
+function ziSkipText() { return 'Not pulled: not under management in ZoomInfo, so it would cost credits.'; }
+
+// ↻ ZoomInfo: all — every due account, any tier, in small steps. Saves once at the end (saving reloads the page).
+async function ziRunAll() {
+  if (ziState.busy || !ziCanRefresh()) return;
+  const list = accounts.filter(ziDue).sort((x, y) => y.priority.score - x.priority.score);
+  if (!list.length) { setSaveState('ok', `ZoomInfo: every account was checked in the last ${ZI_STALE_DAYS} days`); return; }
+  ziState.busy = true;
+  const btns = ['btnZi', 'btnZiAll'].map(id => document.getElementById(id));
+  btns.forEach(b => { b.disabled = true; });
+  const tot = { pulled: 0, needCredits: 0, noMatch: 0 };
+  let done = 0, stopped = '';
+  try {
+    for (const g of chunk(list, ZI_BATCH)) {
+      setSaveState('', `ZoomInfo: ${done} of ${list.length} accounts checked… keep this page open`);
+      try {
+        const r = await ziRefresh(g, false);
+        r.needCredits.forEach(a => { a.zi.skipped = a.zi.skipped || ziSkipText(); });
+        tot.pulled += r.pulled.length; tot.needCredits += r.needCredits.length; tot.noMatch += r.noMatch.length;
+      } catch (err) { stopped = ziErrorText(err); break; }
+      done += g.length;
+      await new Promise(res => setTimeout(res, 1500));   // stay well under ZoomInfo's rate limit
+    }
+  } finally {
+    ziState.busy = false;
+    btns.forEach(b => { b.disabled = false; });
+  }
+  const msg = `ZoomInfo: ${tot.pulled} updated · ${tot.needCredits} skipped (would cost credits) · ${tot.noMatch} not found` +
+    (stopped ? ` · stopped after ${done} of ${list.length}: ${stopped.replace(/\s*Nothing was changed\.?/i, '').replace(/\.$/, '')}. What was pulled is kept; click ↻ ZoomInfo: all again to continue.` : '');
+  if (tot.pulled || tot.needCredits || tot.noMatch) { persist(); setSaveState(stopped ? 'err' : '', msg + ' Sharing…'); }
+  else setSaveState(stopped ? 'err' : 'ok', msg);
+  render();
+}
+document.getElementById('btnZiAll').addEventListener('click', () => ziRunAll());
 
 async function ziRun(list, { allowCredits = false, single = null } = {}) {
   if (ziState.busy || !ziCanRefresh()) return;
