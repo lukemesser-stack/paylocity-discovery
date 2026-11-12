@@ -3,7 +3,7 @@ for (const [mode,vp] of [['writer',{width:1400,height:900}],['reader',{width:390
 const p=await b.newPage({viewport:vp});const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>{if(m.type()==='error')errs.push('console:'+m.text())});
 await p.addInitScript((mode)=>{window.claude={use:async(n)=>{
  if(n==='artifact')return {publish:async()=>{},canEdit:async()=>mode==='writer'};
- if(n==='user')return {canEdit:async()=>mode==='writer'};
+ if(n==='user')return {canEdit:async()=>mode==='writer',isOwner:async()=>mode==='writer'};
  if(n==='downloads')return {save:async()=>{}};
  if(n==='mcp')return {listTools:async(s)=>({servers:[{server:s,tools:s==='ZoomInfo'?[{name:'search_companies'},{name:'enrich_company_signals'},{name:'search_contacts'},{name:'enrich_companies'}]:[{name:'search_employers'},{name:'search_contacts'},{name:'get_contact'}]}]}),callTool:async()=>({payload:{}})};
  throw new Error('no '+n);}};},mode);

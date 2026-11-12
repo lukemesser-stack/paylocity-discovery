@@ -465,6 +465,11 @@
   .a-l3 .when { color: var(--text-dim); }
   .bdg { font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--border); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
   .bdg.warn { color: var(--b); background: var(--b-dim); box-shadow: none; }
+  .bdg.top50 { color: var(--on-brand); background: var(--brand); box-shadow: none; }
+  .top50-btn.on { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+  .note-box + .note-box { margin-top: 10px; }
+  .note-on { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-dim); margin-left: 8px; font-size: 11px; }
+  .opener { margin-top: 4px; }
   button.bdg-x { font-family: inherit; border: 0; cursor: pointer; line-height: inherit; }
   button.bdg-x:hover { filter: brightness(0.92); text-decoration: line-through; }
   .bdg.new { color: var(--green); background: var(--green-dim); box-shadow: none; }
@@ -1254,6 +1259,8 @@ function mergeInto(ex, inc, mode) {
   }
   if ((inc.worked_on || '') > (ex.worked_on || '')) ex.worked_on = inc.worked_on;
   if (!ex.notes && inc.notes) ex.notes = inc.notes;
+  if (!ex.sdr_notes && inc.sdr_notes) { ex.sdr_notes = inc.sdr_notes; ex.sdr_notes_on = inc.sdr_notes_on; }
+  if ((inc.top50_on || '') > (ex.top50_on || '')) { ex.top50 = !!inc.top50; ex.top50_on = inc.top50_on; }
   if (inc.past_process) { ex.past_process = true; if ((inc.past_process_on || '') > (ex.past_process_on || '')) ex.past_process_on = inc.past_process_on; }
   for (const f of ['removed_at', 'restored_at']) if ((inc[f] || '') > (ex[f] || '')) ex[f] = inc[f];
   if (inc.book && !ex.book) ex.book = inc.book;
@@ -1288,7 +1295,7 @@ function toObject() {
 }
 
 function persist() {
-  if (share.mode === 'writer') { schedulePublish(1500); return; }
+  if (canSave()) { schedulePublish(1500); return; }
   if (share.mode === 'reader') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toObject()));
@@ -1352,13 +1359,14 @@ const CARDS = {
   zid:     { label: 'ZoomInfo digest', unit: 'appeared in a ZoomInfo weekly digest', color: 'var(--a)', test: a => (a.zid || []).length > 0 },
   opensig: { label: 'Open signals', unit: 'new buying signal in the last 2 weeks, not worked since', color: 'var(--a)', test: a => openSignal(a) },
   ziint:   { noChip: true, label: 'ZoomInfo intent', unit: 'HR-related ZoomInfo intent in the last 60 days, any tier', color: 'var(--accent)', test: a => ziRecent(a).length > 0 },
+  top50:   { label: 'Top 50', unit: 'your Top 50 ABM accounts', color: 'var(--brand)', test: a => !!a.top50 },
   comp:    { chip: 'Competitor', label: 'Competitor research', unit: 'ADP, Rippling, Paycor…', color: 'var(--comp)', test: a => a.competitor_keywords.length > 0 },
 };
 
 function matchesSearch(a, q) {
   if (!q) return true;
   const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', firmoLine(a), ...payrollVendors(a).map(v => v.name), ...newsItems(a).map(n => n.title), a.past_process ? 'past deal past sales process' : '', a.bf ? [a.bf.broker, a.bf.carrier, a.bf.peo, a.bf.secondary_broker, bfRenewingSoon(a) ? 'renewal renewing' : ''].join(' ') : '', ...buyers(a).map(p => p.name + ' ' + p.title), ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
-    ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw)), ...(a.contacts || []).map(c => (c.name || '') + ' ' + (c.title || '')), a.notes || ''].join(' ').toLowerCase();
+    ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw)), ...(a.contacts || []).map(c => (c.name || '') + ' ' + (c.title || '')), a.notes || '', a.sdr_notes || '', a.top50 ? 'top 50 top50 abm' : ''].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
 }
 
@@ -1584,6 +1592,7 @@ function badges(a) {
   const rn = bfRenewal(a);
   const agree = sourcesAgree(a);
   return [
+    a.top50 ? '<span class="bdg top50" title="Top 50: extra ABM effort on this account">🎯 Top 50</span>' : '',
     notMine(a) ? clearBadge('book', a, 'Not in my book', 'Not on your ZoomInfo prospect list') : '',
     pv.some(v => /paylocity/i.test(v.name)) ? '<span class="bdg warn" title="ZoomInfo detects Paylocity: check Salesforce before calling">⚠ May be a client</span>' : '',
     agree.length >= 2 ? `<span class="bdg agree" title="${esc(agree.join(' + '))} all point to this account right now">✓ ${agree.length} sources</span>` : '',
@@ -1636,8 +1645,14 @@ function scorePill(a) {
   return hasSixsense(a) ? `<span class="score ${L} num" title="${esc(p.tier)}">${p.score}</span>`
     : '<span class="score none" title="No 6sense activity yet: on your prospect list only">–</span>';
 }
+// One notes box. AE notes = the owner's (field "notes"), SDR notes = the SDR's (field "sdr_notes"). Each says when it was last changed.
+function noteBox(a, field, label, editable, hint) {
+  const on = a[field + '_on'];
+  return `<div class="note-box"><div class="dlabel">${label}${isISO(on) ? `<span class="note-on">updated ${fmtDate(on)}</span>` : ''}</div>
+    <textarea class="notes" id="${field}-${esc(slug(a.company))}" data-notes="${esc(a.company)}" data-field="${field}" ${editable ? '' : 'readonly'} placeholder="${editable ? hint : 'No notes yet'}">${esc(a[field] || '')}</textarea></div>`;
+}
 function workBtnHtml(a) {
-  if (share.mode === 'reader') return '';
+  if (!canSave() && share.mode === 'reader') return '';
   const done = a.worked_on === TODAY;
   return `<button class="work-btn ${done ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${done ? '✓ Worked' : 'Worked?'}</button>`;
 }
@@ -1859,13 +1874,13 @@ function renderDrawer() {
   if (ui.dtab === 'prep') {
     const why = [...zidAct(a).map(it => ({ t: 'hot', s: `ZoomInfo digest ${shortDate(it.date)}: ${it.text}` })), ...reasons(a)];
     const plan = openerPlan(a);
-    content = `<div class="opener"><div class="dlabel">Suggested openers</div>
+    content = `${parts['s-notes'] || ''}
+      ${why.length ? `<div class="sec"><div class="dlabel">Why now</div><ul class="d-why">${why.map(r => `<li class="${r.t}">${r.html || esc(r.s)}</li>`).join('')}</ul></div>` : ''}
+      ${['s-who', 's-contacts', 's-hist'].map(k => parts[k] || '').join('')}
+      <div class="opener"><div class="dlabel">Suggested openers</div>
         ${plan.openers.map((o, k) => `<div class="op"><div class="op-angle">${esc(o.angle)}</div><p id="openerText${k}">${esc(o.text)}</p><button class="btn sm" data-copy="openerText${k}">Copy</button></div>`).join('')}
         ${plan.points.length ? `<div class="op-pts"><div class="op-angle">Talking points, newest first</div>${plan.points.map(t => `<div class="op-pt${t.muted ? ' muted' : ''}"><span class="d num">${t.date ? shortDate(t.date) : ''}</span><span><b>${esc(t.label)}</b> · ${esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}</div>` : ''}
-        <div class="muted">Built from this account's latest events and signals, no AI. Edit to your voice.</div></div>
-      ${parts['s-notes'] || ''}
-      ${why.length ? `<div class="sec"><div class="dlabel">Why now</div><ul class="d-why">${why.map(r => `<li class="${r.t}">${r.html || esc(r.s)}</li>`).join('')}</ul></div>` : ''}
-      ${['s-who', 's-contacts', 's-hist'].map(k => parts[k] || '').join('')}`;
+        <div class="muted">Built from this account's latest events and signals, no AI. Edit to your voice.</div></div>`;
   }
   el.innerHTML = `<div class="d-head">
       <div class="d-top">
@@ -1876,7 +1891,7 @@ function renderDrawer() {
       </div>
       <div class="d-meta">${scorePill(a)}<span>${hasSixsense(a) ? esc(p.tier.slice(4)) : 'No 6sense activity yet'}</span>${sigStrip(a)}${badges(a).join('')}</div>
       <div class="d-meta">${a.website ? `<a href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener">${esc(domainOf(a.website))} ↗</a>` : ''}${ziUrl(a) ? `<a class="logo-link" href="${esc(ziUrl(a))}" target="_blank" rel="noopener" title="Open this company in ZoomInfo">${ziLogo(20)}</a>` : ''}${firmoLine(a) ? `<span>${esc(firmoLine(a))}</span>` : ''}</div>
-      <div class="d-act"><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>${workBtnHtml(a)}${i >= 0 ? `<span class="muted">${i + 1} of ${L.length}</span>` : ''}</div>
+      <div class="d-act">${share.mode !== 'reader' ? `<button class="btn sm top50-btn ${a.top50 ? 'on' : ''}" data-top50="${esc(a.company)}" title="Top 50 accounts get extra ABM effort. Your SDR sees the badge.">${a.top50 ? '🎯 Top 50 ✓' : '☆ Add to Top 50'}</button>` : ''}<span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>${workBtnHtml(a)}${i >= 0 ? `<span class="muted">${i + 1} of ${L.length}</span>` : ''}</div>
       <div class="d-tabs" role="tablist">${Object.entries(DRAWER_TABS).map(([k, t]) => `<button class="d-tab ${ui.dtab === k ? 'on' : ''}" data-dtab="${k}" role="tab" aria-selected="${ui.dtab === k}">${t.label}</button>`).join('')}</div>
     </div>
     <div class="d-body">${content || '<div class="muted">Nothing here yet for this account.</div>'}</div>
@@ -1998,9 +2013,8 @@ function detailParts(a) {
         ${share.mode === 'reader' ? '' : sec('s-remove', `<div class="dblock"><div class="dlabel">Not your account?</div>
           <button class="btn sm rm-btn ${removeArm.name === a.company ? 'armed' : ''}" data-remove="${esc(a.company)}">${removeArm.name === a.company ? 'Click again to remove' : '🗑 Remove account'}</button>
           <div class="muted" style="margin-top:4px">Hides it for you and your SDR. Later 6sense emails about it stay hidden. Restore it from "Removed accounts" at the bottom of the page.</div></div>`)}
-        ${sec('s-notes', `<div class="dblock"><div class="dlabel">Notes</div>
-          <textarea class="notes" id="notes-${esc(slug(a.company))}" data-notes="${esc(a.company)}" ${share.mode === 'reader' ? 'readonly' : ''} placeholder="${share.mode === 'reader' ? 'No notes yet' : 'Call notes, next step, who you spoke with…'}">${esc(a.notes || '')}</textarea>
-          <div class="muted" style="margin-top:4px">${isISO(a.worked_on) ? 'Last worked ' + fmtDate(a.worked_on) : 'Not worked yet'}</div></div>`)}
+        ${sec('s-notes', `<div class="dblock notes-pair">${noteBox(a, 'notes', 'AE notes', isAE(), 'Context, priorities, asks for your SDR…')}${noteBox(a, 'sdr_notes', 'SDR notes', isSDR(), 'Call notes, next step, who you spoke with…')}
+          <div class="muted" style="margin-top:4px">${isISO(a.worked_on) ? 'Last worked ' + fmtDate(a.worked_on) : 'Not worked yet'}${share.mode === 'reader' && !share.sdr ? ' · read only' : ''}</div></div>`)}
       </div>
     </div>
   </td></tr>`;
@@ -2114,7 +2128,7 @@ document.addEventListener('click', e => {
   const t = e.target;
   if (t.closest('[data-stop]')) return;
   const work = t.closest('[data-work]');
-  if (work && share.mode !== 'reader') {
+  if (work && (share.mode !== 'reader' || share.sdr)) {
     e.stopPropagation();
     const name = work.dataset.work, a = byName(name);
     const advance = ui.drawer === name && a && a.worked_on !== TODAY && !!work.closest('#drawer');
@@ -2218,6 +2232,18 @@ document.addEventListener('click', e => {
   persist(); render();
   setSaveState(share.mode === 'writer' ? '' : 'ok', `Removed ${name}. Restore it from Removed accounts at the bottom.`);
 });
+// Top 50 (owner): one click on/off, saved for everyone
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-top50]');
+  if (!b || share.mode === 'reader') return;
+  e.stopPropagation();
+  const a = byName(b.dataset.top50);
+  if (!a) return;
+  a.top50 = !a.top50;
+  a.top50_on = new Date().toISOString();
+  persist(); render();
+  setSaveState(share.mode === 'writer' ? '' : 'ok', `${a.company} ${a.top50 ? 'added to' : 'removed from'} Top 50`);
+});
 // Clear a "Not in my book" or "Dup?" badge (owner / editors): one click, saved for everyone
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-clearbadge]');
@@ -2253,14 +2279,17 @@ document.addEventListener('input', e => {
   if (!ta) return;
   const a = byName(ta.dataset.notes);
   if (!a) return;
-  a.notes = ta.value;
+  const field = ta.dataset.field === 'sdr_notes' ? 'sdr_notes' : 'notes';
+  if (ta.readOnly) return;
+  a[field] = ta.value;
+  a[field + '_on'] = TODAY;
   clearTimeout(notesTimer);
   setSaveState('', 'Saving…');
-  if (share.mode === 'writer') { setSaveState('', 'Unsaved note: click outside the box to share it'); return; }
+  if (canSave()) { setSaveState('', 'Unsaved note: click outside the box to share it'); return; }
   notesTimer = setTimeout(persist, 500);
 });
 document.addEventListener('change', e => {
-  if (e.target.closest('textarea[data-notes]') && share.mode === 'writer') schedulePublish(0);
+  if (e.target.closest('textarea[data-notes]') && canSave()) schedulePublish(0);
 });
 
 function clearFilters(rerender = true) {
@@ -2309,11 +2338,11 @@ document.getElementById('btnSave').addEventListener('click', () => {
 });
 document.getElementById('btnCsv').addEventListener('click', () => {
   const cell = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Industry', 'Employees', 'Revenue', 'HQ', 'Payroll vendor', 'Benefits renewal', 'Broker', 'Carrier', 'Recent news', 'Past sales process', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
+  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Industry', 'Employees', 'Revenue', 'HQ', 'Payroll vendor', 'Benefits renewal', 'Broker', 'Carrier', 'Recent news', 'Past sales process', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes', 'SDR notes', 'Top 50']];
   sortList(filtered()).forEach((a, i) => {
     const p = a.priority;
     rows.push([i + 1, a.company, p.score, p.tier, p.action, a.stage, a.fit, p.last_activity, p.days_since_activity, p.active_days_30d, p.trend,
-      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), (a.zi && a.zi.firmo && a.zi.firmo.sub_industry) || '', (a.zi && a.zi.firmo && a.zi.firmo.employees) || '', (a.zi && a.zi.firmo && a.zi.firmo.revenue_range) || '', (a.zi && a.zi.firmo && a.zi.firmo.hq) || '', payrollVendors(a).map(v => v.name).join(' / '), bfRenewal(a) ? bfRenewal(a).date : '', (a.bf && a.bf.broker) || '', (a.bf && a.bf.carrier) || '', newsItems(a).slice(0, 2).map(n => `${n.date} ${n.title} ${n.url}`).join('; '), a.past_process ? 'Yes' : '', buyers(a).map(p => { const rv = p.bf_id && a.bf && a.bf.revealed && a.bf.revealed[p.bf_id]; return `${p.name} (${p.title}${p.accuracy != null ? ', accuracy ' + p.accuracy : ''})${rv ? ' ' + [rv.email, rv.phone].filter(Boolean).join(' ') : ''} ${liUrl(p.name, a, p)}`; }).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
+      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), (a.zi && a.zi.firmo && a.zi.firmo.sub_industry) || '', (a.zi && a.zi.firmo && a.zi.firmo.employees) || '', (a.zi && a.zi.firmo && a.zi.firmo.revenue_range) || '', (a.zi && a.zi.firmo && a.zi.firmo.hq) || '', payrollVendors(a).map(v => v.name).join(' / '), bfRenewal(a) ? bfRenewal(a).date : '', (a.bf && a.bf.broker) || '', (a.bf && a.bf.carrier) || '', newsItems(a).slice(0, 2).map(n => `${n.date} ${n.title} ${n.url}`).join('; '), a.past_process ? 'Yes' : '', buyers(a).map(p => { const rv = p.bf_id && a.bf && a.bf.revealed && a.bf.revealed[p.bf_id]; return `${p.name} (${p.title}${p.accuracy != null ? ', accuracy ' + p.accuracy : ''})${rv ? ' ' + [rv.email, rv.phone].filter(Boolean).join(' ') : ''} ${liUrl(p.name, a, p)}`; }).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '', a.sdr_notes || '', a.top50 ? 'Yes' : '']);
   });
   download(`6sense_call_list_${TODAY}.csv`, rows.map(r => r.map(cell).join(',')).join('\r\n'), 'text/csv');
 });
@@ -2643,7 +2672,10 @@ function cap(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slic
 // Editors' changes (Worked, notes, imports) republish it, and everyone with
 // the link sees the update. Viewers get a read-only mirror.
 // ═══════════════════════════════════════════════════════════════════════════
-const share = { mode: 'local', artifact: null, downloads: null, timer: null };
+const share = { mode: 'local', artifact: null, downloads: null, timer: null, sdr: false };   // sdr: an editor who isn't the owner (SDR notes + Worked only)
+const canSave = () => share.mode === 'writer' || share.sdr;
+const isAE = () => share.mode !== 'reader';        // owner, or local file
+const isSDR = () => share.sdr || share.mode === 'local';
 function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60); }
 
 const SESSION_UI_KEY = 'sixsense_ui_session';
@@ -2678,9 +2710,13 @@ async function initShare() {
   share.downloads = dl;
   if (!art || !PAGE_SRC) return;            // not running as a shared page: stay local
   share.artifact = art;
-  let canEdit = false;
+  let canEdit = false, owner = false;
   try { canEdit = user ? await user.canEdit() : false; } catch (e) { canEdit = false; }
-  setShareMode(canEdit ? 'writer' : 'reader');
+  // if this viewer's app can't say who the owner is, editors keep full access (the old behaviour)
+  try { owner = user && typeof user.isOwner === 'function' ? await user.isOwner() : canEdit; } catch (e) { owner = canEdit; }
+  // Editors who aren't the owner (the SDR) get the read-only view plus SDR notes and Worked; owner tools stay with the owner
+  share.sdr = canEdit && !owner;
+  setShareMode(canEdit && owner ? 'writer' : 'reader');
   initZi();
   initBf();
 }
@@ -2690,7 +2726,7 @@ function setShareMode(mode) {
   const badge = document.getElementById('shareBadge');
   badge.classList.remove('hidden');
   badge.classList.toggle('ro', mode === 'reader');
-  badge.textContent = mode === 'writer' ? 'Shared · your changes update everyone' : 'Shared view · read only';
+  badge.textContent = mode === 'writer' ? 'Shared · your changes update everyone' : share.sdr ? 'Shared · your notes and Worked marks update everyone' : 'Shared view · read only';
   badge.title = mode === 'writer'
     ? 'Worked marks, notes and imported emails are saved to this page for everyone who has the link.'
     : 'This is a live copy of the owner\'s dashboard. It updates when they make changes.';
@@ -2725,7 +2761,7 @@ function schedulePublish(delay) {
 }
 
 async function publishNow() {
-  if (share.mode !== 'writer' || !share.artifact) return;
+  if (!canSave() || !share.artifact) return;
   let doc;
   try { doc = buildDocument(); } catch (e) { setSaveState('err', 'Could not share: ' + e.message); return; }
   saveSessionUi();
@@ -2735,7 +2771,7 @@ async function publishNow() {
   } catch (err) {
     const code = err && err.code;
     if (code === 'conflict') setSaveState('', 'Someone else just saved. Reloading…');
-    else if (code === 'not_writer' || code === 'not_granted') { setSaveState('err', 'Read-only: changes were not saved'); setShareMode('reader'); }
+    else if (code === 'not_writer' || code === 'not_granted') { setSaveState('err', 'Read-only: changes were not saved'); share.sdr = false; setShareMode('reader'); }
     else setSaveState('err', 'Could not share changes' + (code ? ' (' + code + ')' : '') + '. Use 💾 Save JSON as a backup.');
   }
 }
