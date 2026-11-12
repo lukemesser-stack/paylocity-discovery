@@ -465,6 +465,13 @@
   a.soc { display: inline-flex; border-radius: 4px; line-height: 0; }
   a.soc img, a.soc svg { width: 20px; height: 20px; border-radius: 4px; display: block; }
   a.soc:hover { outline: 2px solid var(--accent-dim); outline-offset: 1px; }
+  .soc-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 5px; min-width: 0; }
+  .soc-row .soc-url { color: var(--accent); font-weight: 600; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .soc-row.off .soc { opacity: .3; filter: grayscale(1); }
+  .soc-row .soc-find { color: var(--text-dim); text-decoration: none; }
+  .soc-row .soc-find:hover { color: var(--accent); text-decoration: underline; }
+  .soc-add { display: flex; gap: 6px; margin-top: 8px; }
+  .soc-add .search { flex: 1 1 auto; min-width: 0; padding: 6px 10px; font-size: 12px; }
   .vendors { display: inline-flex; gap: 8px; align-items: center; }
   img.vlogo { height: 16px; width: auto; display: block; }
   .a-sp { flex: 1 1 auto; }
@@ -1277,6 +1284,8 @@ function mergeInto(ex, inc, mode) {
   if (!ex.notes && inc.notes) ex.notes = inc.notes;
   if (!ex.sdr_notes && inc.sdr_notes) { ex.sdr_notes = inc.sdr_notes; ex.sdr_notes_on = inc.sdr_notes_on; }
   if (inc.ai_openers && (inc.ai_openers.at || '') > ((ex.ai_openers && ex.ai_openers.at) || '')) ex.ai_openers = inc.ai_openers;
+  if ((inc.social_manual_on || '') > (ex.social_manual_on || '')) { ex.social_manual = inc.social_manual; ex.social_manual_on = inc.social_manual_on; }
+  if (inc.web_social && (inc.web_social.on || '') >= ((ex.web_social && ex.web_social.on) || '')) ex.web_social = inc.web_social;
   if ((inc.top50_on || '') > (ex.top50_on || '')) { ex.top50 = !!inc.top50; ex.top50_on = inc.top50_on; }
   if (inc.past_process) { ex.past_process = true; if ((inc.past_process_on || '') > (ex.past_process_on || '')) ex.past_process_on = inc.past_process_on; }
   for (const f of ['removed_at', 'restored_at']) if ((inc[f] || '') > (ex[f] || '')) ex[f] = inc[f];
@@ -1679,8 +1688,17 @@ const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FEDA75"/><stop offset=".35" stop-color="#FA7E1E"/><stop offset=".6" stop-color="#D62976"/><stop offset=".85" stop-color="#962FBF"/><stop offset="1" stop-color="#4F5BD5"/></linearGradient></defs><rect width="20" height="20" rx="5" fill="url(#igg)"/><rect x="4.5" y="4.5" width="11" height="11" rx="3.2" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="10" cy="10" r="2.6" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="13.3" cy="6.7" r=".9" fill="#fff"/></svg>',
   tiktok: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><rect width="20" height="20" rx="4" fill="#000"/><path d="M11.6 4v7.6a2.3 2.3 0 1 1-2.3-2.3" fill="none" stroke="#25F4EE" stroke-width="1.7" transform="translate(-.6 -.4)"/><path d="M11.6 4c.3 1.7 1.4 2.8 3 3" fill="none" stroke="#25F4EE" stroke-width="1.7" transform="translate(-.6 -.4)"/><path d="M11.6 4v7.6a2.3 2.3 0 1 1-2.3-2.3" fill="none" stroke="#FE2C55" stroke-width="1.7" transform="translate(.6 .4)"/><path d="M11.6 4c.3 1.7 1.4 2.8 3 3" fill="none" stroke="#FE2C55" stroke-width="1.7" transform="translate(.6 .4)"/><path d="M11.6 4v7.6a2.3 2.3 0 1 1-2.3-2.3M11.6 4c.3 1.7 1.4 2.8 3 3" fill="none" stroke="#fff" stroke-width="1.7"/></svg>',
 };
-const SOCIAL_LABEL = { linkedin: 'LinkedIn', facebook: 'Facebook', x: 'X (Twitter)', instagram: 'Instagram', tiktok: 'TikTok' };
-const SOCIAL_TYPES = { LINKED_IN: 'linkedin', LINKEDIN: 'linkedin', FACEBOOK: 'facebook', TWITTER: 'x', X: 'x', INSTAGRAM: 'instagram', TIKTOK: 'tiktok', TIK_TOK: 'tiktok' };
+SOCIAL_ICONS.youtube = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><rect width="20" height="20" rx="4" fill="#FF0000"/><path d="M8 6.6v6.8l5.6-3.4z" fill="#fff"/></svg>';
+const SOCIAL_KEYS = ['linkedin', 'facebook', 'x', 'instagram', 'tiktok', 'youtube'];
+const SOCIAL_LABEL = { linkedin: 'LinkedIn', facebook: 'Facebook', x: 'X (Twitter)', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' };
+const SOCIAL_HOST = { linkedin: 'linkedin.com', facebook: 'facebook.com', x: 'x.com', instagram: 'instagram.com', tiktok: 'tiktok.com', youtube: 'youtube.com' };
+// Which platform a pasted link belongs to (owner's "+ Add social link")
+function socialKind(u) {
+  const h = String(u || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^(www|m|mobile|web)\./, '');
+  return h.startsWith('linkedin.com/') ? 'linkedin' : /^(facebook|fb)\.com\//.test(h) ? 'facebook' : /^(twitter|x)\.com\//.test(h) ? 'x'
+    : h.startsWith('instagram.com/') ? 'instagram' : h.startsWith('tiktok.com/') ? 'tiktok' : /^(youtube\.com|youtu\.be)\//.test(h) ? 'youtube' : null;
+}
+const SOCIAL_TYPES = { LINKED_IN: 'linkedin', LINKEDIN: 'linkedin', FACEBOOK: 'facebook', TWITTER: 'x', X: 'x', INSTAGRAM: 'instagram', TIKTOK: 'tiktok', TIK_TOK: 'tiktok', YOUTUBE: 'youtube', YOU_TUBE: 'youtube' };
 function socialFromZi(list) {   // ZoomInfo socialMediaUrls -> { linkedin, facebook, x, instagram, tiktok }
   const out = {};
   for (const s of (Array.isArray(list) ? list : [])) {
@@ -1692,15 +1710,22 @@ function socialFromZi(list) {   // ZoomInfo socialMediaUrls -> { linkedin, faceb
   }
   return out;
 }
+function socialSources(a) {
+  const book = a.book && /linkedin\.com\//i.test(a.book.linkedin || '') ? { linkedin: a.book.linkedin.replace(/^http:\/\//i, 'https://') } : {};
+  return [['added by you', a.social_manual || {}], ['their website', a.web_social || {}], ['ZoomInfo', (a.zi && a.zi.firmo && a.zi.firmo.social) || {}], ['prospect list', book]];
+}
 function socials(a) {
-  const s = { ...((a.zi && a.zi.firmo && a.zi.firmo.social) || {}) };
-  if (!s.linkedin && a.book && /linkedin\.com\//i.test(a.book.linkedin || '')) s.linkedin = a.book.linkedin.replace(/^http:\/\//i, 'https://');
-  return ['linkedin', 'facebook', 'x', 'instagram', 'tiktok'].filter(k => s[k]).map(k => ({ k, url: s[k] }));
+  const out = [];
+  for (const k of SOCIAL_KEYS) {
+    const hit = socialSources(a).find(([, s]) => s[k] && s[k] !== '-');
+    if (hit && !((a.social_manual || {})[k] === '-')) out.push({ k, url: hit[1][k], src: hit[0] });
+  }
+  return out;
 }
 function socialsHtml(a) {
   const list = socials(a);
   if (!list.length) return '';
-  return `<span class="socials">${list.map(({ k, url }) => `<a class="soc" href="${esc(safeUrl(url))}" target="_blank" rel="noopener" data-stop title="${esc(opShortName(a))} on ${SOCIAL_LABEL[k]}" aria-label="${SOCIAL_LABEL[k]}">${k === 'linkedin' ? `<img src="${LI_LOGO}" width="20" height="20" alt="">` : SOCIAL_ICONS[k]}</a>`).join('')}</span>`;
+  return `<span class="socials">${list.map(({ k, url, src }) => `<a class="soc" href="${esc(safeUrl(url))}" target="_blank" rel="noopener" data-stop title="${esc(opShortName(a))} on ${SOCIAL_LABEL[k]} (from ${src})" aria-label="${SOCIAL_LABEL[k]}">${k === 'linkedin' ? `<img src="${LI_LOGO}" width="20" height="20" alt="">` : SOCIAL_ICONS[k]}</a>`).join('')}</span>`;
 }
 // Payroll vendor as its real logo where we have one, otherwise a 💼 name chip (Paylocity is shown as a warning badge instead)
 function vendorHtml(a) {
@@ -1709,6 +1734,38 @@ function vendorHtml(a) {
   const title = esc('Payroll / HR vendor: ' + pv.map(v => `${v.name} (${v.source})`).join(', ') + '. Confirm in Salesforce.');
   return `<span class="vendors" title="${title}">${pv.map(v => VENDOR_LOGOS[v.name] ? `<img class="vlogo" src="${VENDOR_LOGOS[v.name]}" alt="${esc(v.name)}">` : `<span class="bdg">💼 ${esc(v.name)}</span>`).join('')}</span>`;
 }
+function socialSectionHtml(a) {
+  const have = new Map(socials(a).map(x => [x.k, x]));
+  const name = opShortName(a);
+  const rows = SOCIAL_KEYS.map(k => {
+    const x = have.get(k), ico = k === 'linkedin' ? `<img src="${LI_LOGO}" width="20" height="20" alt="">` : SOCIAL_ICONS[k];
+    if (x) return `<div class="soc-row"><a class="soc" href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener">${ico}</a><a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener" class="soc-url">${esc(x.url.replace(/^https?:\/\/(www\.)?/, ''))}</a><span class="muted">from ${esc(x.src)}</span>${share.mode !== 'reader' ? `<button class="btn sm" data-soc-del="${k}" data-name="${esc(a.company)}" title="Hide this link">✕</button>` : ''}</div>`;
+    const q = encodeURIComponent(`"${name}" site:${SOCIAL_HOST[k]}`);
+    return `<div class="soc-row off"><span class="soc">${ico}</span><a href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener" class="soc-find">Find on ${SOCIAL_LABEL[k]} ↗</a></div>`;
+  }).join('');
+  const add = share.mode !== 'reader' ? `<div class="soc-add"><input type="url" class="search" id="socIn" placeholder="+ Paste a LinkedIn, Facebook, X, Instagram, TikTok or YouTube link" data-name="${esc(a.company)}"><button class="btn sm" data-soc-add="${esc(a.company)}">Add</button></div>` : '';
+  return `<div class="dblock"><div class="dlabel">Social pages</div>${rows}${add}<div class="muted" style="margin-top:4px">Links show on the account card. "Find" opens a web search; check it's the right company.</div></div>`;
+}
+document.addEventListener('click', e => {
+  const add = e.target.closest('[data-soc-add]'), del = e.target.closest('[data-soc-del]');
+  if ((!add && !del) || share.mode === 'reader') return;
+  e.stopPropagation();
+  const a = byName((add || del).dataset.socAdd || del.dataset.name);
+  if (!a) return;
+  if (add) {
+    const inp = document.getElementById('socIn'); let u = (inp && inp.value || '').trim();
+    if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+    const k = socialKind(u);
+    if (!k) { setSaveState('err', 'That isn’t a LinkedIn, Facebook, X, Instagram, TikTok or YouTube link'); return; }
+    a.social_manual = { ...(a.social_manual || {}), [k]: u.replace(/^http:\/\//i, 'https://').replace(/[?#].*$/, '') };
+    setSaveState(share.mode === 'writer' ? '' : 'ok', `Added ${SOCIAL_LABEL[k]} for ${a.company}`);
+  } else {
+    a.social_manual = { ...(a.social_manual || {}), [del.dataset.socDel]: '-' };   // '-' hides that platform's link
+    setSaveState(share.mode === 'writer' ? '' : 'ok', `Hid ${SOCIAL_LABEL[del.dataset.socDel]} for ${a.company}`);
+  }
+  a.social_manual_on = new Date().toISOString();
+  persist(); render();
+});
 function workBtnHtml(a) {
   if (!canSave() && share.mode === 'reader') return '';
   const done = a.worked_on === TODAY;
@@ -1994,7 +2051,7 @@ document.addEventListener('click', async e => {
 const DRAWER_TABS = {
   prep:    { label: 'Call prep', parts: ['s-notes', 's-who', 's-contacts', 's-hist'] },
   signals: { label: 'Signals', parts: ['s-zid', 's-pages', 's-kw', 's-zi', 's-trig', 's-news', 's-surge'] },
-  company: { label: 'Company', parts: ['s-snap', 's-bf'] },
+  company: { label: 'Company', parts: ['s-snap', 's-social', 's-bf'] },
   history: { label: 'History', parts: ['s-score', 's-weeks', 's-sig', 's-dup', 's-remove'] },
 };
 function drawerList() { return sortList(filtered()); }
@@ -2103,7 +2160,7 @@ function detailParts(a) {
         ${sec('s-sig', `<div class="dblock muted">${a.signal_count} signals · ${a.web_visits} web visits · reach ${esc(a.reach || '?')}${a.source_files.length ? ` · ${a.source_files.length} source email${a.source_files.length === 1 ? '' : 's'}` : ''}</div>`)}
       </div>
       <div class="dcol">
-        ${sec('s-snap', a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} Company snapshot${a.zi.firmo.src === 'book' ? ' · from your prospect list' : ''}</div>
+        ${sec('s-social', socialSectionHtml(a))}${sec('s-snap', a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} Company snapshot${a.zi.firmo.src === 'book' ? ' · from your prospect list' : ''}</div>
           <dl class="snap">
             <dt>Industry</dt><dd>${esc(a.zi.firmo.industry)}${a.zi.firmo.sub_industry ? ' · ' + esc(a.zi.firmo.sub_industry) : ''}</dd>
             <dt>Employees</dt><dd>${a.zi.firmo.employees ? Number(a.zi.firmo.employees).toLocaleString() : '—'}</dd>

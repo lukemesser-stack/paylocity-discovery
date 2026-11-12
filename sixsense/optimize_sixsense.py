@@ -139,6 +139,10 @@ def merge_into(dst, src):
         dst["sdr_notes"] = "\n".join(filter(None, [dst.get("sdr_notes"), src["sdr_notes"]]))
     if (src.get("ai_openers") or {}).get("at", "") > (dst.get("ai_openers") or {}).get("at", ""):   # owner's saved AI openers
         dst["ai_openers"] = src["ai_openers"]
+    if (src.get("social_manual_on") or "") > (dst.get("social_manual_on") or ""):   # social links the owner added or hid
+        dst["social_manual"], dst["social_manual_on"] = src.get("social_manual") or {}, src["social_manual_on"]
+    if src.get("web_social") and (src["web_social"].get("on") or "") >= ((dst.get("web_social") or {}).get("on") or ""):   # links read from their website
+        dst["web_social"] = src["web_social"]
     if (src.get("top50_on") or "") > (dst.get("top50_on") or ""):   # owner's Top 50 ABM mark
         dst["top50"], dst["top50_on"] = bool(src.get("top50")), src["top50_on"]
     if src.get("notes") and src["notes"] not in (dst.get("notes") or ""):
