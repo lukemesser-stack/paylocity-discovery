@@ -271,6 +271,7 @@
   .bd-sum b { color: var(--text); font-weight: 600; }
   .filters { display: contents; }
   .m-work { display: none; }
+  .co-sub a.zi-open { color: var(--accent); font-weight: 600; }
   .rm-btn:hover { border-color: var(--a); color: var(--a); }
   .rm-btn.armed { border-color: var(--a); color: var(--on-accent); background: var(--a); }
   .removed-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 13px; }
@@ -1254,7 +1255,7 @@ function rowHtml(a) {
     <td class="td-score"><span class="score ${L} num">${p.score}</span><div class="tier-label ${L}">${esc(p.tier.slice(4))}</div></td>
     <td class="td-co">
       <div class="co"><span class="caret">▶</span>${esc(a.company)} ${flags}</div>
-      ${a.website ? `<div class="co-sub"><a href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener" data-stop>${esc(domainOf(a.website))}</a></div>` : ''}
+      ${a.website || ziUrl(a) ? `<div class="co-sub">${a.website ? `<a href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener" data-stop>${esc(domainOf(a.website))}</a>` : ''}${a.website && ziUrl(a) ? ' · ' : ''}${ziUrl(a) ? `<a class="zi-open" href="${esc(ziUrl(a))}" target="_blank" rel="noopener" data-stop title="Open this company in ZoomInfo (you need to be signed in to ZoomInfo). Just a link: no ZoomInfo call or credits from this page.">ZoomInfo ↗</a>` : ''}</div>` : ''}
       ${firmoLine(a) ? `<div class="co-firmo">${esc(firmoLine(a))}</div>` : ''}
       ${buyers(a).length ? `<div class="co-buyer">👤 ${personHtml(buyers(a)[0], a)} <span>${esc(shortTitle(buyers(a)[0].title))}</span></div>` : ''}
     </td>
@@ -1335,6 +1336,7 @@ function detailHtml(a) {
         ${sec('s-news', newsItems(a).length ? `<div class="dblock"><div class="dlabel">Recent news · last 12 months</div>
           ${newsItems(a).slice(0, 4).map(n => `<div class="news-row"><span class="d num">${fmtDate(n.date)}</span><span><a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">${esc(n.title)}</a> <span class="src">${esc(String(n.source || '').replace(/^www\./, ''))}</span></span></div>`).join('')}</div>` : '')}
         ${sec('s-zi', a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel">ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>
+          ${ziUrl(a) ? `<a class="btn sm" style="display:inline-block;margin-bottom:6px;text-decoration:none" href="${esc(ziUrl(a))}" target="_blank" rel="noopener">Open in ZoomInfo ↗</a>` : ''}
           ${!a.zi ? '<div class="muted">Not pulled yet.</div>' : `
           <div class="muted" style="margin-bottom:4px">${esc(a.zi.name)}${a.zi.location ? ' · ' + esc(a.zi.location) : ''}${a.zi.employees ? ' · ' + esc(a.zi.employees) + ' employees' : ''}</div>
           ${a.zi.note ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:4px">${esc(a.zi.note)}</div>` : ''}
@@ -2056,6 +2058,11 @@ const PAYROLL_TECH = {   // ZoomInfo tech-product ids (lookup, Nov 2026)
   'isolved': ['59035'], 'Dayforce': ['131193'],
 };
 const ziState = { mcp: null, tools: { search: 'search_companies', enrich: 'enrich_company_signals', contacts: 'search_contacts', firmo: 'enrich_companies' }, busy: false, confirm: new Set(), working: new Set() };
+// Link to the company's page in the ZoomInfo web app, from the company id ZoomInfo returned. A plain link: no API call, no credits.
+function ziUrl(a) {
+  const id = a.zi && String(a.zi.company_id || '').trim();
+  return /^\d+$/.test(id) ? `https://app.zoominfo.com/#/apps/profile/company/${id}/overview` : '';
+}
 function ziCanRefresh() { return share.mode === 'writer' && !!ziState.mcp; }
 
 function ziButtonHtml(a) {
