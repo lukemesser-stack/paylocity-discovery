@@ -143,6 +143,8 @@ def merge_into(dst, src):
         dst["social_manual"], dst["social_manual_on"] = src.get("social_manual") or {}, src["social_manual_on"]
     if src.get("web_social") and (src["web_social"].get("on") or "") >= ((dst.get("web_social") or {}).get("on") or ""):   # links read from their website
         dst["web_social"] = src["web_social"]
+    if src.get("vendor_list") and (src.get("vendor_list_on") or "") >= (dst.get("vendor_list_on") or ""):   # owner's current-vendor list
+        dst["vendor_list"], dst["vendor_list_on"] = src["vendor_list"], src.get("vendor_list_on")
     if (src.get("top50_on") or "") > (dst.get("top50_on") or ""):   # owner's Top 50 ABM mark
         dst["top50"], dst["top50_on"] = bool(src.get("top50")), src["top50_on"]
     if src.get("notes") and src["notes"] not in (dst.get("notes") or ""):
