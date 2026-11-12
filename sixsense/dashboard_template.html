@@ -470,6 +470,9 @@
       <select id="fFit" aria-label="Fit">
         <option value="">Any fit</option><option>Strong</option><option>Moderate</option><option>Weak</option>
       </select>
+      <select id="fActive" aria-label="Last active" title="When 6sense last saw activity from the account">
+        <option value="">Active any time</option><option value="7">Active last 7 days</option><option value="30">Active last 30 days</option><option value="60">Active last 60 days</option><option value="90">Active last 90 days</option><option value="q90">Quiet 90+ days</option>
+      </select>
       <button class="chip on" id="fHideWorked" title="Hide accounts you marked worked in the last 7 days, unless they had new activity since">Hide worked</button>
       <button class="chip hidden" id="fClear">✕ Clear filters</button>
       </div>
@@ -1070,7 +1073,7 @@ function setSaveState(cls, text) {
 // ═══════════════════════════════════════════════════════════════════════════
 // UI state
 // ═══════════════════════════════════════════════════════════════════════════
-const ui = { q: '', tiers: new Set(), signals: new Set(), stage: '', fit: '', hideWorked: true, sort: 'score', dir: -1, open: new Set() };
+const ui = { q: '', tiers: new Set(), signals: new Set(), stage: '', fit: '', active: '', hideWorked: true, sort: 'score', dir: -1, open: new Set() };
 
 function loadPrefs() {
   try {
@@ -1112,11 +1115,20 @@ function matchesSearch(a, q) {
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
 }
 
+// Last-active window: days since 6sense last saw activity (no activity at all counts as quiet)
+function activeMatch(a) {
+  if (!ui.active) return true;
+  const d = a.priority.days_since_activity;
+  const known = typeof d === 'number' && d >= 0;
+  if (ui.active === 'q90') return !known || d > 90;
+  return known && d <= Number(ui.active);
+}
 function filtered() {
   return accounts.filter(a =>
     (!ui.tiers.size || ui.tiers.has(tierLetter(a))) &&
     (!ui.stage || a.stage === ui.stage) &&
     (!ui.fit || a.fit === ui.fit) &&
+    activeMatch(a) &&
     [...ui.signals].every(k => CARDS[k].test(a)) &&
     (!ui.hideWorked || !isWorkedRecently(a)) &&
     matchesSearch(a, ui.q));
@@ -1255,7 +1267,7 @@ function renderTable() {
   renderSignalChips();
   document.querySelectorAll('.stat[data-card]').forEach(c => { const on = cardOn(c.dataset.card); c.classList.toggle('on', on); c.setAttribute('aria-pressed', on); });
   document.getElementById('fHideWorked').classList.toggle('on', ui.hideWorked);
-  const anyFilter = ui.q || ui.tiers.size || ui.signals.size || ui.stage || ui.fit;
+  const anyFilter = ui.q || ui.tiers.size || ui.signals.size || ui.stage || ui.fit || ui.active;
   document.getElementById('fClear').classList.toggle('hidden', !anyFilter);
 }
 
@@ -1605,7 +1617,8 @@ document.addEventListener('change', e => {
 });
 
 function clearFilters(rerender = true) {
-  ui.q = ''; ui.tiers.clear(); ui.signals.clear(); ui.stage = ''; ui.fit = '';
+  ui.q = ''; ui.tiers.clear(); ui.signals.clear(); ui.stage = ''; ui.fit = ''; ui.active = '';
+  document.getElementById('fActive').value = '';
   document.getElementById('q').value = '';
   document.getElementById('fStage').value = '';
   document.getElementById('fFit').value = '';
@@ -1615,6 +1628,7 @@ function clearFilters(rerender = true) {
 document.getElementById('q').addEventListener('input', e => { ui.q = e.target.value.trim(); renderTable(); });
 document.getElementById('fStage').addEventListener('change', e => { ui.stage = e.target.value; renderTable(); });
 document.getElementById('fFit').addEventListener('change', e => { ui.fit = e.target.value; renderTable(); });
+document.getElementById('fActive').addEventListener('change', e => { ui.active = e.target.value; renderTable(); });
 document.getElementById('fHideWorked').addEventListener('click', () => { ui.hideWorked = !ui.hideWorked; savePrefs(); renderTable(); });
 document.getElementById('fClear').addEventListener('click', () => clearFilters());
 document.addEventListener('keydown', e => {
@@ -1979,7 +1993,7 @@ function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 const SESSION_UI_KEY = 'sixsense_ui_session';
 function saveSessionUi() {
   try {
-    sessionStorage.setItem(SESSION_UI_KEY, JSON.stringify({ q: ui.q, tiers: [...ui.tiers], signals: [...ui.signals], stage: ui.stage, fit: ui.fit,
+    sessionStorage.setItem(SESSION_UI_KEY, JSON.stringify({ q: ui.q, tiers: [...ui.tiers], signals: [...ui.signals], stage: ui.stage, fit: ui.fit, active: ui.active,
       hideWorked: ui.hideWorked, sort: ui.sort, dir: ui.dir, open: [...ui.open], y: window.scrollY }));
   } catch (e) { /* ignore */ }
 }
@@ -1988,13 +2002,14 @@ function restoreSessionUi() {
     const s = JSON.parse(sessionStorage.getItem(SESSION_UI_KEY) || 'null');
     if (!s) return;
     sessionStorage.removeItem(SESSION_UI_KEY);
-    Object.assign(ui, { q: s.q || '', stage: s.stage || '', fit: s.fit || '', hideWorked: s.hideWorked !== false,
+    Object.assign(ui, { q: s.q || '', stage: s.stage || '', fit: s.fit || '', active: s.active || '', hideWorked: s.hideWorked !== false,
       sort: s.sort || 'score', dir: s.dir || -1 });
     ui.tiers = new Set(s.tiers || []); ui.open = new Set(s.open || []);
     ui.signals = new Set((s.signals || (s.card ? [s.card] : [])).filter(k => CARDS[k] && !CARDS[k].tier));
     document.getElementById('q').value = ui.q;
     document.getElementById('fStage').value = ui.stage;
     document.getElementById('fFit').value = ui.fit;
+    document.getElementById('fActive').value = ui.active;
     if (s.y) setTimeout(() => window.scrollTo(0, s.y), 0);
   } catch (e) { /* ignore */ }
 }

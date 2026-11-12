@@ -16,7 +16,7 @@
 - **Call today** cards: the top tier-A accounts, each with a next step and why it ranks there.
 - **Stat cards are filters**: clicking a card shows only its accounts in the table (click again to clear). The filter row has a matching button for every card: A · Call today, B · This week, C · Nurture, D · Monitor, Heating up, Active 7 days, Past sales, Trigger events, Renewing ≤ 90 days, ZoomInfo confirmed, Competitor. The card and its button light up together.
   - Buttons can be combined. Tiers add together (A + B = everything to call this week), and the other buttons narrow the list (B · This week + Heating up = this-week accounts that are heating up).
-- **Search** (press `/`) covers company, keywords, pages visited and your notes. You can also filter by tier, stage and fit.
+- **Search** (press `/`) covers company, keywords, pages visited and your notes. You can also filter by tier, stage, fit and **last active** (any time, last 7 / 30 / 60 / 90 days, or quiet 90+ days, counted from the last day 6sense saw activity). The last-active filter combines with the other filters and doesn't change the score.
 - **✓ Worked**: marks an account as contacted today. It drops off the list for 7 days, and comes back early (tagged *new since worked*) if 6sense records new activity.
 - **Notes** per account, saved in the browser and included in 💾 Save JSON. The Python script keeps `worked_on` and `notes` too.
 - **Add emails / JSON**: drop 6sense alert `.msg` files (or a JSON update) anywhere on the page. Emails already loaded are skipped: an email counts as a duplicate only when every account in it already has that day's activity. Outlook gives every alert the same file name, so names alone aren't used. Nothing is merged until you click Apply.
