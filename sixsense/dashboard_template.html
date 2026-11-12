@@ -607,7 +607,7 @@
     <details class="owner" id="ownerMenu">
       <summary class="btn" title="Imports, refreshes and backups (only you see this)">⚙ Owner</summary>
       <div class="menu" role="menu">
-        <button class="mi" id="btnImport">⬆ Add 6sense emails / JSON</button>
+        <button class="mi" id="btnImport">⬆ Add 6sense / ZoomInfo / JSON</button>
         <button class="mi hidden" id="btnZi" title="Refresh ZoomInfo for Call today, This week and Heating up accounts. Free accounts only.">↻ ZoomInfo: hot accounts</button>
         <button class="mi hidden" id="btnZiAll" title="Run ZoomInfo on every account not pulled in the last 7 days, any tier. Free accounts only; the rest are skipped, no credits.">↻ ZoomInfo: all accounts</button>
         <button class="mi hidden" id="btnZiSoc" title="Add LinkedIn, Facebook, X, Instagram and TikTok links from ZoomInfo to accounts that don't have them yet. Free: companies under management only.">↻ ZoomInfo: social links</button>
@@ -625,7 +625,7 @@
 
   <section id="importPanel" class="panel hidden" aria-label="Import">
     <div class="drop" id="drop" tabindex="0" role="button">
-      <div class="drop-title">Drop 6sense alert emails (.msg / .eml / .txt) or a JSON update file</div>
+      <div class="drop-title">Drop 6sense alert emails, ZoomInfo weekly digest emails (.msg / .eml / .txt) or a JSON update file</div>
       <div class="drop-hint">Or click to browse. Emails already loaded are detected (by activity date and the accounts in them) and skipped. Re-loading a JSON file never double-counts.</div>
       <input type="file" id="fileInput" multiple accept=".msg,.eml,.txt,.json" hidden>
     </div>
@@ -2658,7 +2658,25 @@ async function handleFiles(fileList) {
       // Outlook saves every alert under the same name ("<Name>'s 6sense Hot Accounts_ Email Alerts.msg"),
       // so the file name alone can't tell emails apart. Each email is keyed by name + activity date,
       // and it only counts as a duplicate when every account in it already has that day's activity.
-      const text = /\.msg$/i.test(f.name) ? msgToText(await f.arrayBuffer()) : await f.text();
+      const buf = /\.msg$/i.test(f.name) ? await f.arrayBuffer() : null;
+      const text = buf ? msgToText(buf) : await f.text();
+      if (isZiDigest(text)) {
+        let date = '';
+        try { date = buf ? emailDate(readMsgBody(buf, 'headers')) : emailDate(text); } catch (e) { date = ''; }
+        if (!date) { date = TODAY; log('warn', `~ ${esc(f.name)}: couldn't read the send date, so it's filed under today (${fmtDate(TODAY)})`); }
+        const accs = parseZiDigest(text);
+        if (!accs.length) { log('warn', `~ ${esc(f.name)}: looks like a ZoomInfo digest, but no target accounts were found`); continue; }
+        const hits = accs.map(c => ({ c, a: zidAccount(c) }));
+        const matched = hits.filter(h => h.a), fresh = matched.filter(h => !(h.a.zid || []).some(e => e.date === date));
+        const key = `ZoomInfo digest ${date}`;
+        if (stagedFiles().has(key) || (matched.length && !fresh.length)) { log('warn', `⚠ ${esc(f.name)}: the ZoomInfo digest from ${fmtDate(date)} is already loaded, skipped`); continue; }
+        staged.push({ name: f.name, mode: 'zid', date, accs: fresh.map(h => ({ ...h.c, company: h.a.company })), files: [key], data: {} });
+        const signals = fresh.reduce((n, h) => n + h.c.items.filter(it => it.kind === 'act').length, 0);
+        log('ok', `✓ ${esc(f.name)}: ZoomInfo digest ${fmtDate(date)} · ${accs.length} accounts · ${fresh.length} matched: ${esc(fresh.map(h => h.a.company).slice(0, 6).join(', '))}${fresh.length > 6 ? '…' : ''} · ${signals} buying signal${signals === 1 ? '' : 's'}`);
+        const missing = hits.filter(h => !h.a).map(h => h.c.name);
+        if (missing.length) log('info', `Not on the dashboard, skipped: ${esc(missing.join(', '))}`);
+        continue;
+      }
       const parsed = parseSixsenseText(text, f.name);
       const fileKey = parsed.activityDate ? `${f.name} (${parsed.activityDate})` : f.name;
       if (known.has(fileKey) || stagedFiles().has(fileKey)) { log('warn', `⚠ ${esc(f.name)}: this email${parsed.activityDate ? ` (activity ${fmtDate(parsed.activityDate)})` : ''} is already loaded, skipped`); continue; }
@@ -2693,7 +2711,18 @@ async function applyStaged() {
   const before = new Map(accounts.map(a => [a.company, a.priority.score]));
   let added = 0, merged = 0;
   const touched = new Set(), hiddenHits = new Set();
+  let zidAdded = 0;
   for (const s of staged) {
+    if (s.mode === 'zid') {   // ZoomInfo digest: one dated entry per matched account
+      for (const c of s.accs) {
+        const a = byName(c.company) || removedAccounts.find(x => x.company === c.company);
+        if (!a || (a.zid || []).some(e => e.date === s.date)) continue;
+        a.zid = [...(a.zid || []), { date: s.date, cat: c.cat, items: c.items }];
+        zidAdded++;
+        if (!isRemoved(a)) touched.add(a); else hiddenHits.add(a.company);
+      }
+      continue;
+    }
     const r = ingest(s.data, s.mode); added += r.added; merged += r.merged;
     for (const raw of Object.values(s.data || {})) {
       if (!raw || !raw.company) continue;
@@ -2702,7 +2731,9 @@ async function applyStaged() {
     }
   }
   staged = [];
+  rescore();
   render();
+  if (zidAdded) log('ok', `✓ ZoomInfo digest: added to ${zidAdded} account${zidAdded === 1 ? '' : 's'}`);
   const jumped = accounts.filter(a => before.has(a.company) && a.priority.score - before.get(a.company) >= 10).map(a => a.company);
   log('ok', `✓ Applied: ${added} new accounts, ${merged} updated.${jumped.length ? ' Big movers: ' + esc(jumped.slice(0, 5).join(', ')) : ''}`);
   if (hiddenHits.size) log('info', `Kept hidden (you removed ${hiddenHits.size === 1 ? 'it' : 'them'}): ${esc([...hiddenHits].join(', '))}`);
@@ -2767,7 +2798,7 @@ function msgToText(buf) {
   return marker(u16) >= marker(l1) ? u16 : l1;
 }
 
-function readMsgBody(buf) {
+function readMsgBody(buf, want = 'body') {
   const dv = new DataView(buf);
   const u8 = new Uint8Array(buf);
   if (dv.getUint32(0, true) !== 0xE011CFD0) throw new Error('not an Outlook .msg file');
@@ -2817,12 +2848,54 @@ function readMsgBody(buf) {
   };
   const find = n => top.find(e => e.name.toLowerCase() === n.toLowerCase());
   let e;
+  if (want === 'headers') {
+    if ((e = find('__substg1.0_007D001F'))) return new TextDecoder('utf-16le').decode(readStream(e));
+    if ((e = find('__substg1.0_007D001E'))) return new TextDecoder('windows-1252').decode(readStream(e));
+    return '';
+  }
   if ((e = find('__substg1.0_1000001F'))) return new TextDecoder('utf-16le').decode(readStream(e));
   if ((e = find('__substg1.0_1000001E'))) return new TextDecoder('windows-1252').decode(readStream(e));
   if ((e = find('__substg1.0_10130102'))) return htmlToText(new TextDecoder('utf-8').decode(readStream(e)));
   return '';
 }
 
+// When an email was sent, from its headers ("Date: Mon, 10 Nov 2026 13:02:11 +0000"), as YYYY-MM-DD
+function emailDate(headersOrText) {
+  const m = String(headersOrText || '').match(/^(?:Date|Sent):\s*(.+)$/mi);
+  if (!m) return '';
+  const d = new Date(m[1].trim());
+  return isNaN(d) ? '' : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// ── ZoomInfo weekly target-account digest email → [{name, domain, cat, items:[{window, text, kind}]}] ──
+// Same rules as tools/blend_book_digests.py. Lines are grouped under each "Target account" heading.
+const ZID_ACT = /researching (payroll|benefits|human resources|recruiting|talent|workforce|compensation)|competitive alert|competitor|has visited a webpage|mergers & acquisitions|\bacquire|researched intent topics: (hr|labor|benefits|payroll|vendors|human)|(chief financial officer|cfo|controller|chief people|human resources|hr director|payroll|benefits)[^.]{0,40}(has joined|appointed|promoted)|hiring plans:.*(human resources|finance|accounting)/i;
+const ZID_CONTEXT = /hiring plans|funding|has joined the company|departed the company|appointed|promoted/i;
+function isZiDigest(text) { return /^\s*Target account\s*$/m.test(text) && /zoominfo/i.test(text); }
+function parseZiDigest(raw) {
+  const doms = [...String(raw).matchAll(/d_company-not-found\.png\/([^>]+?)\.png>/g)].map(m => m[1].toLowerCase());
+  const t = String(raw).replace(/<https?:\/\/[^>]+>/g, '').replace(/[ \t\u00a0]+/g, ' ');
+  const lines = t.split('\n').map(l => l.trim());
+  const accs = []; let cur = null, win = '';
+  lines.forEach((s, n) => {
+    if (s === 'Target account') { cur = { name: lines[n - 1], cat: '', items: [] }; accs.push(cur); return; }
+    if (!cur) return;
+    if (['Now is a good time to reach out', 'Competitive risk', 'Recent signals'].includes(s)) { cur.cat = s; return; }
+    if (/^Last .*days$/.test(s)) { win = s; return; }
+    if (!s || ['•', 'See Full Update', 'Find Buying Group', '\u200c'].includes(s) || s.startsWith('Contact Us')) return;
+    if (cur.cat && win && lines[n + 1] !== 'Target account') {
+      const txt = s.replace(/\s+([,.])/g, '$1');
+      cur.items.push({ window: win, text: txt.slice(0, 240), kind: ZID_ACT.test(txt) ? 'act' : ZID_CONTEXT.test(txt) ? 'context' : 'noise' });
+    }
+  });
+  accs.forEach((c, i) => { c.domain = doms[i] || ''; const seen = new Set(); c.items = c.items.filter(it => !seen.has(it.text) && seen.add(it.text)); });
+  return accs.filter(c => c.name);
+}
+// Which dashboard account a digest company is: same website first, then the usual name match
+function zidAccount(c) {
+  if (c.domain) { const a = allAccounts().find(x => domainOf(x.website) === c.domain.replace(/^www\./, '')); if (a) return a; }
+  return findExisting({ company: c.name, aliases: [], website: c.domain ? 'https://' + c.domain : '' });
+}
 function htmlToText(html) {
   const doc = new DOMParser().parseFromString(html.replace(/<(br|\/p|\/div|\/tr|\/li|\/h\d)[^>]*>/gi, '$&\n'), 'text/html');
   return doc.body ? doc.body.textContent : html;
