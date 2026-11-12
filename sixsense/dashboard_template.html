@@ -497,7 +497,6 @@
   .logo-link:hover { outline: 2px solid var(--accent-dim); }
   .logo-btn { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; text-decoration: none; }
   .dlabel-logo { display: flex; align-items: center; gap: 6px; }
-  .views { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .acct { grid-template-columns: minmax(0, 1fr); }
   .acct > div { min-width: 0; }
   .score.none { background: var(--surface-3); color: var(--text-dim); box-shadow: inset 0 0 0 1px var(--border); font-weight: 700; }
@@ -554,7 +553,6 @@
     .a-l2 { flex-direction: column; gap: 2px; }
     .a-why { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .views { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-    .views .vcard:last-child { grid-column: 1 / -1; }
     .scorecard { padding: 10px 12px; gap: 8px; }
     .vcard { padding: 8px 12px; }
     .vc-n { font-size: 22px; }
@@ -791,6 +789,60 @@ function dedupeObjects(list) {
 
 function pagePath(url) { return String(url || '').replace(/^https?:\/\/[^/]+/, '') || '/'; }
 
+// ── Signal boost: ZoomInfo + BenefitFlow points on top of the 6sense score. Same rules in optimize_sixsense.py. ──
+// Each signal fades by its own date, so sources that load on different schedules blend without going stale.
+const BOOST_CAP = 20;
+const DIGEST_POINTS = { competitor: 8, visit: 8, research: 6, research_other: 4, leader: 5, mna: 4, hiring: 3, other: 0 };
+const DIGEST_LABEL = { competitor: 'researched a competitor', visit: 'visited our site', research: 'payroll / benefits / HR research', research_other: 'research',
+  leader: 'new leader', mna: 'M&A', hiring: 'hiring surge', other: '' };
+function digestKind(text) {
+  if (/competitor - /i.test(text)) return 'competitor';
+  if (/visited a webpage/i.test(text)) return 'visit';
+  if (/(researching|researched intent topics:).*(payroll|benefits|human resources|compensation|\bhr\b|labor)/i.test(text)) return 'research';
+  if (/researching|researched intent topics/i.test(text)) return 'research_other';
+  if (/has joined|appointed|promoted/i.test(text)) return 'leader';
+  if (/mergers & acquisitions|acquir/i.test(text)) return 'mna';
+  if (/hiring plans/i.test(text)) return 'hiring';
+  return 'other';
+}
+function digestFade(kind, age) {
+  if (kind === 'leader') return age <= 30 ? 1 : age <= 90 ? 0.5 : 0;
+  if (kind === 'mna' || kind === 'hiring') return age <= 30 ? 1 : age <= 60 ? 0.5 : 0;
+  return age <= 7 ? 1 : age <= 14 ? 0.5 : age <= 30 ? 0.25 : 0;
+}
+// New buying-signal lines from the weekly digests, with the date each first appeared ("Last 7 days" lines are new every week)
+function digestNewAct(a) {
+  const seen = new Set(), out = [];
+  for (const e of (a.zid || []).slice().sort((x, y) => String(x.date).localeCompare(String(y.date)))) {
+    for (const it of (e.items || [])) {
+      const isNew = it.window === 'Last 7 days' || !seen.has(it.text);
+      seen.add(it.text);
+      if (isNew && it.kind === 'act' && isISO(e.date) && e.date <= TODAY) out.push({ text: it.text, date: e.date, age: daysBetween(TODAY, e.date) });
+    }
+  }
+  return out;
+}
+function signalBoost(a) {
+  const parts = [];
+  const best = {};
+  for (const it of digestNewAct(a)) {
+    const k = digestKind(it.text), pts = Math.floor(DIGEST_POINTS[k] * digestFade(k, it.age));
+    if (pts > 0 && (!best[k] || pts > best[k].pts)) best[k] = { pts, date: it.date };
+  }
+  for (const k of Object.keys(DIGEST_POINTS)) if (best[k]) parts.push({ src: 'ZoomInfo', pts: best[k].pts, why: `${DIGEST_LABEL[k]} ${fmtDate(best[k].date).replace(/\/\d{4}$/, '')}` });
+  const zint = ((a.zi && a.zi.intent) || []).some(t => isISO(t.date) && t.date <= TODAY && daysBetween(TODAY, t.date) <= 30 && (t.score || 0) >= 80 && ziRelevant(t));
+  if (zint) parts.push({ src: 'ZoomInfo intent', pts: 3, why: 'HR-related topic, score 80+' });
+  const rn = bfRenewal(a);
+  if (rn && rn.days <= 90) parts.push({ src: 'BenefitFlow', pts: 5, why: `renewal ${fmtDate(rn.date).replace(/\/\d{4}$/, '')}` });
+  else if (rn && rn.days <= 180) parts.push({ src: 'BenefitFlow', pts: 3, why: `renewal ${fmtDate(rn.date).replace(/\/\d{4}$/, '')}` });
+  const bft = ((a.bf && a.bf.signals) || []).some(x => (x.type === 'broker_change' || x.type === 'carrier_switch') && isISO(x.at) && x.at <= TODAY && daysBetween(TODAY, x.at) <= 182);
+  if (bft) parts.push({ src: 'BenefitFlow', pts: 3, why: 'broker or carrier change' });
+  const total = Math.min(BOOST_CAP, parts.reduce((n, p) => n + p.pts, 0));
+  return { total, parts };
+}
+// A new ZoomInfo buying signal in the last 14 days keeps the account in This week at least
+function freshDigestSignal(a) { return digestNewAct(a).some(it => it.age <= 14); }
+
 function score(a) {
   const days = uniqSorted([...a.dates, ...a.activity_dates]).filter(d => d <= TODAY);
   const last = days.length ? days[days.length - 1] : null;
@@ -816,21 +868,26 @@ function score(a) {
   const comp = a.competitor_keywords.length ? 5 : 0;
   const known = (a.contacts.length || a.form_fills.length) ? 2 : 0;
 
-  const total = Math.min(100, recency + momentum + stage + fit + pages + volume + comp + known);
+  const boost = signalBoost(a).total;
+  const total = Math.min(100, recency + momentum + stage + fit + pages + volume + comp + known + boost);
   let tier = total >= 65 ? 'A' : total >= 45 ? 'B' : total >= 28 ? 'C' : 'D';
   if (since > 60 && (tier === 'A' || tier === 'B')) tier = 'C';
+  const floored = freshDigestSignal(a) && (tier === 'C' || tier === 'D');
+  if (floored) tier = 'B';
+  let action = recommendedAction(a, since, hand, ad, d30);
+  if (freshDigestSignal(a) && /^P[34]/.test(action)) action = 'P2 Follow up on ZoomInfo signal';
 
   return {
     score: total,
     tier: TIER_NAMES[tier],
-    action: recommendedAction(a, since, hand, ad, d30),
+    action,
     last_activity: last,
     days_since_activity: last ? since : null,
     active_days_30d: d30,
     active_days_prev_30d: d60,
     trend: d30 > d60 ? 'heating up' : d30 < d60 ? 'cooling' : 'steady',
     hot_pages: uniqSorted([...hand, ...ad].map(u => pagePath(u.decoded || u.raw))),
-    breakdown: { recency, momentum, stage, fit, pages, volume, competitor: comp, known_contact: known },
+    breakdown: { recency, momentum, stage, fit, pages, volume, competitor: comp, known_contact: known, boost },
     scored_on: TODAY,
   };
 }
@@ -863,7 +920,7 @@ function recommendedAction(a, since, hand, ad, d30) {
   return 'P4 Monitor';
 }
 
-// ── ZoomInfo intent (display only, not part of the score) ──
+// ── ZoomInfo intent (adds a few boost points when an HR-related topic scores 80+) ──
 // Buying themes used to check whether ZoomInfo agrees with 6sense / Bombora / page visits.
 const THEMES = {
   'Payroll / HCM': /\badp\b|automatic data processing|paychex|ukg|ultimate software|paycor|rippling|gusto|payroll|\bhris\b|\bhcm\b|workday|paycom|isolved|dayforce|ceridian|pay on demand/i,
@@ -1257,7 +1314,6 @@ const VIEWS = {
   today:   { label: 'Call today', unit: 'Tier A · score 65+', color: 'var(--a)', test: a => tierLetter(a) === 'A' },
   week:    { label: 'This week', unit: 'Tier B · score 45–64', color: 'var(--b)', test: a => tierLetter(a) === 'B' },
   heating: { label: 'Heating up', unit: 'more active days than prior 30', color: 'var(--green)', test: a => CARDS.heating.test(a) },
-  zisig:   { label: 'ZoomInfo signals', unit: 'new buying signals, last 2 weeks', color: '#e0352b', test: a => zidAct(a).length > 0 },
   all:     { label: 'All accounts', unit: 'every account on the page', color: 'var(--text-dim)', test: () => true },
 };
 
@@ -1692,8 +1748,8 @@ function closeDrawer() { ui.drawer = null; renderTable(); }
 
 function detailParts(a) {
   const p = a.priority, b = p.breakdown;
-  const max = { recency: 25, momentum: 15, stage: 20, fit: 15, pages: 15, volume: 5, competitor: 5, known_contact: 2 };
-  const label = { recency: 'Recency', momentum: 'Momentum', stage: 'Stage', fit: 'Fit', pages: 'Pages', volume: 'Volume', competitor: 'Competitor', known_contact: 'Known contact' };
+  const max = { recency: 25, momentum: 15, stage: 20, fit: 15, pages: 15, volume: 5, competitor: 5, known_contact: 2, boost: 20 };
+  const label = { recency: 'Recency', momentum: 'Momentum', stage: 'Stage', fit: 'Fit', pages: 'Pages', volume: 'Volume', competitor: 'Competitor', known_contact: 'Known contact', boost: 'ZoomInfo + BenefitFlow' };
   // Display only: shows the points the score already gave, it never changes them.
   const keys = Object.keys(max);
   const frac = k => Math.min(1, (b[k] || 0) / max[k]);
@@ -1702,7 +1758,9 @@ function detailParts(a) {
     `<span class="bd-chip l${level(k)}" title="${label[k]}: ${b[k] || 0} of ${max[k]} points">${label[k]}<b>${b[k] || 0}/${max[k]}</b></span>`).join('')}</div>`;
   const group = test => keys.filter(test).map(k => label[k]).join(', ');
   const full = group(k => frac(k) >= 1), part = group(k => frac(k) > 0 && frac(k) < 1), none = group(k => !frac(k));
-  const summary = `<div class="bd-sum">${[full && `<b>Full points:</b> ${full}.`, part && `<b>Partly:</b> ${part}.`, none && `<b>Nothing yet:</b> ${none}.`].filter(Boolean).join(' ')}</div>`;
+  const bparts = signalBoost(a).parts;
+  const boostLine = bparts.length ? `<div class="bd-sum"><b>ZoomInfo + BenefitFlow boost:</b> ${bparts.map(x => `${esc(x.src)} +${x.pts} (${esc(x.why)})`).join(' · ')}${bparts.reduce((n, x) => n + x.pts, 0) > BOOST_CAP ? ` · capped at +${BOOST_CAP}` : ''}</div>` : '';
+  const summary = boostLine + `<div class="bd-sum">${[full && `<b>Full points:</b> ${full}.`, part && `<b>Partly:</b> ${part}.`, none && `<b>Nothing yet:</b> ${none}.`].filter(Boolean).join(' ')}</div>`;
   // Each section registers itself here; the side panel lays them out by tab (DRAWER_TABS).
   const parts = {};
   const sec = (cls, html) => { if (html && html.trim()) parts[cls] = `<div class="sec ${cls}">${html}</div>`; return ''; };
@@ -2475,6 +2533,7 @@ function setShareMode(mode) {
     : 'This is a live copy of the owner\'s dashboard. It updates when they make changes.';
   for (const id of ['btnImport', 'btnSave']) document.getElementById(id).classList.toggle('hidden', mode === 'reader');
   document.getElementById('ownerMenu').classList.toggle('hidden', mode === 'reader');
+  if (mode === 'writer') for (const id of ['btnZi', 'btnZiAll', 'btnBf']) setConnBtn(id, 'checking');
   if (mode === 'reader') document.getElementById('importPanel').classList.add('hidden');
   setSaveState(mode === 'writer' ? 'ok' : '', mode === 'writer' ? 'Up to date' : '');
   render();
@@ -2545,23 +2604,34 @@ function ziButtonHtml(a) {
   return `<button class="btn sm zi-btn" data-zi="${n}">↻ ${a.zi ? 'Refresh' : 'Pull'} ZoomInfo intent</button>`;
 }
 
+// Owner refresh buttons: shown as soon as the owner is recognised; disabled with the reason when a connector can't be reached
+function setConnBtn(id, state, reason) {
+  const b = document.getElementById(id);
+  if (!b) return;
+  if (!b.dataset.label) b.dataset.label = b.textContent;
+  const src = id === 'btnBf' ? 'BenefitFlow' : 'ZoomInfo';
+  b.classList.remove('hidden');
+  b.disabled = state !== 'ready';
+  b.textContent = state === 'ready' ? b.dataset.label : state === 'checking' ? `${b.dataset.label} · checking…` : `${b.dataset.label} · not connected`;
+  b.title = state === 'off' ? (reason || `${src} isn't reachable from this page right now. Open the dashboard in claude.ai on a computer and check that ${src} is connected in Settings → Connectors, then reload.`) : (b.dataset.title || b.title);
+}
 async function initZi() {
   if (share.mode !== 'writer') return;
+  const off = why => { for (const id of ['btnZi', 'btnZiAll']) setConnBtn(id, 'off', why); };
   const mcp = await window.claude.use('mcp').catch(() => null);
-  if (!mcp) return;
+  if (!mcp) { off(); return; }
   try {
     const lt = await mcp.listTools(ZI_SERVER);
     const srv = (lt.servers || []).find(x => x.server === ZI_SERVER);
-    if (!srv || !srv.tools.length) return;           // owner has no ZoomInfo connector here
+    if (!srv || !srv.tools.length) { off(); return; }   // owner has no ZoomInfo connector here
     const names = srv.tools.map(t => t.name);
     ziState.tools.search = names.find(n => /search_companies$/.test(n)) || ziState.tools.search;
     ziState.tools.enrich = names.find(n => /enrich_company_signals$/.test(n)) || ziState.tools.enrich;
     ziState.tools.contacts = names.find(n => /search_contacts$/.test(n)) || null;
     ziState.tools.firmo = names.find(n => /enrich_companies$/.test(n)) || null;
-  } catch (e) { return; }
+  } catch (e) { off(); return; }
   ziState.mcp = mcp;
-  document.getElementById('btnZi').classList.remove('hidden');
-  document.getElementById('btnZiAll').classList.remove('hidden');
+  setConnBtn('btnZi', 'ready'); setConnBtn('btnZiAll', 'ready');
   render();
 }
 
@@ -2829,16 +2899,16 @@ function bfButtonHtml(a) {
 async function initBf() {
   if (share.mode !== 'writer') return;
   const mcp = await window.claude.use('mcp').catch(() => null);
-  if (!mcp) return;
+  if (!mcp) { setConnBtn('btnBf', 'off'); return; }
   try {
     const lt = await mcp.listTools(BF_SERVER);
     const srv = (lt.servers || []).find(x => x.server === BF_SERVER);
     const names = srv ? srv.tools.map(t => t.name) : [];
-    if (!names.includes('search_employers') || !names.includes('search_contacts')) return;   // no BenefitFlow connector here
+    if (!names.includes('search_employers') || !names.includes('search_contacts')) { setConnBtn('btnBf', 'off'); return; }   // no BenefitFlow connector here
     bfState.canReveal = names.includes('get_contact');
-  } catch (e) { return; }
+  } catch (e) { setConnBtn('btnBf', 'off'); return; }
   bfState.mcp = mcp;
-  document.getElementById('btnBf').classList.remove('hidden');
+  setConnBtn('btnBf', 'ready');
   render();
 }
 // BenefitFlow allows 50 calls a minute per user: space calls out.
@@ -2994,6 +3064,7 @@ document.addEventListener('click', e => {
 
 // Preview build: a banner, and a switch to see the page the way the SDR does (read-only)
 function renderPreviewBanner() {
+  if (share.mode !== 'reader') for (const id of ['btnZi', 'btnZiAll', 'btnBf']) setConnBtn(id, 'off', 'Refresh buttons work on the live dashboard, not in this preview.');
   const b = document.getElementById('previewBanner');
   b.classList.remove('hidden');
   const sdr = share.mode === 'reader';

@@ -202,6 +202,92 @@ def page_path(url):
     return re.sub(r"^https?://[^/]+", "", url or "") or "/"
 
 
+# ── Signal boost: ZoomInfo + BenefitFlow points on top of the 6sense score. Same rules as the dashboard. ──
+BOOST_CAP = 20
+DIGEST_POINTS = {"competitor": 8, "visit": 8, "research": 6, "research_other": 4, "leader": 5, "mna": 4, "hiring": 3, "other": 0}
+THEMES = [r"\badp\b|automatic data processing|paychex|ukg|ultimate software|paycor|rippling|gusto|payroll|\bhris\b|\bhcm\b|workday|paycom|isolved|dayforce|ceridian|pay on demand",
+          r"benefit|\baca\b|affordable care|cobra|safe harbor|enrollment|401k|retirement|\bhra\b|health insurance",
+          r"talent|recruit|candidate|applicant|onboarding|on boarding|hiring",
+          r"engagement|communication|retention|culture|recognition",
+          r"attendance|time clock|timekeeping|\bhours\b|scheduling",
+          r"asset",
+          r"airbase|corporate card|credit card|expense|spend management"]
+
+
+def digest_kind(text):
+    if re.search(r"competitor - ", text, re.I): return "competitor"
+    if re.search(r"visited a webpage", text, re.I): return "visit"
+    if re.search(r"(researching|researched intent topics:).*(payroll|benefits|human resources|compensation|\bhr\b|labor)", text, re.I): return "research"
+    if re.search(r"researching|researched intent topics", text, re.I): return "research_other"
+    if re.search(r"has joined|appointed|promoted", text, re.I): return "leader"
+    if re.search(r"mergers & acquisitions|acquir", text, re.I): return "mna"
+    if re.search(r"hiring plans", text, re.I): return "hiring"
+    return "other"
+
+
+def digest_fade(kind, age):
+    if kind == "leader": return 1 if age <= 30 else 0.5 if age <= 90 else 0
+    if kind in ("mna", "hiring"): return 1 if age <= 30 else 0.5 if age <= 60 else 0
+    return 1 if age <= 7 else 0.5 if age <= 14 else 0.25 if age <= 30 else 0
+
+
+def digest_new_act(a, today):
+    seen, out = set(), []
+    for e in sorted(a.get("zid") or [], key=lambda e: str(e.get("date"))):
+        d = parse_d(e.get("date"))
+        for it in e.get("items") or []:
+            is_new = it.get("window") == "Last 7 days" or it.get("text") not in seen
+            seen.add(it.get("text"))
+            if is_new and it.get("kind") == "act" and d and d <= today:
+                out.append({"text": it.get("text") or "", "age": (today - d).days})
+    return out
+
+
+def next_renewal_days(a, today):
+    r = (a.get("bf") or {}).get("renewal")
+    if not parse_d(r):
+        return None
+    y, m, dd = int(r[:4]), int(r[5:7]), int(r[8:10])
+    def at(year):   # day overflow rolls into the next month, like the dashboard's date maths
+        return date(year, m, 1).toordinal() + dd - 1
+    t = today.toordinal()
+    d = at(today.year)
+    if d < t:
+        d = at(today.year + 1)
+    return d - t
+
+
+def signal_boost(a, today):
+    best = {}
+    for it in digest_new_act(a, today):
+        k = digest_kind(it["text"])
+        pts = math.floor(DIGEST_POINTS[k] * digest_fade(k, it["age"]))
+        if pts > 0 and pts > best.get(k, 0):
+            best[k] = pts
+    total = sum(best.values())
+    for t in (a.get("zi") or {}).get("intent") or []:
+        d = parse_d(t.get("date"))
+        txt = f"{t.get('topic') or ''} {t.get('category') or ''}"
+        if d and d <= today and (today - d).days <= 30 and (t.get("score") or 0) >= 80 and any(re.search(p, txt, re.I) for p in THEMES):
+            total += 3
+            break
+    days = next_renewal_days(a, today)
+    if days is not None and days <= 90:
+        total += 5
+    elif days is not None and days <= 180:
+        total += 3
+    for x in (a.get("bf") or {}).get("signals") or []:
+        d = parse_d(x.get("at"))
+        if x.get("type") in ("broker_change", "carrier_switch") and d and d <= today and (today - d).days <= 182:
+            total += 3
+            break
+    return min(BOOST_CAP, total)
+
+
+def fresh_digest_signal(a, today):
+    return any(it["age"] <= 14 for it in digest_new_act(a, today))
+
+
 def score(a, today):
     """0-100 'call this account now' score. Recency and momentum dominate on purpose:
     6sense signals cool off fast, so a Decision-stage account that went quiet in March
@@ -241,15 +327,22 @@ def score(a, today):
     # Penalties: we already have a known person to call -> small bump instead
     known = 2 if a["contacts"] or a["form_fills"] else 0
 
-    total = min(100, recency + momentum + stage + fit + pages + volume + comp + known)
+    boost = signal_boost(a, today)
+    total = min(100, recency + momentum + stage + fit + pages + volume + comp + known + boost)
     tier = "A - Call today" if total >= 65 else "B - This week" if total >= 45 else "C - Nurture" if total >= 28 else "D - Monitor"
     if since > 60 and tier[0] in "AB":  # gone quiet: good account, wrong moment
         tier = "C - Nurture"
+    fresh_zi = fresh_digest_signal(a, today)
+    if fresh_zi and tier[0] in "CD":   # a new ZoomInfo buying signal keeps it in This week for 14 days
+        tier = "B - This week"
+    action = recommended_action(a, since, hand, ad, d30, today)
+    if fresh_zi and action[:2] in ("P3", "P4"):
+        action = "P2 Follow up on ZoomInfo signal"
 
     return {
         "score": total,
         "tier": tier,
-        "action": recommended_action(a, since, hand, ad, d30, today),
+        "action": action,
         "last_activity": last.isoformat() if last else None,
         "days_since_activity": since if last else None,
         "active_days_30d": d30,
@@ -257,7 +350,7 @@ def score(a, today):
         "trend": "heating up" if d30 > d60 else "cooling" if d30 < d60 else "steady",
         "hot_pages": sorted({page_path(u.get("decoded")) for u in hot}),
         "breakdown": {"recency": recency, "momentum": momentum, "stage": stage, "fit": fit,
-                      "pages": pages, "volume": volume, "competitor": comp, "known_contact": known},
+                      "pages": pages, "volume": volume, "competitor": comp, "known_contact": known, "boost": boost},
         "scored_on": today.isoformat(),
     }
 
