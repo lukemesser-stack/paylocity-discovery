@@ -3137,6 +3137,7 @@ async function initZi() {
   } catch (e) { off(); return; }
   ziState.mcp = mcp;
   setConnBtn('btnZi', 'ready'); setConnBtn('btnZiAll', 'ready'); setConnBtn('btnZiSoc', 'ready');
+  setTimeout(ziDailyAuto, 2000);   // once a day: free refresh of hot + Top 50 accounts
   render();
 }
 
@@ -3342,6 +3343,38 @@ async function ziRunAll() {
   render();
 }
 document.getElementById('btnZiAll').addEventListener('click', () => ziRunAll());
+
+// Daily auto-refresh (owner only, free, no AI): the first time the owner opens the page each day, refresh ZoomInfo
+// (intent, news, Scoops, new leaders, contacts, snapshot) for Call today, This week, Heating up and Top 50 accounts
+// not already pulled today. Accounts that would cost credits are skipped. Saves once at the end.
+let ziDailyRan = false;
+async function ziDailyAuto() {
+  if (ziDailyRan || ziState.busy || !ziCanRefresh() || staged.length) return;
+  ziDailyRan = true;
+  try { if (localStorage.getItem('tn_zi_daily') === TODAY) return; } catch (e) { /* no storage: per-account dates still stop repeats */ }
+  const list = accounts.filter(a => (ziTarget(a) || a.top50) && a.zi && a.zi.company_id && a.zi.pulled_on !== TODAY && !(a.zi.skipped && a.zi.checked_on === TODAY))
+    .sort((x, y) => (y.top50 ? 1 : 0) - (x.top50 ? 1 : 0) || y.priority.score - x.priority.score);
+  try { localStorage.setItem('tn_zi_daily', TODAY); } catch (e) { /* ignore */ }
+  if (!list.length) return;
+  ziState.busy = true;
+  const tot = { pulled: 0, needCredits: 0 };
+  let done = 0, stopped = '';
+  try {
+    for (const g of chunk(list, ZI_BATCH)) {
+      setSaveState('', `Daily ZoomInfo refresh: ${done} of ${list.length} accounts… keep this page open`);
+      try {
+        const r = await ziRefresh(g, false);
+        r.needCredits.forEach(a => { a.zi.skipped = a.zi.skipped || ziSkipText(); a.zi.checked_on = TODAY; });
+        tot.pulled += r.pulled.length; tot.needCredits += r.needCredits.length;
+      } catch (err) { stopped = ziErrorText(err); break; }
+      done += g.length;
+      await new Promise(res => setTimeout(res, 1500));
+    }
+  } finally { ziState.busy = false; }
+  const msg = `Daily ZoomInfo refresh: ${tot.pulled} hot and Top 50 accounts updated` + (tot.needCredits ? ` · ${tot.needCredits} skipped (would cost credits)` : '') + (stopped ? ` · stopped early: ${stopped}` : '');
+  if (tot.pulled || tot.needCredits) { persist(); setSaveState(stopped ? 'err' : '', msg + ' Sharing…'); } else setSaveState(stopped ? 'err' : 'ok', msg);
+  render();
+}
 
 // ↻ ZoomInfo: social links — free backfill. Checks management status (free), then enriches only managed companies, 10 at a time.
 async function ziSocialRun() {
