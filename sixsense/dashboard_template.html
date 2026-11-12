@@ -1190,8 +1190,7 @@ function reasons(a) {
     out.push({ t: 'hot', s: '★ Past sales process: see notes' });
   }
   const pv = payrollVendors(a);
-  if (pv.some(v => /paylocity/i.test(v.name))) out.push({ t: 'hot', s: '⚠ ZoomInfo detects Paylocity: may already be a client. Check Salesforce before calling.' });
-  else if (pv.length) out.push({ t: 'hot', s: `💼 Payroll: ${pv.map(v => v.name).join(' / ')} (${pv.map(v => v.source).filter((x, i, arr) => arr.indexOf(x) === i).join(', ')}; confirm in Salesforce)` });
+  if (pv.some(v => /paylocity/i.test(v.name))) out.push({ t: 'hot', s: `⚠ May already be a Paylocity client (${pv.filter(v => /paylocity/i.test(v.name)).map(v => v.source).join(', ')}). Check Salesforce before calling.` });
   const fresh = newsItems(a, 60).filter(n => !MNA.test(n.title + ' ' + (n.summary || '')));
   if (fresh.length) out.push({ t: '', s: `📰 ${fresh[0].title.length > 90 ? fresh[0].title.slice(0, 87).replace(/\s+\S*$/, '') + '…' : fresh[0].title} (${fmtDate(fresh[0].date)})` });
   // only pages recent enough to be a reason to call now (urls are sorted newest first)
@@ -1200,10 +1199,8 @@ function reasons(a) {
   const ad = a.decoded_urls.find(u => age(u) <= 30 && AD_LANDING_PAGES.some(x => pagePath(u.decoded || u.raw).includes(x)));
   if (hand) out.push({ t: 'hot', s: `Visited ${pagePath(hand.decoded || hand.raw)} ${fmtDate(hand.date)}` });
   else if (ad) out.push({ t: '', s: `Ad landing page ${fmtDate(ad.date)}` });
-  if (a.six_qa_on) out.push({ t: 'hot', s: `6sense Qualified Account (6QA) since ${fmtDate(a.six_qa_on)}` });
   if (a.competitor_keywords.length) out.push({ t: 'hot', s: `Researching ${a.competitor_keywords.join(', ')}` });
   const surge = a.surge_topics.filter(t => isISO(t.date) && daysBetween(TODAY, t.date) <= 30);
-  if (surge.length) out.push({ t: 'hot', s: `Bombora surge: ${uniqSorted(surge.map(t => t.topic)).join(', ')} (${fmtDate(surge[0].date)})` });
   const zr = ziRecent(a);
   if (zr.length) {
     const conf = ziConfirmed(a);
@@ -2105,7 +2102,7 @@ function renderDrawer() {
   const p = a.priority;
   let content = DRAWER_TABS[ui.dtab].parts.map(k => parts[k] || '').join('');
   if (ui.dtab === 'prep') {
-    const why = [...zidAct(a).map(it => ({ t: 'hot', s: `ZoomInfo digest ${shortDate(it.date)}: ${it.text}` })), ...reasons(a)];
+    const why = reasons(a);   // digest lines, payroll vendor, 6QA and Bombora live in the Signals/Company tabs, not here
     const plan = openerPlan(a);
     content = `${parts['s-notes'] || ''}
       ${why.length ? `<div class="sec"><div class="dlabel">Why now</div><ul class="d-why">${why.map(r => `<li class="${r.t}">${r.html || esc(r.s)}</li>`).join('')}</ul></div>` : ''}
