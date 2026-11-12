@@ -1652,7 +1652,7 @@ function scorePill(a) {
   return hasSixsense(a) ? `<span class="score ${L} num" title="${esc(p.tier)}">${p.score}</span>`
     : '<span class="score none" title="No 6sense activity yet: on your prospect list only">–</span>';
 }
-// One notes box. AE notes = the owner's (field "notes"), SDR notes = the SDR's (field "sdr_notes"). Each says when it was last changed.
+// A notes box (AE notes = the owner's, field "notes"). Shows when it was last changed.
 function noteBox(a, field, label, editable, hint) {
   const on = a[field + '_on'];
   return `<div class="note-box"><div class="dlabel">${label}${isISO(on) ? `<span class="note-on">updated ${fmtDate(on)}</span>` : ''}</div>
@@ -2102,8 +2102,8 @@ function detailParts(a) {
         ${share.mode === 'reader' ? '' : sec('s-remove', `<div class="dblock"><div class="dlabel">Not your account?</div>
           <button class="btn sm rm-btn ${removeArm.name === a.company ? 'armed' : ''}" data-remove="${esc(a.company)}">${removeArm.name === a.company ? 'Click again to remove' : '🗑 Remove account'}</button>
           <div class="muted" style="margin-top:4px">Hides it for you and your SDR. Later 6sense emails about it stay hidden. Restore it from "Removed accounts" at the bottom of the page.</div></div>`)}
-        ${sec('s-notes', `<div class="dblock notes-pair">${noteBox(a, 'notes', 'AE notes', isAE(), 'Context, priorities, asks for your SDR…')}${noteBox(a, 'sdr_notes', 'SDR notes', isSDR(), 'Call notes, next step, who you spoke with…')}
-          <div class="muted" style="margin-top:4px">${isISO(a.worked_on) ? 'Last worked ' + fmtDate(a.worked_on) : 'Not worked yet'}${share.mode === 'reader' && !share.sdr ? ' · read only' : ''}</div></div>`)}
+        ${sec('s-notes', `<div class="dblock notes-pair">${noteBox(a, 'notes', 'AE notes', isAE(), 'Context, priorities, asks for your SDR…')}
+          <div class="muted" style="margin-top:4px">${isISO(a.worked_on) ? 'Last worked ' + fmtDate(a.worked_on) : 'Not worked yet'}</div></div>`)}
       </div>
     </div>
   </td></tr>`;
@@ -2427,11 +2427,11 @@ document.getElementById('btnSave').addEventListener('click', () => {
 });
 document.getElementById('btnCsv').addEventListener('click', () => {
   const cell = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Industry', 'Employees', 'Revenue', 'HQ', 'Payroll vendor', 'Benefits renewal', 'Broker', 'Carrier', 'Recent news', 'Past sales process', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes', 'SDR notes', 'Top 50']];
+  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Industry', 'Employees', 'Revenue', 'HQ', 'Payroll vendor', 'Benefits renewal', 'Broker', 'Carrier', 'Recent news', 'Past sales process', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes', 'Top 50']];
   sortList(filtered()).forEach((a, i) => {
     const p = a.priority;
     rows.push([i + 1, a.company, p.score, p.tier, p.action, a.stage, a.fit, p.last_activity, p.days_since_activity, p.active_days_30d, p.trend,
-      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), (a.zi && a.zi.firmo && a.zi.firmo.sub_industry) || '', (a.zi && a.zi.firmo && a.zi.firmo.employees) || '', (a.zi && a.zi.firmo && a.zi.firmo.revenue_range) || '', (a.zi && a.zi.firmo && a.zi.firmo.hq) || '', payrollVendors(a).map(v => v.name).join(' / '), bfRenewal(a) ? bfRenewal(a).date : '', (a.bf && a.bf.broker) || '', (a.bf && a.bf.carrier) || '', newsItems(a).slice(0, 2).map(n => `${n.date} ${n.title} ${n.url}`).join('; '), a.past_process ? 'Yes' : '', buyers(a).map(p => { const rv = p.bf_id && a.bf && a.bf.revealed && a.bf.revealed[p.bf_id]; return `${p.name} (${p.title}${p.accuracy != null ? ', accuracy ' + p.accuracy : ''})${rv ? ' ' + [rv.email, rv.phone].filter(Boolean).join(' ') : ''} ${liUrl(p.name, a, p)}`; }).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '', a.sdr_notes || '', a.top50 ? 'Yes' : '']);
+      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), (a.zi && a.zi.firmo && a.zi.firmo.sub_industry) || '', (a.zi && a.zi.firmo && a.zi.firmo.employees) || '', (a.zi && a.zi.firmo && a.zi.firmo.revenue_range) || '', (a.zi && a.zi.firmo && a.zi.firmo.hq) || '', payrollVendors(a).map(v => v.name).join(' / '), bfRenewal(a) ? bfRenewal(a).date : '', (a.bf && a.bf.broker) || '', (a.bf && a.bf.carrier) || '', newsItems(a).slice(0, 2).map(n => `${n.date} ${n.title} ${n.url}`).join('; '), a.past_process ? 'Yes' : '', buyers(a).map(p => { const rv = p.bf_id && a.bf && a.bf.revealed && a.bf.revealed[p.bf_id]; return `${p.name} (${p.title}${p.accuracy != null ? ', accuracy ' + p.accuracy : ''})${rv ? ' ' + [rv.email, rv.phone].filter(Boolean).join(' ') : ''} ${liUrl(p.name, a, p)}`; }).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '', a.top50 ? 'Yes' : '']);
   });
   download(`6sense_call_list_${TODAY}.csv`, rows.map(r => r.map(cell).join(',')).join('\r\n'), 'text/csv');
 });
@@ -2761,7 +2761,7 @@ function cap(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slic
 // Editors' changes (Worked, notes, imports) republish it, and everyone with
 // the link sees the update. Viewers get a read-only mirror.
 // ═══════════════════════════════════════════════════════════════════════════
-const share = { mode: 'local', artifact: null, downloads: null, timer: null, sdr: false, sample: null };   // sdr: an editor who isn't the owner (SDR notes + Worked only)
+const share = { mode: 'local', artifact: null, downloads: null, timer: null, sdr: false, sample: null };   // sdr: an editor who isn't the owner (Worked only)
 const canSave = () => share.mode === 'writer' || share.sdr;
 const isAE = () => share.mode !== 'reader';        // owner, or local file
 const isSDR = () => share.sdr || share.mode === 'local';
@@ -2803,7 +2803,7 @@ async function initShare() {
   try { canEdit = user ? await user.canEdit() : false; } catch (e) { canEdit = false; }
   // if this viewer's app can't say who the owner is, editors keep full access (the old behaviour)
   try { owner = user && typeof user.isOwner === 'function' ? await user.isOwner() : canEdit; } catch (e) { owner = canEdit; }
-  // Editors who aren't the owner (the SDR) get the read-only view plus SDR notes and Worked; owner tools stay with the owner
+  // Editors who aren't the owner get the read-only view plus Worked; owner tools stay with the owner
   share.sdr = canEdit && !owner;
   share.sample = canEdit && owner ? smp : null;   // ✨ AI openers: owner only, on the owner's Claude account
   setShareMode(canEdit && owner ? 'writer' : 'reader');
