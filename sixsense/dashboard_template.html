@@ -38,7 +38,7 @@
     --shadow: 0 1px 2px rgba(19,34,27,0.05), 0 8px 24px rgba(19,34,27,0.06);
     --radius: 14px; --radius-sm: 8px;
     --font: 'Figtree', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-    --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --serif: var(--font);   /* one font everywhere */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }   /* stop iPhone from enlarging some text blocks */
@@ -406,27 +406,148 @@
     .fcard-meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
     .btn.sm { padding: 7px 11px; font-size: 12px; }
   }
+
+  /* ═══ v2 layout ═══ */
+  .hdr { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--brand); color: var(--on-brand);
+    padding: 14px max(28px, env(safe-area-inset-right, 0px)) 14px max(28px, env(safe-area-inset-left, 0px)); }
+  .hdr-l { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .hdr .title { font-size: 18px; }
+  .hdr .sub { color: var(--on-brand-2); }
+  .hdr .sub b { color: var(--on-brand); }
+  .hdr-r { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .hdr .btn { background: transparent; border-color: rgba(255,255,255,0.32); color: var(--on-brand); }
+  .hdr .btn:hover { background: rgba(255,255,255,0.10); border-color: var(--on-brand); }
+  .hdr .save-state { color: var(--on-brand-2); } .hdr .save-state.ok { color: var(--spark); } .hdr .save-state.err { color: #ffb4a0; }
+  .hdr .share-badge { background: rgba(255,255,255,0.12); color: var(--on-brand); }
+  .owner { position: relative; }
+  .owner > summary { list-style: none; cursor: pointer; display: inline-block; }
+  .owner > summary::-webkit-details-marker { display: none; }
+  .owner .menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 50; min-width: 250px; display: flex; flex-direction: column; padding: 6px;
+    background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(19,34,27,.16); }
+  .mi { text-align: left; background: none; border: 0; padding: 9px 10px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text); }
+  .mi:hover { background: var(--surface-3); }
+  .mi:disabled { opacity: .5; cursor: wait; }
+  .preview { background: #fff4d6; color: #5c4300; border-bottom: 1px solid #ecd27f; font-size: 13px;
+    padding: 8px max(28px, env(safe-area-inset-right, 0px)) 8px max(28px, env(safe-area-inset-left, 0px)); }
+  .preview a { color: inherit; font-weight: 700; }
+  .wrap { max-width: 1180px; margin: 0 auto; gap: 12px; padding-top: 16px; }
+  .views { display: flex; gap: 2px; border-bottom: 1px solid var(--border-bright); overflow-x: auto; scrollbar-width: none; }
+  .views::-webkit-scrollbar { display: none; }
+  .view { background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 14px 11px; font-size: 14px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+  .view:hover { color: var(--text); }
+  .view.on { color: var(--text); border-bottom-color: var(--brand); }
+  .view .n { margin-left: 6px; font-size: 12px; font-weight: 700; color: var(--text-2); background: var(--surface-3); padding: 1px 8px; border-radius: 999px; }
+  .view.on .n { background: var(--brand); color: var(--on-brand); }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .bar .search { flex: 1 1 280px; padding: 9px 12px; border-radius: 999px; }
+  .bar select { border-radius: 999px; padding: 8px 10px; }
+  .btn.on { background: var(--accent-dim); border-color: var(--accent); }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tags:empty { display: none; }
+  .tag { background: var(--accent-dim); color: var(--text); border: 0; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
+  .tag:hover { background: #c9ece6; }
+  .fpanel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: grid; gap: 14px; }
+  .flabel { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim); margin-bottom: 6px; }
+  .fgroup .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .acct { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; display: grid; gap: 5px; cursor: pointer;
+    transition: border-color .12s, box-shadow .12s; min-width: 0; }
+  .acct:hover { border-color: var(--border-bright); box-shadow: var(--shadow); }
+  .acct:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .acct.sel { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+  .acct.worked { opacity: .55; }
+  .a-l1, .a-l3 { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
+  .a-name { font-size: 15px; font-weight: 700; line-height: 1.3; }
+  .a-sp { flex: 1 1 auto; }
+  .a-l2 { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .a-l3 { font-size: 12px; color: var(--text-2); }
+  .a-l3 .t { color: var(--text-2); }
+  .a-l3 .when { color: var(--text-dim); }
+  .bdg { font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--border); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+  .bdg.warn { color: var(--b); background: var(--b-dim); box-shadow: none; }
+  .bdg.new { color: var(--green); background: var(--green-dim); box-shadow: none; }
+  .sigs { display: inline-flex; gap: 3px; }
+  .sigs i { font-style: normal; font-size: 10px; font-weight: 700; min-width: 30px; text-align: center; padding: 1px 4px; border-radius: 5px;
+    color: var(--text-dim); box-shadow: inset 0 0 0 1px var(--border); letter-spacing: .2px; }
+  .sigs i.on { color: var(--brand); background: var(--green-dim); box-shadow: none; }
+  .score { min-width: 36px; height: 24px; font-size: 13px; border-radius: 999px; }
+  .score.C, .score.D { background: var(--surface-3); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--border); }
+  .action { font-size: 11px; padding: 3px 10px; white-space: nowrap; }
+  .action.P3, .action.P4 { background: var(--surface-3); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--border); }
+  .flag { background: var(--surface-3) !important; color: var(--text-2) !important; box-shadow: none !important; }
+  .kw.comp { background: var(--surface-3); color: var(--text); box-shadow: inset 0 0 0 1px var(--border-bright); }
+  .empty { background: var(--surface); border: 1px dashed var(--border-bright); border-radius: 12px; padding: 22px; text-align: center; }
+  /* side panel */
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(580px, 100vw); z-index: 40; display: flex; flex-direction: column;
+    background: var(--surface); box-shadow: -14px 0 40px rgba(19,34,27,.14); transform: translateX(105%); transition: transform .2s ease; visibility: hidden; }
+  body.drawer-open .drawer { transform: none; visibility: visible; }
+  .scrim { position: fixed; inset: 0; background: rgba(19,34,27,.18); z-index: 39; display: none; }
+  .d-head { padding: max(14px, env(safe-area-inset-top, 0px)) 18px 0; border-bottom: 1px solid var(--border); }
+  .d-top { display: flex; align-items: center; gap: 6px; }
+  .d-name { font-size: 18px; font-weight: 700; flex: 1 1 auto; min-width: 0; line-height: 1.25; }
+  .icon-btn { width: 34px; height: 34px; flex: none; border-radius: 999px; border: 1px solid var(--border-bright); background: var(--surface); font-size: 15px; color: var(--text-2); }
+  .icon-btn:hover { border-color: var(--accent); color: var(--text); }
+  .icon-btn:disabled { opacity: .35; cursor: default; }
+  .d-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 8px 0 6px; font-size: 12px; color: var(--text-2); }
+  .d-meta a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  .d-act { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 4px 0 10px; }
+  .d-tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .d-tabs::-webkit-scrollbar { display: none; }
+  .d-tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: 9px 12px 10px; font-size: 13px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+  .d-tab.on { color: var(--text); border-bottom-color: var(--brand); }
+  .d-body { flex: 1 1 auto; overflow-y: auto; padding: 16px 18px max(28px, env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 20px; }
+  .d-body .dblock + .dblock { margin-top: 14px; }
+  .d-body .muted, .d-body .about { font-size: 12px; }
+  .opener { background: var(--accent-dim); border-radius: 12px; padding: 12px 14px; }
+  .opener p { font-size: 14px; line-height: 1.5; color: var(--text); margin: 4px 0 8px; }
+  .d-why { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--text); }
+  .d-why .hot { font-weight: 600; }
+  .d-hint { font-size: 11px; color: var(--text-dim); text-align: right; padding: 0 18px 8px; }
+  @media (min-width: 1400px) {
+    body.drawer-open .wrap { margin-left: 24px; margin-right: 604px; max-width: none; }
+  }
+  @media (max-width: 1399px) { body.drawer-open .scrim { display: block; } }
+  @media (max-width: 700px) {
+    .hdr { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+    .hdr .title { font-size: 17px; }
+    .preview { padding-left: 16px; padding-right: 16px; }
+    .acct { padding: 12px 14px; }
+    .a-l2 { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .drawer { width: 100vw; }
+    body.drawer-open { overflow: hidden; }
+    .bar .search { font-size: 16px; flex-basis: 100%; }
+    .d-hint { display: none; }
+    .a-l3 > span:first-child { flex-basis: 100%; }
+    .a-l3 .a-sp { display: none; }
+    .hide-sm { display: none; }
+  }
 </style>
 
-<header class="header">
-  <div class="brand">
+<header class="hdr">
+  <div class="hdr-l">
     <div class="logo-mark" aria-hidden="true"></div>
     <div>
-      <div class="title">Target Now <span class="title-sub">· hot accounts from 6sense alerts</span></div>
+      <div class="title">Target Now</div>
       <div class="sub" id="subline">Loading…</div>
     </div>
   </div>
-  <div class="header-actions">
+  <div class="hdr-r">
     <span class="share-badge hidden" id="shareBadge"></span>
     <span class="save-state" id="saveState">Ready</span>
-    <button class="btn primary" id="btnImport">⬆ Add emails / JSON</button>
-    <button class="btn hidden" id="btnZiAll" title="Run ZoomInfo on every account not pulled in the last 7 days, whatever its tier. Free accounts only (under management); the rest are skipped, no credits.">↻ ZoomInfo: all</button>
-    <button class="btn hidden" id="btnZi" title="Refresh ZoomInfo intent for every Call today, This week and Heating up account. Only pulls accounts that are free (under management) in ZoomInfo.">↻ ZoomInfo</button>
-    <button class="btn hidden" id="btnBf" title="Refresh BenefitFlow (renewal, broker, carrier, contacts) for every Call today, This week and Heating up account. Free searches only: no credits.">↻ BenefitFlow</button>
-    <button class="btn" id="btnCsv" title="Download the rows currently shown as a CSV call list">⬇ Call list CSV</button>
-    <button class="btn" id="btnSave" title="Download everything (incl. worked / notes) as JSON">💾 Save JSON</button>
+    <button class="btn" id="btnCsv" title="Download the accounts you're looking at as a CSV call list">⬇ CSV</button>
+    <details class="owner" id="ownerMenu">
+      <summary class="btn" title="Imports, refreshes and backups (only you see this)">⚙ Owner</summary>
+      <div class="menu" role="menu">
+        <button class="mi" id="btnImport">⬆ Add 6sense emails / JSON</button>
+        <button class="mi hidden" id="btnZi" title="Refresh ZoomInfo for Call today, This week and Heating up accounts. Free accounts only.">↻ ZoomInfo: hot accounts</button>
+        <button class="mi hidden" id="btnZiAll" title="Run ZoomInfo on every account not pulled in the last 7 days, any tier. Free accounts only; the rest are skipped, no credits.">↻ ZoomInfo: all accounts</button>
+        <button class="mi hidden" id="btnBf" title="Refresh BenefitFlow for Call today, This week and Heating up accounts. Free searches only.">↻ BenefitFlow</button>
+        <button class="mi" id="btnSave" title="Download everything (worked marks, notes, contacts) as a JSON backup">💾 Save JSON backup</button>
+      </div>
+    </details>
   </div>
 </header>
+<div class="preview hidden" id="previewBanner"></div>
 
 <div class="wrap">
 
@@ -448,20 +569,27 @@
     </div>
   </section>
 
-  <section>
-    <div class="stats" id="stats"></div>
-  </section>
+  <nav class="views" id="views" aria-label="Views"></nav>
 
-  <section>
-    <h2>All accounts <small>click a row for detail · press / to search</small></h2>
-    <div class="toolbar">
-      <input class="search" id="q" type="search" placeholder="Search company, keyword, page…" autocomplete="off">
-      <div class="filters">
+  <div class="bar">
+    <input class="search" id="q" type="search" placeholder="Search accounts, people, notes…" autocomplete="off">
+    <button class="btn" id="btnFilters" aria-expanded="false">Filters</button>
+    <select id="fSort" aria-label="Sort">
+      <option value="score">Sort: Score</option><option value="last">Sort: Last activity</option><option value="company">Sort: Company A–Z</option>
+    </select>
+    <span class="count num" id="count"></span>
+  </div>
+  <div class="tags" id="tags"></div>
+
+  <section class="fpanel hidden" id="fpanel" aria-label="Filters">
+    <div class="fgroup"><div class="flabel">Tier</div><div class="chips">
       <button class="chip" data-tier="A">A · Call today</button>
       <button class="chip" data-tier="B">B · This week</button>
       <button class="chip" data-tier="C">C · Nurture</button>
       <button class="chip" data-tier="D">D · Monitor</button>
-      <span id="sigChips" style="display:contents"></span>
+    </div></div>
+    <div class="fgroup"><div class="flabel">Signals</div><div class="chips" id="sigChips"></div></div>
+    <div class="fgroup"><div class="flabel">Stage, fit and last active</div><div class="chips">
       <select id="fStage" aria-label="Stage">
         <option value="">Any stage</option><option>Purchase</option><option>Decision</option><option>Consideration</option><option>Awareness</option><option>Target</option>
       </select>
@@ -471,32 +599,17 @@
       <select id="fActive" aria-label="Last active" title="When 6sense last saw activity from the account">
         <option value="">Active any time</option><option value="7">Active last 7 days</option><option value="30">Active last 30 days</option><option value="60">Active last 60 days</option><option value="90">Active last 90 days</option><option value="q90">Quiet 90+ days</option>
       </select>
-      <button class="chip on hidden" id="fHideWorked" title="Hide accounts you marked worked in the last 7 days, unless they had new activity since">Hide worked</button>
-      <button class="chip hidden" id="fClear">✕ Clear filters</button>
-      </div>
-      <span class="count num" id="count"></span>
-    </div>
+    </div></div>
+    <div><button class="chip on hidden" id="fHideWorked">Hide worked</button><button class="btn sm hidden" id="fClear">✕ Clear all filters</button></div>
   </section>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th data-sort="score">Score</th>
-          <th data-sort="company">Company</th>
-          <th data-sort="stage" class="col-sf">Stage / Fit</th>
-          <th data-sort="last">Last activity</th>
-          <th class="col-why">Why now</th>
-          <th data-sort="action">Next step</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
+  <div class="list" id="list"></div>
 
   <section id="removedPanel" class="panel hidden" aria-label="Removed accounts"></section>
 </div>
+
+<div class="scrim" id="scrim" data-close></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Account"></aside>
 
 <footer id="footer"></footer>
 
@@ -504,6 +617,7 @@
 // Data is injected by optimize_sixsense.py. Do not edit by hand.
 const EMBEDDED_DATA = /*__EMBEDDED_DATA__*/null;
 const PUBLISHED_AT = null;
+const PREVIEW = false;   // preview build only: shows a banner, never shares changes
 // The page's own source as served, captured before anything renders. Used to republish itself when shared.
 const PAGE_SRC = (() => {
   try {
@@ -1076,17 +1190,26 @@ function setSaveState(cls, text) {
 // ═══════════════════════════════════════════════════════════════════════════
 // UI state
 // ═══════════════════════════════════════════════════════════════════════════
-const ui = { q: '', tiers: new Set(), signals: new Set(), stage: '', fit: '', active: '', hideWorked: true, sort: 'score', dir: -1, open: new Set() };
+const ui = { q: '', tiers: new Set(), signals: new Set(), stage: '', fit: '', active: '', hideWorked: true, sort: 'score', dir: -1, open: new Set(),
+  view: 'today', drawer: null, dtab: 'prep', filtersOpen: false };
+// Views are the main way in: one tab each, with a live count. Search always looks across every account.
+const VIEWS = {
+  today:   { label: 'Call today', test: a => tierLetter(a) === 'A' },
+  week:    { label: 'This week', test: a => tierLetter(a) === 'B' },
+  heating: { label: 'Heating up', test: a => CARDS.heating.test(a) },
+  all:     { label: 'All accounts', test: () => true },
+};
 
 function loadPrefs() {
   try {
     const p = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
     if (typeof p.hideWorked === 'boolean') ui.hideWorked = p.hideWorked;
     if (p.sort) { ui.sort = p.sort; ui.dir = p.dir || -1; }
+    if (p.view && VIEWS[p.view]) ui.view = p.view;
   } catch (e) { /* ignore */ }
 }
 function savePrefs() {
-  try { localStorage.setItem(PREFS_KEY, JSON.stringify({ hideWorked: ui.hideWorked, sort: ui.sort, dir: ui.dir })); } catch (e) { /* ignore */ }
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify({ hideWorked: ui.hideWorked, sort: ui.sort, dir: ui.dir, view: ui.view })); } catch (e) { /* ignore */ }
 }
 
 function tierLetter(a) { return a.priority.tier.charAt(0); }
@@ -1127,8 +1250,9 @@ function activeMatch(a) {
   if (ui.active === 'q90') return !known || d > 90;
   return known && d <= Number(ui.active);
 }
-function filtered() {
-  return accounts.filter(a =>
+function filtered(view = ui.view) {
+  const v = ui.q ? VIEWS.all : (VIEWS[view] || VIEWS.all);
+  return accounts.filter(a => v.test(a) &&
     (!ui.tiers.size || ui.tiers.has(tierLetter(a))) &&
     (!ui.stage || a.stage === ui.stage) &&
     (!ui.fit || a.fit === ui.fit) &&
@@ -1167,7 +1291,6 @@ function actionText(action) { return (action || '').replace(/^P\d\s+/, ''); }
 function render() {
   renderWelcome();
   renderHeader();
-  renderStats();
   renderTable();
   renderRemoved();
 }
@@ -1191,7 +1314,7 @@ function renderHeader() {
   const upd = PUBLISHED_AT ? new Date(PUBLISHED_AT) : null;
   const updText = upd && !isNaN(upd) ? ` · updated ${upd.toLocaleDateString()} ${upd.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : '';
   document.getElementById('subline').innerHTML =
-    `Scored for <b>${fmtDate(TODAY)}</b> · activity ${esc(range)} · <b>${accounts.length}</b> accounts${esc(updText)}`;
+    `<span class="hide-sm">Scored for <b>${fmtDate(TODAY)}</b> · activity ${esc(range)} · </span><b>${accounts.length}</b> accounts${esc(updText)}`;
   document.getElementById('footer').textContent =
     `${accounts.length} accounts${removedAccounts.length ? ` (${removedAccounts.length} removed)` : ''} · ${files} source emails · score = recency 25 + momentum 15 + stage 20 + fit 15 + pages 15 + volume 5 + competitor 5 (+2 known contact). Tier A ≥ 65, B ≥ 45, C ≥ 28; silent 60+ days caps at C.`;
   document.title = `Target Now · ${fmtDate(TODAY)}`;
@@ -1202,19 +1325,29 @@ function renderHeader() {
 function cardOn(k) { const t = CARDS[k].tier; return t ? ui.tiers.has(t) : ui.signals.has(k); }
 function cardOnly(k) { return cardOn(k) && ui.tiers.size + ui.signals.size === 1; }
 function renderSignalChips() {
-  document.getElementById('sigChips').innerHTML = Object.entries(CARDS).filter(([, c]) => !c.tier && !c.noChip)
+  document.getElementById('sigChips').innerHTML = Object.entries(CARDS).filter(([k, c]) => !c.tier && k !== 'heating')
     .map(([k, c]) => `<button class="chip ${ui.signals.has(k) ? 'on' : ''}" data-sig="${k}" title="${esc(c.unit)}">${esc(c.chip || c.label)}</button>`).join('');
 }
-function renderStats() {
-  const el = document.getElementById('stats');
-  el.innerHTML = Object.entries(CARDS).map(([k, c]) => {
-    const n = accounts.filter(c.test).length;
-    const on = cardOn(k);
-    return `<button class="stat ${on ? 'on' : ''}" data-card="${k}" aria-pressed="${on}" title="Show only these accounts (click again to clear)">
-      <span class="stat-label"><i style="background:${c.color}"></i>${c.label}</span>
-      <span class="stat-value num">${n}</span>
-      <span class="stat-unit">${c.unit}</span></button>`;
-  }).join('');
+function renderViews() {
+  const el = document.getElementById('views');
+  if (!el) return;
+  el.innerHTML = Object.entries(VIEWS).map(([k, v]) =>
+    `<button class="view ${ui.view === k && !ui.q ? 'on' : ''}" data-view="${k}" role="tab" aria-selected="${ui.view === k && !ui.q}">${esc(v.label)}<span class="n num">${filtered(k).length}</span></button>`).join('');
+}
+function filterCount() { return ui.tiers.size + ui.signals.size + (ui.stage ? 1 : 0) + (ui.fit ? 1 : 0) + (ui.active ? 1 : 0); }
+function renderTags() {
+  const tags = [
+    ...[...ui.tiers].map(t => [`tier:${t}`, `Tier ${t}`]),
+    ...[...ui.signals].map(k => [`sig:${k}`, CARDS[k] ? (CARDS[k].chip || CARDS[k].label) : k]),
+    ...(ui.stage ? [['stage', ui.stage]] : []), ...(ui.fit ? [['fit', ui.fit + ' fit']] : []),
+    ...(ui.active ? [['active', document.querySelector(`#fActive option[value="${ui.active}"]`)?.textContent || ui.active]] : []),
+  ];
+  document.getElementById('tags').innerHTML = tags.map(([k, l]) => `<button class="tag" data-untag="${esc(k)}" title="Remove this filter">${esc(l)} ✕</button>`).join('');
+  const n = filterCount(), b = document.getElementById('btnFilters');
+  b.textContent = n ? `Filters · ${n}` : 'Filters';
+  b.classList.toggle('on', ui.filtersOpen || n > 0);
+  b.setAttribute('aria-expanded', ui.filtersOpen);
+  document.getElementById('fpanel').classList.toggle('hidden', !ui.filtersOpen);
 }
 
 function spark(a) {
@@ -1227,60 +1360,173 @@ function spark(a) {
 
 function renderTable() {
   const list = sortList(filtered());
-  const tb = document.getElementById('tbody');
-  tb.innerHTML = list.map(a => rowHtml(a) + (ui.open.has(a.company) ? detailHtml(a) : '')).join('') ||
-    `<tr><td colspan="7" class="empty" style="text-align:center">No accounts match these filters.</td></tr>`;
-  document.getElementById('count').textContent = `${list.length} of ${accounts.length} accounts`;
-  document.querySelectorAll('th[data-sort]').forEach(th => {
-    th.classList.toggle('sorted', th.dataset.sort === ui.sort);
-    th.classList.toggle('asc', th.dataset.sort === ui.sort && ui.dir === 1);
-  });
+  const el = document.getElementById('list');
+  const v = ui.q ? 'your search' : VIEWS[ui.view] ? VIEWS[ui.view].label : 'this view';
+  el.innerHTML = list.map(acctHtml).join('') ||
+    `<div class="empty">Nothing in ${esc(v)}${filterCount() ? ' with these filters' : ''}. ${filterCount() ? '<button class="btn sm" data-clearall>Clear filters</button>' : ui.view !== 'all' ? '<button class="btn sm" data-view="all">See all accounts</button>' : ''}</div>`;
+  document.getElementById('count').textContent = `${list.length} account${list.length === 1 ? '' : 's'}`;
+  document.getElementById('fSort').value = ['score', 'last', 'company'].includes(ui.sort) ? ui.sort : 'score';
   document.querySelectorAll('.chip[data-tier]').forEach(c => c.classList.toggle('on', ui.tiers.has(c.dataset.tier)));
   renderSignalChips();
-  document.querySelectorAll('.stat[data-card]').forEach(c => { const on = cardOn(c.dataset.card); c.classList.toggle('on', on); c.setAttribute('aria-pressed', on); });
   document.getElementById('fHideWorked').classList.toggle('on', ui.hideWorked);
-  const anyFilter = ui.q || ui.tiers.size || ui.signals.size || ui.stage || ui.fit || ui.active;
-  document.getElementById('fClear').classList.toggle('hidden', !anyFilter);
+  document.getElementById('fClear').classList.toggle('hidden', !filterCount());
+  renderViews();
+  renderTags();
+  renderDrawer();
 }
 
-function rowHtml(a) {
+// ── Account row: three calm lines (name + 2 badges + signals + score / strongest reasons / who + next step) ──
+function shortDate(d) { return fmtDate(d).replace(/\/\d{4}$/, ''); }
+function recentVisits(a, days) { return a.decoded_urls.filter(u => isISO(u.date) && daysBetween(TODAY, u.date) <= days); }
+function pageKind(u) {
+  const x = pagePath(u.decoded || u.raw);
+  return HAND_RAISE_PAGES.some(h => x.includes(h)) ? 'hand' : AD_LANDING_PAGES.some(h => x.includes(h)) ? 'ad' : '';
+}
+function badges(a) {
+  const pv = payrollVendors(a);
+  const rn = bfRenewal(a);
+  return [
+    pv.some(v => /paylocity/i.test(v.name)) ? '<span class="bdg warn" title="ZoomInfo detects Paylocity: check Salesforce before calling">⚠ May be a client</span>' : '',
+    a.past_process ? '<span class="bdg" title="Previous sales process: see notes">★ Past deal</span>' : '',
+    hasLeaderTrigger(a) ? `<span class="bdg" title="${esc(triggers(a).map(t => t.text).join(' | '))}">🔔 Trigger</span>` : '',
+    bfRenewingSoon(a) ? `<span class="bdg" title="${esc(bfRenewalText(a))}">📅 Renews ${esc(shortDate(rn.date))}</span>` : '',
+    pv.length && !pv.some(v => /paylocity/i.test(v.name)) ? `<span class="bdg" title="Payroll/HR vendor. Confirm in Salesforce.">💼 ${esc(pv.map(v => v.name).join(' / '))}</span>` : '',
+    a.six_qa_on ? `<span class="bdg" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
+    ziConfirmed(a).length ? `<span class="bdg" title="ZoomInfo intent agrees with 6sense: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span>` : '',
+    a.zi && a.zi.note ? `<span class="bdg warn" title="${esc(a.zi.note)}">Check fit</span>` : '',
+    a.possible_duplicate_of.length ? `<span class="bdg warn" title="Possible duplicate of ${esc(a.possible_duplicate_of.join(', '))}">Dup?</span>` : '',
+  ].filter(Boolean);
+}
+// The few strongest reasons to call right now, in plain words
+function callReasons(a) {
+  const out = [], p = a.priority;
+  const vis = recentVisits(a, 60);
+  const hand = vis.find(u => pageKind(u) === 'hand');
+  if (hand) out.push(`Visited ${pagePath(hand.decoded || hand.raw).replace(/\/$/, '')} on ${shortDate(hand.date)}`);
+  const rn = bfRenewal(a);
+  if (rn && rn.days <= 120) out.push(`Benefits renew ${shortDate(rn.date)} (${rn.days} days)`);
+  const tr = triggers(a).find(t => ['Acquisition', 'Leadership change', 'New leader', 'Broker change', 'Carrier switch'].includes(t.kind) && t.hot);
+  if (tr) out.push(tr.kind === 'New leader' ? `New ${shortTitle(tr.title)}: ${tr.person}` : tr.kind);
+  if (a.competitor_keywords.length) out.push('Researching ' + a.competitor_keywords.slice(0, 2).join(', '));
+  const z = ziRecent(a)[0];
+  if (z) out.push('ZoomInfo intent: ' + shortTopic(z.topic));
+  if (!hand) { const ad = vis.find(u => pageKind(u) === 'ad'); if (ad) out.push(`Campaign page ${shortDate(ad.date)}`); }
+  if (a.past_process) out.push('Past sales process');
+  if (out.length < 3 && p.days_since_activity != null) out.push(`6sense activity ${agoText(p.days_since_activity)}${p.trend === 'heating up' && p.active_days_30d >= 2 ? ', heating up' : ''}`);
+  return out.slice(0, 3);
+}
+// Four sources at a glance: filled = that source has something current on this account
+function sigStrip(a) {
+  const p = a.priority;
+  const bf = bfRenewingSoon(a, 180) || bfSignals(a).some(x => x.trigger);
+  const s = [
+    ['6s', '6sense', p.days_since_activity != null && p.days_since_activity <= 30, 'activity in the last 30 days'],
+    ['ZI', 'ZoomInfo', ziRecent(a).length > 0, 'HR-related intent in the last 60 days'],
+    ['BF', 'BenefitFlow', bf, 'benefits renewal within 6 months or a BenefitFlow trigger'],
+    ['Web', 'Website', recentVisits(a, 90).length > 0, 'visited a Paylocity page in the last 90 days'],
+  ];
+  return `<span class="sigs" aria-label="Signals">${s.map(([k, n, on, t]) => `<i class="${on ? 'on' : ''}" title="${n}: ${on ? 'yes' : 'nothing current'} (${t})">${k}</i>`).join('')}</span>`;
+}
+function workBtnHtml(a) {
+  if (share.mode === 'reader') return '';
+  const done = a.worked_on === TODAY;
+  return `<button class="work-btn ${done ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${done ? '✓ Worked' : 'Worked?'}</button>`;
+}
+function acctHtml(a) {
   const p = a.priority, L = tierLetter(a);
-  const worked = isISO(a.worked_on);
-  const flags = [
-    a.six_qa_on ? `<span class="flag qa" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
-    payrollVendors(a).length ? `<span class="flag ${payrollVendors(a).some(v => /paylocity/i.test(v.name)) ? 'client' : 'vendor'}" title="Payroll/HR vendor: ${esc(payrollVendors(a).map(v => v.name + ' (' + v.source + ')').join(', '))}. Confirm in Salesforce.">💼 ${esc(payrollVendors(a).map(v => v.name).join(' / '))}</span>` : '',
-    a.past_process ? `<span class="flag hist" title="Previous sales process: see notes">★ Past deal</span>` : '',
-    bfRenewingSoon(a) ? `<span class="flag trig" title="${esc(bfRenewalText(a))}${a.bf.broker ? ' · broker ' + esc(a.bf.broker) : ''}">📅 Renews ${esc(fmtDate(bfRenewal(a).date).replace(/\/\d{4}$/, ''))}</span>` : '',
-    hasLeaderTrigger(a) ? `<span class="flag trig" title="${esc(triggers(a).map(t => t.text).join(' | '))}">🔔 Trigger</span>` : '',
-    ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo intent agrees with 6sense: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span>` : '',
-    a.zi && a.zi.note ? `<span class="flag warn" title="${esc(a.zi.note)}">check fit</span>` : '',
-    newSinceWorked(a) ? '<span class="flag new">new since worked</span>' : '',
-    worked && !newSinceWorked(a) ? `<span class="flag worked">worked ${fmtDate(a.worked_on)}</span>` : '',
-    a.possible_duplicate_of.length ? `<span class="flag dup" title="Possible duplicate of ${esc(a.possible_duplicate_of.join(', '))}">dup?</span>` : '',
-  ].join('');
-  const trend = p.trend === 'heating up' && p.active_days_30d >= 2 ? '<span class="trend-up" title="Heating up">↑</span>' : p.trend === 'cooling' ? '<span class="trend-down" title="Cooling">↓</span>' : '';
-  return `<tr class="row ${ui.open.has(a.company) ? 'open' : ''} ${isWorkedRecently(a) ? 'worked' : ''}" data-row="${esc(a.company)}">
-    <td class="td-score"><span class="score ${L} num">${p.score}</span><div class="tier-label ${L}">${esc(p.tier.slice(4))}</div></td>
-    <td class="td-co">
-      <div class="co"><span class="caret">▶</span>${esc(a.company)} ${flags}</div>
-      ${a.website || ziUrl(a) ? `<div class="co-sub">${a.website ? `<a href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener" data-stop>${esc(domainOf(a.website))}</a>` : ''}${a.website && ziUrl(a) ? ' · ' : ''}${ziUrl(a) ? `<a class="zi-open" href="${esc(ziUrl(a))}" target="_blank" rel="noopener" data-stop title="Open this company in ZoomInfo (you need to be signed in to ZoomInfo). Just a link: no ZoomInfo call or credits from this page.">ZoomInfo ↗</a>` : ''}</div>` : ''}
-      ${firmoLine(a) ? `<div class="co-firmo">${esc(firmoLine(a))}</div>` : ''}
-      ${buyers(a).length ? `<div class="co-buyer">👤 ${personHtml(buyers(a)[0], a)} <span>${esc(shortTitle(buyers(a)[0].title))}</span></div>` : ''}
-    </td>
-    <td class="col-sf"><div class="sf"><span class="badge stage">${esc(a.stage || '?')}</span><span class="badge ${esc((a.fit || 'weak').toLowerCase())}">${esc(a.fit || '?')}</span></div></td>
-    <td class="when td-when"><div class="num">${p.last_activity ? fmtDate(p.last_activity) : '—'} ${trend}</div><div class="ago">${agoText(p.days_since_activity)}</div>${spark(a)}</td>
-    <td class="col-why"><div class="why">${reasons(a).map(r => `<span class="${r.t}">${r.html || esc(r.s)}</span>`).join('')}</div></td>
-    <td class="td-act"><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span><span class="m-work">${share.mode === 'reader' ? '' : `<button class="work-btn ${a.worked_on === TODAY ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${a.worked_on === TODAY ? '✓ Worked' : 'Worked?'}</button>`}</span></td>
-    <td class="td-work">${share.mode === 'reader' ? '' : `<button class="work-btn ${a.worked_on === TODAY ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${a.worked_on === TODAY ? '✓ Worked' : 'Worked?'}</button>`}</td>
-  </tr>`;
+  const buyer = buyers(a)[0];
+  const status = newSinceWorked(a) ? '<span class="bdg new">New since worked</span>' : isISO(a.worked_on) ? `<span class="when">Worked ${shortDate(a.worked_on)}</span>` : '';
+  return `<article class="acct ${ui.drawer === a.company ? 'sel' : ''} ${isWorkedRecently(a) ? 'worked' : ''}" data-row="${esc(a.company)}" tabindex="0">
+    <div class="a-l1"><span class="a-name">${esc(a.company)}</span>${badges(a).slice(0, 2).join('')}<span class="a-sp"></span>${sigStrip(a)}<span class="score ${L} num" title="${esc(p.tier)}">${p.score}</span></div>
+    <div class="a-l2">${esc(callReasons(a).join(' · '))}</div>
+    <div class="a-l3">${buyer ? `<span>👤 ${personHtml(buyer, a)} <span class="t">${esc(shortTitle(buyer.title))}</span></span>` : '<span class="when">No contact found yet</span>'}${status}<span class="a-sp"></span><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>${workBtnHtml(a)}</div>
+  </article>`;
 }
 
-// Account detail, top to bottom (and down the columns on wide screens):
-// notes and sales history, company snapshot, pages visited, intent keywords, ZoomInfo intent, trigger events,
-// recent news, who to call (+ known contacts), BenefitFlow, Bombora, then score, activity weeks, duplicates and Remove.
-const DETAIL_ORDER = ['s-notes', 's-hist', 's-snap', 's-pages', 's-kw', 's-zi', 's-trig', 's-news', 's-who', 's-contacts',
-  's-bf', 's-surge', 's-score', 's-weeks', 's-sig', 's-dup', 's-remove'];
-function detailHtml(a) {
+// Suggested opener: built from rules and the account's own signals (no AI). Edit it to your voice.
+function openerText(a) {
+  const buyer = buyers(a)[0];
+  const first = buyer ? buyer.name.split(' ')[0] : '';
+  const vis = recentVisits(a, 90);
+  const bits = [];
+  const paths = vis.filter(u => pageKind(u) === 'hand').map(u => pagePath(u.decoded || u.raw));
+  const named = [['demo', /demo/], ['pricing', /pricing|quote/], ['contact', /contact/]].filter(([, re]) => paths.some(x => re.test(x))).map(([n]) => n);
+  if (named.length) bits.push(`noticed your team looking at our ${named.join(' and ')} page${named.length > 1 ? 's' : ''}`);
+  else if (vis.length) bits.push('saw your team checking out our HR and payroll resources');
+  if (a.competitor_keywords.length) bits.push(`comparing options like ${a.competitor_keywords.slice(0, 2).join(' and ')}`);
+  else { const z = ziRecent(a)[0]; if (z) bits.push(`looking into ${shortTopic(z.topic)}`); }
+  const tr = triggers(a).find(t => t.kind === 'Acquisition' || t.kind === 'Leadership change');
+  const rn = bfRenewal(a);
+  const month = rn ? new Date(utc(rn.date)).toLocaleString('en-US', { month: 'long', timeZone: 'UTC' }) : '';
+  const pv = payrollVendors(a).find(v => !/paylocity/i.test(v.name));
+  let s1 = bits.length ? `I ${bits.join(' and ')}.` : `I work with HR and finance leaders at companies like ${a.zi && a.zi.name || a.company} on payroll, HR and benefits.`;
+  if (tr && bits.length < 2) s1 += tr.kind === 'Acquisition' ? ' With the recent acquisition, I imagine HR and payroll are on the list to sort out.' : ' Saw the recent leadership change, too.';
+  const s2 = rn && rn.days <= 180 ? `With your benefits renewing in ${month}, is it worth 15 minutes to see how we'd bring HR, payroll and benefits into one place?`
+    : pv ? `Curious how ${pv.name} is working for you. Worth 15 minutes to compare notes?` : 'Worth 15 minutes to compare notes?';
+  return `${first ? 'Hi ' + first + ', ' : 'Hi, '}${s1} ${s2}`;
+}
+
+const DRAWER_TABS = {
+  prep:    { label: 'Call prep', parts: ['s-notes', 's-who', 's-contacts', 's-hist'] },
+  signals: { label: 'Signals', parts: ['s-pages', 's-kw', 's-zi', 's-trig', 's-news', 's-surge'] },
+  company: { label: 'Company', parts: ['s-snap', 's-bf'] },
+  history: { label: 'History', parts: ['s-score', 's-weeks', 's-sig', 's-dup', 's-remove'] },
+};
+function drawerList() { return sortList(filtered()); }
+function renderDrawer() {
+  const el = document.getElementById('drawer');
+  const a = ui.drawer ? byName(ui.drawer) : null;
+  document.body.classList.toggle('drawer-open', !!a);
+  el.setAttribute('aria-hidden', a ? 'false' : 'true');
+  if (!a) { el.innerHTML = ''; el.dataset.acct = ''; return; }
+  const ae = document.activeElement;
+  if (ae && el.contains(ae) && ae.tagName === 'TEXTAREA') return;        // don't wipe a note while it's being typed
+  const body = el.querySelector('.d-body');
+  const keep = body && el.dataset.acct === a.company && el.dataset.tab === ui.dtab ? body.scrollTop : 0;
+  const parts = detailParts(a);
+  const L = drawerList(), i = L.findIndex(x => x.company === a.company);
+  const p = a.priority;
+  let content = DRAWER_TABS[ui.dtab].parts.map(k => parts[k] || '').join('');
+  if (ui.dtab === 'prep') {
+    const why = reasons(a);
+    content = `<div class="opener"><div class="dlabel">Suggested opener</div><p id="openerText">${esc(openerText(a))}</p>
+        <button class="btn sm" data-copy="openerText">Copy</button> <span class="muted">Built from this account's signals. Edit to your voice.</span></div>
+      ${parts['s-notes'] || ''}
+      ${why.length ? `<div class="sec"><div class="dlabel">Why now</div><div class="d-why">${why.map(r => `<span class="${r.t}">${r.html || esc(r.s)}</span>`).join('')}</div></div>` : ''}
+      ${['s-who', 's-contacts', 's-hist'].map(k => parts[k] || '').join('')}`;
+  }
+  el.innerHTML = `<div class="d-head">
+      <div class="d-top">
+        <div class="d-name">${esc(a.company)}</div>
+        <button class="icon-btn" data-nav="-1" title="Previous account (k)" ${i <= 0 ? 'disabled' : ''}>‹</button>
+        <button class="icon-btn" data-nav="1" title="Next account (j)" ${i < 0 || i >= L.length - 1 ? 'disabled' : ''}>›</button>
+        <button class="icon-btn" data-close title="Close (Esc)">✕</button>
+      </div>
+      <div class="d-meta"><span class="score ${tierLetter(a)} num">${p.score}</span><span>${esc(p.tier.slice(4))}</span>${sigStrip(a)}${badges(a).join('')}</div>
+      <div class="d-meta">${a.website ? `<a href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener">${esc(domainOf(a.website))} ↗</a>` : ''}${ziUrl(a) ? `<a href="${esc(ziUrl(a))}" target="_blank" rel="noopener">ZoomInfo ↗</a>` : ''}${firmoLine(a) ? `<span>${esc(firmoLine(a))}</span>` : ''}</div>
+      <div class="d-act"><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>${workBtnHtml(a)}${i >= 0 ? `<span class="muted">${i + 1} of ${L.length}</span>` : ''}</div>
+      <div class="d-tabs" role="tablist">${Object.entries(DRAWER_TABS).map(([k, t]) => `<button class="d-tab ${ui.dtab === k ? 'on' : ''}" data-dtab="${k}" role="tab" aria-selected="${ui.dtab === k}">${t.label}</button>`).join('')}</div>
+    </div>
+    <div class="d-body">${content || '<div class="muted">Nothing here yet for this account.</div>'}</div>
+    <div class="d-hint">j / k next · previous · Esc close</div>`;
+  el.dataset.acct = a.company; el.dataset.tab = ui.dtab;
+  if (keep) el.querySelector('.d-body').scrollTop = keep;
+}
+function openDrawer(name, tab) {
+  ui.drawer = name;
+  if (tab) ui.dtab = tab;
+  renderTable();
+  const row = document.querySelector(`.acct[data-row="${CSS.escape(name)}"]`);
+  if (row) row.scrollIntoView({ block: 'nearest' });
+}
+function stepDrawer(dir) {
+  const L = drawerList(), i = L.findIndex(x => x.company === ui.drawer);
+  const n = L[i + dir];
+  if (n) openDrawer(n.company);
+}
+function closeDrawer() { ui.drawer = null; renderTable(); }
+
+function detailParts(a) {
   const p = a.priority, b = p.breakdown;
   const max = { recency: 25, momentum: 15, stage: 20, fit: 15, pages: 15, volume: 5, competitor: 5, known_contact: 2 };
   const label = { recency: 'Recency', momentum: 'Momentum', stage: 'Stage', fit: 'Fit', pages: 'Pages', volume: 'Volume', competitor: 'Competitor', known_contact: 'Known contact' };
@@ -1293,7 +1539,7 @@ function detailHtml(a) {
   const group = test => keys.filter(test).map(k => label[k]).join(', ');
   const full = group(k => frac(k) >= 1), part = group(k => frac(k) > 0 && frac(k) < 1), none = group(k => !frac(k));
   const summary = `<div class="bd-sum">${[full && `<b>Full points:</b> ${full}.`, part && `<b>Partly:</b> ${part}.`, none && `<b>Nothing yet:</b> ${none}.`].filter(Boolean).join(' ')}</div>`;
-  // Each section registers itself here; they are then laid out in DETAIL_ORDER (same order on phone and desktop).
+  // Each section registers itself here; the side panel lays them out by tab (DRAWER_TABS).
   const parts = {};
   const sec = (cls, html) => { if (html && html.trim()) parts[cls] = `<div class="sec ${cls}">${html}</div>`; return ''; };
 
@@ -1381,7 +1627,7 @@ function detailHtml(a) {
       </div>
     </div>
   </td></tr>`;
-  return `<tr class="detail"><td colspan="7"><div class="detail-flow">${DETAIL_ORDER.map(k => parts[k] || '').join('')}</div></td></tr>`;
+  return parts;
 }
 
 // Getting-started panel, shown only while the dashboard has no accounts.
@@ -1491,15 +1737,39 @@ document.addEventListener('click', e => {
   const t = e.target;
   if (t.closest('[data-stop]')) return;
   const work = t.closest('[data-work]');
-  if (work && share.mode !== 'reader') { e.stopPropagation(); toggleWorked(work.dataset.work); return; }
+  if (work && share.mode !== 'reader') {
+    e.stopPropagation();
+    const name = work.dataset.work, a = byName(name);
+    const advance = ui.drawer === name && a && a.worked_on !== TODAY && !!work.closest('#drawer');
+    let next = null;
+    if (advance) { const L = drawerList(), i = L.findIndex(x => x.company === name); next = L[i + 1] || L[i - 1] || null; }
+    if (advance) ui.drawer = next ? next.company : null;
+    toggleWorked(name);
+    return;
+  }
   const jump = t.closest('[data-jump]');
-  if (jump) {
-    const name = jump.dataset.jump;
-    ui.open.add(name);
-    if (!filtered().some(a => a.company === name)) { clearFilters(false); ui.hideWorked = false; }
-    renderTable();
-    const row = document.querySelector(`tr[data-row="${CSS.escape(name)}"]`);
-    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (jump) { openDrawer(jump.dataset.jump); return; }
+  const view = t.closest('[data-view]');
+  if (view) { ui.view = view.dataset.view; if (ui.q) { ui.q = ''; document.getElementById('q').value = ''; } savePrefs(); renderTable(); window.scrollTo({ top: 0 }); return; }
+  if (t.closest('#btnFilters')) { ui.filtersOpen = !ui.filtersOpen; renderTags(); return; }
+  if (t.closest('[data-clearall]')) { clearFilters(); return; }
+  const untag = t.closest('[data-untag]');
+  if (untag) {
+    const [kind, k] = untag.dataset.untag.split(':');
+    if (kind === 'tier') ui.tiers.delete(k); else if (kind === 'sig') ui.signals.delete(k);
+    else { ui[kind] = ''; const sel = { stage: 'fStage', fit: 'fFit', active: 'fActive' }[kind]; if (sel) document.getElementById(sel).value = ''; }
+    renderTable(); return;
+  }
+  const dtab = t.closest('[data-dtab]');
+  if (dtab) { ui.dtab = dtab.dataset.dtab; renderDrawer(); document.querySelector('#drawer .d-body').scrollTop = 0; return; }
+  const nav = t.closest('[data-nav]');
+  if (nav) { stepDrawer(Number(nav.dataset.nav)); return; }
+  if (t.closest('[data-close]')) { closeDrawer(); return; }
+  const copy = t.closest('[data-copy]');
+  if (copy) {
+    const txt = (document.getElementById(copy.dataset.copy) || {}).textContent || '';
+    const done = () => { copy.textContent = 'Copied ✓'; setTimeout(() => { copy.textContent = 'Copy'; }, 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, done); else done();
     return;
   }
   const card = t.closest('[data-card]');
@@ -1523,12 +1793,19 @@ document.addEventListener('click', e => {
     if (ui.sort === k) ui.dir = -ui.dir; else { ui.sort = k; ui.dir = k === 'company' || k === 'action' ? 1 : -1; }
     savePrefs(); renderTable(); return;
   }
-  const row = t.closest('tr.row');
+  const row = t.closest('.acct[data-row]');
   if (row && !t.closest('a, button, textarea')) {
     const name = row.dataset.row;
-    ui.open.has(name) ? ui.open.delete(name) : ui.open.add(name);
-    renderTable();
+    ui.drawer === name ? closeDrawer() : openDrawer(name);
   }
+});
+// close the Owner menu after a choice, or when clicking elsewhere
+document.addEventListener('click', e => {
+  const m = document.getElementById('ownerMenu');
+  if (m && m.open && (!m.contains(e.target) || e.target.closest('.mi'))) m.open = false;
+});
+document.getElementById('fSort').addEventListener('change', e => {
+  ui.sort = e.target.value; ui.dir = ui.sort === 'company' ? 1 : -1; savePrefs(); renderTable();
 });
 
 // Remove account (owner / editors only): two clicks, then hidden for everyone. Restore from the list at the bottom.
@@ -1559,6 +1836,7 @@ document.addEventListener('click', e => {
   if (!a) return;
   a.removed_at = new Date().toISOString();
   ui.open.delete(name);
+  if (ui.drawer === name) ui.drawer = null;
   partitionRemoved();
   persist(); render();
   setSaveState(share.mode === 'writer' ? '' : 'ok', `Removed ${name}. Restore it from Removed accounts at the bottom.`);
@@ -1597,15 +1875,15 @@ document.addEventListener('change', e => {
 });
 
 function clearFilters(rerender = true) {
-  ui.q = ''; ui.tiers.clear(); ui.signals.clear(); ui.stage = ''; ui.fit = ''; ui.active = '';
+  ui.tiers.clear(); ui.signals.clear(); ui.stage = ''; ui.fit = ''; ui.active = '';
   document.getElementById('fActive').value = '';
-  document.getElementById('q').value = '';
   document.getElementById('fStage').value = '';
   document.getElementById('fFit').value = '';
-  if (rerender) { renderStats(); renderTable(); }
+  if (rerender) renderTable();
 }
 
 document.getElementById('q').addEventListener('input', e => { ui.q = e.target.value.trim(); renderTable(); });
+
 document.getElementById('fStage').addEventListener('change', e => { ui.stage = e.target.value; renderTable(); });
 document.getElementById('fFit').addEventListener('change', e => { ui.fit = e.target.value; renderTable(); });
 document.getElementById('fActive').addEventListener('change', e => { ui.active = e.target.value; renderTable(); });
@@ -1613,7 +1891,13 @@ document.getElementById('fHideWorked').addEventListener('click', () => { ui.hide
 document.getElementById('fClear').addEventListener('click', () => clearFilters());
 document.addEventListener('keydown', e => {
   if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); document.getElementById('q').focus(); }
-  if (e.key === 'Escape' && document.activeElement.id === 'q') { document.getElementById('q').value = ''; ui.q = ''; renderTable(); }
+  if (e.key === 'Escape' && document.activeElement.id === 'q') { document.getElementById('q').value = ''; ui.q = ''; renderTable(); return; }
+  const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if (e.key === 'Enter' && document.activeElement.matches && document.activeElement.matches('.acct[data-row]')) { openDrawer(document.activeElement.dataset.row); return; }
+  if (!ui.drawer || typing) return;
+  if (e.key === 'Escape') { closeDrawer(); }
+  else if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); stepDrawer(1); }
+  else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); stepDrawer(-1); }
 });
 
 // Downloads
@@ -1977,7 +2261,8 @@ const SESSION_UI_KEY = 'sixsense_ui_session';
 function saveSessionUi() {
   try {
     sessionStorage.setItem(SESSION_UI_KEY, JSON.stringify({ q: ui.q, tiers: [...ui.tiers], signals: [...ui.signals], stage: ui.stage, fit: ui.fit, active: ui.active,
-      hideWorked: ui.hideWorked, sort: ui.sort, dir: ui.dir, open: [...ui.open], y: window.scrollY }));
+      hideWorked: ui.hideWorked, sort: ui.sort, dir: ui.dir, open: [...ui.open], y: window.scrollY,
+      view: ui.view, drawer: ui.drawer, dtab: ui.dtab, filtersOpen: ui.filtersOpen }));
   } catch (e) { /* ignore */ }
 }
 function restoreSessionUi() {
@@ -1986,7 +2271,8 @@ function restoreSessionUi() {
     if (!s) return;
     sessionStorage.removeItem(SESSION_UI_KEY);
     Object.assign(ui, { q: s.q || '', stage: s.stage || '', fit: s.fit || '', active: s.active || '', hideWorked: s.hideWorked !== false,
-      sort: s.sort || 'score', dir: s.dir || -1 });
+      sort: s.sort || 'score', dir: s.dir || -1, view: VIEWS[s.view] ? s.view : ui.view, drawer: s.drawer || null,
+      dtab: DRAWER_TABS[s.dtab] ? s.dtab : 'prep', filtersOpen: !!s.filtersOpen });
     ui.tiers = new Set(s.tiers || []); ui.open = new Set(s.open || []);
     ui.signals = new Set((s.signals || (s.card ? [s.card] : [])).filter(k => CARDS[k] && !CARDS[k].tier));
     document.getElementById('q').value = ui.q;
@@ -2020,6 +2306,7 @@ function setShareMode(mode) {
     ? 'Worked marks, notes and imported emails are saved to this page for everyone who has the link.'
     : 'This is a live copy of the owner\'s dashboard. It updates when they make changes.';
   for (const id of ['btnImport', 'btnSave']) document.getElementById(id).classList.toggle('hidden', mode === 'reader');
+  document.getElementById('ownerMenu').classList.toggle('hidden', mode === 'reader');
   if (mode === 'reader') document.getElementById('importPanel').classList.add('hidden');
   setSaveState(mode === 'writer' ? 'ok' : '', mode === 'writer' ? 'Up to date' : '');
   render();
@@ -2537,6 +2824,27 @@ document.addEventListener('click', e => {
   if (rv) { e.stopPropagation(); const a = byName(rv.dataset.bfco); if (a && a.bf) bfReveal(a, rv.dataset.bfrev); }
 });
 
+// Preview build: a banner, and a switch to see the page the way the SDR does (read-only)
+function renderPreviewBanner() {
+  const b = document.getElementById('previewBanner');
+  b.classList.remove('hidden');
+  const sdr = share.mode === 'reader';
+  b.innerHTML = `<b>Preview of the new layout</b> with a copy of your data. Nothing you do here changes your live dashboard. ` +
+    `<button class="btn sm" data-asreader>${sdr ? 'Back to owner view' : 'See it as your SDR'}</button>`;
+}
+document.addEventListener('click', e => {
+  if (!PREVIEW || !e.target.closest('[data-asreader]')) return;
+  if (share.mode === 'reader') {
+    share.mode = null;
+    document.getElementById('shareBadge').classList.add('hidden');
+    document.getElementById('ownerMenu').classList.remove('hidden');
+    for (const id of ['btnImport', 'btnSave']) document.getElementById(id).classList.remove('hidden');
+    setSaveState('', 'Owner view');
+    render();
+  } else setShareMode('reader');
+  renderPreviewBanner();
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Init
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2554,6 +2862,7 @@ document.addEventListener('click', e => {
   }
   if (!accounts.length) document.getElementById('importPanel').classList.remove('hidden');
   render();
-  if (inClaude) initShare();
+  if (inClaude && !PREVIEW) initShare();
+  if (PREVIEW) renderPreviewBanner();
 })();
 </script>

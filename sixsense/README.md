@@ -13,6 +13,9 @@
    The same ranking is also in `6SENSE_Update_File_target_now.csv` and printed in the terminal.
 
 ## Dashboard (`dashboard_template.html`)
+**Layout (v2):** four view tabs (Call today · This week · Heating up · All accounts) with live counts, a search bar, a **Filters** panel (tier, signals, stage, fit, last active; active filters show as removable tags) and a sort menu. Each account is a three-line row: name, up to two badges, a signal strip (6s · ZI · BF · Web, filled when that source has something current) and the score; the strongest reasons to call; who to call and the next step. Clicking a row opens a side panel (full screen on a phone) with tabs **Call prep** (suggested opener, notes, why now, who to call, past-sales mark), **Signals**, **Company** and **History**, plus ‹ › to move through the list (j / k, Esc to close). ✓ Worked in the panel moves on to the next account. The suggested opener is built from rules and the account's signals, with no AI. Owner tools (imports, ZoomInfo / BenefitFlow refreshes, JSON backup) sit in the **⚙ Owner** menu, which the SDR doesn't see. One font throughout; colour is used for urgency (tier, next step) and the page-visit key.
+A preview build sets `const PREVIEW = true` (banner, no sharing, "See it as your SDR" switch).
+
 - There's no fixed "top 6" block: the stat cards and filters pick what the list shows, ranked by score.
 - **Stat cards are filters**: clicking a card shows only its accounts in the table (click again to clear). The filter row under All accounts has buttons for A · Call today, B · This week, C · Nurture, D · Monitor, Heating up, Past sales, Trigger events and Competitor. Active 7 days, Renewing soon, ZoomInfo confirmed and ZoomInfo intent are cards only (set with `noChip` in `CARDS`).
   - Buttons can be combined. Tiers add together (A + B = everything to call this week), and the other buttons narrow the list (B · This week + Heating up = this-week accounts that are heating up).
