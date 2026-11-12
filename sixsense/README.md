@@ -14,10 +14,10 @@
 
 ## Dashboard (`dashboard_template.html`)
 - There's no fixed "top 6" block: the stat cards and filters pick what the list shows, ranked by score.
-- **Stat cards are filters**: clicking a card shows only its accounts in the table (click again to clear). The filter row has a matching button for every card: A · Call today, B · This week, C · Nurture, D · Monitor, Heating up, Active 7 days, Past sales, Trigger events, Renewing ≤ 90 days, ZoomInfo confirmed, Competitor. The card and its button light up together.
+- **Stat cards are filters**: clicking a card shows only its accounts in the table (click again to clear). The filter row under All accounts has buttons for A · Call today, B · This week, C · Nurture, D · Monitor, Heating up, Past sales, Trigger events and Competitor. Active 7 days, Renewing soon, ZoomInfo confirmed and ZoomInfo intent are cards only (set with `noChip` in `CARDS`).
   - Buttons can be combined. Tiers add together (A + B = everything to call this week), and the other buttons narrow the list (B · This week + Heating up = this-week accounts that are heating up).
 - **Search** (press `/`) covers company, keywords, pages visited and your notes. You can also filter by tier, stage, fit and **last active** (any time, last 7 / 30 / 60 / 90 days, or quiet 90+ days, counted from the last day 6sense saw activity). The last-active filter combines with the other filters and doesn't change the score.
-- **✓ Worked**: marks an account as contacted today. It drops off the list for 7 days, and comes back early (tagged *new since worked*) if 6sense records new activity.
+- **✓ Worked**: marks an account as contacted today. It drops off the list for 7 days (there's no Hide worked button; searching for it still finds it), and comes back early (tagged *new since worked*) if 6sense records new activity.
 - **Notes** per account, saved in the browser and included in 💾 Save JSON. The Python script keeps `worked_on` and `notes` too.
 - **Add emails / JSON**: drop 6sense alert `.msg` files (or a JSON update) anywhere on the page. Emails already loaded are skipped: an email counts as a duplicate only when every account in it already has that day's activity. Outlook gives every alert the same file name, so names alone aren't used. Nothing is merged until you click Apply.
 - **⬇ Call list CSV** exports the rows you're currently looking at.
@@ -91,9 +91,9 @@ Each account can carry a `bf` block (`employer_id, broker, broker_years, carrier
 - BenefitFlow doesn't change the score.
 
 ## Previous sales process (owner, manual)
-- In an account's detail, **☆ Mark as past sales process** sets `past_process: true` and `past_process_on`. A **Sales history** box (`history_note`) appears for details to pass to the SDR.
-- The account then shows a **★ Past deal** badge (the note shows on hover), a "★ Past sales process: …" line in Why now, and a filter card. Search covers the note, and the CSV has two columns for it.
-- Read-only viewers see the note but can't edit it. Removing the mark keeps the note, so re-marking brings it back. The Python script preserves these fields.
+- In an account's detail, **☆ Mark as past sales process** sets `past_process: true` and `past_process_on`. Write the details in the regular **Notes** box.
+- The account then shows a **★ Past deal** badge, a "★ Past sales process: see notes" line in Why now, and a Past sales filter. The CSV has a Past sales process column.
+- The old separate sales-history box is gone. Any text it held (`history_note`) is moved into Notes as "Sales history: …" the first time the page or the Python script reads it, so nothing is lost.
 
 ## Cost
 - The page's buttons, email auto-refresh and LinkedIn links run in the browser against ZoomInfo directly. They use **no AI tokens** and only free ZoomInfo calls (search, plus enrichment of companies already under management).

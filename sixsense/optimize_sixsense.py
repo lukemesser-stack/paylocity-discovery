@@ -121,8 +121,6 @@ def merge_into(dst, src):
     if src.get("past_process"):
         dst["past_process"] = True
         dst["past_process_on"] = max(filter(None, [dst.get("past_process_on"), src.get("past_process_on")]), default=None)
-    if src.get("history_note") and not dst.get("history_note"):
-        dst["history_note"] = src["history_note"]
     if (src.get("worked_on") or "") > (dst.get("worked_on") or ""):
         dst["worked_on"] = src["worked_on"]
     for f in ("removed_at", "restored_at"):   # owner removed / restored the account on the page
@@ -153,6 +151,10 @@ def clean(account):
         a[f] = int(a.get(f) or 0)
     for f in ("stage", "fit", "reach", "website"):
         a[f] = (a.get(f) or "").strip()
+    # the separate sales-history box is gone: its text moves into notes (once), same as the dashboard
+    hist = (a.pop("history_note", None) or "").strip()
+    if hist and hist not in (a.get("notes") or ""):
+        a["notes"] = (a["notes"].strip() + "\n\nSales history: " + hist) if (a.get("notes") or "").strip() else "Sales history: " + hist
 
     # 6sense tags qualified accounts with a trailing "6QA" after the name. Keep it as a flag, not part of the name.
     m = re.search(r"\s+6QA$", a["company"], re.I)
@@ -354,7 +356,7 @@ def main():
     order = ["company", "priority", "stage", "fit", "reach", "website", "signal_count", "web_visits",
              "competitor_keywords", "keywords", "surge_topics", "zi", "bf", "contacts", "form_fills", "decoded_urls",
              "activity_date", "email_date", "_latest_date", "dates", "activity_dates", "source_files",
-             "aliases", "possible_duplicate_of", "six_qa_on", "past_process", "past_process_on", "history_note", "worked_on", "notes",
+             "aliases", "possible_duplicate_of", "six_qa_on", "past_process", "past_process_on", "worked_on", "notes",
              "removed_at", "restored_at"]
     out = {a["company"]: {**{k: a[k] for k in order if k in a}, **{k: v for k, v in a.items() if k not in order}}
            for a in ranked}

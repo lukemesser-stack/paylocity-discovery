@@ -471,7 +471,7 @@
       <select id="fActive" aria-label="Last active" title="When 6sense last saw activity from the account">
         <option value="">Active any time</option><option value="7">Active last 7 days</option><option value="30">Active last 30 days</option><option value="60">Active last 60 days</option><option value="90">Active last 90 days</option><option value="q90">Quiet 90+ days</option>
       </select>
-      <button class="chip on" id="fHideWorked" title="Hide accounts you marked worked in the last 7 days, unless they had new activity since">Hide worked</button>
+      <button class="chip on hidden" id="fHideWorked" title="Hide accounts you marked worked in the last 7 days, unless they had new activity since">Hide worked</button>
       <button class="chip hidden" id="fClear">✕ Clear filters</button>
       </div>
       <span class="count num" id="count"></span>
@@ -589,6 +589,13 @@ function clean(src) {
   [...a.keywords, ...a.competitor_keywords].forEach(k => { if (COMPETITORS.includes(String(k).trim().toLowerCase())) comp.add(k); });
   a.competitor_keywords = Array.from(comp).sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase()));
   a.keywords = uniqSorted(a.keywords);
+  // The separate sales-history box is gone: its text moves into Notes (once), so nothing is lost.
+  const hist = String(a.history_note || '').trim();
+  if (hist) {
+    const notes = String(a.notes || '');
+    if (!notes.includes(hist)) a.notes = notes.trim() ? notes.trim() + '\n\nSales history: ' + hist : 'Sales history: ' + hist;
+  }
+  delete a.history_note;
   if (!a.bf || typeof a.bf !== 'object') delete a.bf;
   if (!a.zi || typeof a.zi !== 'object') delete a.zi;
   else a.zi = { ...a.zi, intent: Array.isArray(a.zi.intent) ? a.zi.intent : [] };
@@ -915,8 +922,7 @@ function reasons(a) {
   const rn = bfRenewal(a);
   if (rn && rn.days > 90 && rn.days <= 180) out.push({ t: '', s: '📅 ' + bfRenewalText(a) + (a.bf.broker ? ` · broker ${a.bf.broker}` : '') });
   if (a.past_process) {
-    const n = String(a.history_note || '').replace(/\s+/g, ' ').trim();
-    out.push({ t: 'hot', s: '★ Past sales process' + (n ? ': ' + (n.length > 90 ? n.slice(0, 87).replace(/\s+\S*$/, '') + '…' : n) : '') });
+    out.push({ t: 'hot', s: '★ Past sales process: see notes' });
   }
   const pv = payrollVendors(a);
   if (pv.some(v => /paylocity/i.test(v.name))) out.push({ t: 'hot', s: '⚠ ZoomInfo detects Paylocity: may already be a client. Check Salesforce before calling.' });
@@ -1023,7 +1029,6 @@ function mergeInto(ex, inc, mode) {
   if ((inc.worked_on || '') > (ex.worked_on || '')) ex.worked_on = inc.worked_on;
   if (!ex.notes && inc.notes) ex.notes = inc.notes;
   if (inc.past_process) { ex.past_process = true; if ((inc.past_process_on || '') > (ex.past_process_on || '')) ex.past_process_on = inc.past_process_on; }
-  if (!ex.history_note && inc.history_note) ex.history_note = inc.history_note;
   for (const f of ['removed_at', 'restored_at']) if ((inc[f] || '') > (ex[f] || '')) ex[f] = inc[f];
 }
 
@@ -1098,18 +1103,18 @@ const CARDS = {
   A:       { tier: 'A', label: 'Call today', unit: 'Tier A · score 65+', color: 'var(--a)', test: a => tierLetter(a) === 'A' },
   B:       { tier: 'B', label: 'This week', unit: 'Tier B · score 45–64', color: 'var(--b)', test: a => tierLetter(a) === 'B' },
   heating: { label: 'Heating up', unit: 'more active days than prior 30', color: 'var(--green)', test: a => a.priority.trend === 'heating up' && a.priority.active_days_30d >= 2 },
-  active7: { label: 'Active 7 days', unit: 'any 6sense activity this week', color: 'var(--accent-2)', test: a => a.priority.days_since_activity != null && a.priority.days_since_activity <= 7 },
+  active7: { noChip: true, label: 'Active 7 days', unit: 'any 6sense activity this week', color: 'var(--accent-2)', test: a => a.priority.days_since_activity != null && a.priority.days_since_activity <= 7 },
   hist:    { chip: 'Past sales', label: 'Past sales process', unit: 'accounts you\'ve worked before', color: 'var(--accent)', test: a => !!a.past_process },
   trig:    { label: 'Trigger events', unit: 'new leaders, exec moves, M&A, broker changes', color: 'var(--b)', test: a => hasLeaderTrigger(a) },
-  renew:   { chip: 'Renewing ≤ 90 days', label: 'Renewing soon', unit: 'benefits renew in the next 90 days', color: 'var(--stage)', test: a => bfRenewingSoon(a) },
-  zi:      { label: 'ZoomInfo confirmed', unit: 'ZoomInfo intent matches 6sense', color: 'var(--green)', test: a => ziConfirmed(a).length > 0 },
-  ziint:   { label: 'ZoomInfo intent', unit: 'HR-related ZoomInfo intent in the last 60 days, any tier', color: 'var(--accent)', test: a => ziRecent(a).length > 0 },
+  renew:   { noChip: true, chip: 'Renewing ≤ 90 days', label: 'Renewing soon', unit: 'benefits renew in the next 90 days', color: 'var(--stage)', test: a => bfRenewingSoon(a) },
+  zi:      { noChip: true, label: 'ZoomInfo confirmed', unit: 'ZoomInfo intent matches 6sense', color: 'var(--green)', test: a => ziConfirmed(a).length > 0 },
+  ziint:   { noChip: true, label: 'ZoomInfo intent', unit: 'HR-related ZoomInfo intent in the last 60 days, any tier', color: 'var(--accent)', test: a => ziRecent(a).length > 0 },
   comp:    { chip: 'Competitor', label: 'Competitor research', unit: 'ADP, Rippling, Paycor…', color: 'var(--comp)', test: a => a.competitor_keywords.length > 0 },
 };
 
 function matchesSearch(a, q) {
   if (!q) return true;
-  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', firmoLine(a), ...payrollVendors(a).map(v => v.name), ...newsItems(a).map(n => n.title), a.past_process ? 'past deal past sales process ' + (a.history_note || '') : '', a.bf ? [a.bf.broker, a.bf.carrier, a.bf.peo, a.bf.secondary_broker, bfRenewingSoon(a) ? 'renewal renewing' : ''].join(' ') : '', ...buyers(a).map(p => p.name + ' ' + p.title), ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
+  const hay = [a.company, a.website, a.six_qa_on ? '6qa' : '', firmoLine(a), ...payrollVendors(a).map(v => v.name), ...newsItems(a).map(n => n.title), a.past_process ? 'past deal past sales process' : '', a.bf ? [a.bf.broker, a.bf.carrier, a.bf.peo, a.bf.secondary_broker, bfRenewingSoon(a) ? 'renewal renewing' : ''].join(' ') : '', ...buyers(a).map(p => p.name + ' ' + p.title), ...triggers(a).map(t => t.kind + ' ' + t.text), ...(a.zi ? a.zi.intent.map(t => t.topic) : []), ziConfirmed(a).length ? 'confirmed' : '', ...a.surge_topics.map(t => t.topic), ...(a.aliases || []), ...a.keywords, a.priority.action, a.stage, a.fit,
     ...a.decoded_urls.map(u => pagePath(u.decoded || u.raw)), ...(a.contacts || []).map(c => (c.name || '') + ' ' + (c.title || '')), a.notes || ''].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
 }
@@ -1129,7 +1134,7 @@ function filtered() {
     (!ui.fit || a.fit === ui.fit) &&
     activeMatch(a) &&
     [...ui.signals].every(k => CARDS[k].test(a)) &&
-    (!ui.hideWorked || !isWorkedRecently(a)) &&
+    (!ui.hideWorked || ui.q || !isWorkedRecently(a)) &&
     matchesSearch(a, ui.q));
 }
 
@@ -1197,7 +1202,7 @@ function renderHeader() {
 function cardOn(k) { const t = CARDS[k].tier; return t ? ui.tiers.has(t) : ui.signals.has(k); }
 function cardOnly(k) { return cardOn(k) && ui.tiers.size + ui.signals.size === 1; }
 function renderSignalChips() {
-  document.getElementById('sigChips').innerHTML = Object.entries(CARDS).filter(([, c]) => !c.tier)
+  document.getElementById('sigChips').innerHTML = Object.entries(CARDS).filter(([, c]) => !c.tier && !c.noChip)
     .map(([k, c]) => `<button class="chip ${ui.signals.has(k) ? 'on' : ''}" data-sig="${k}" title="${esc(c.unit)}">${esc(c.chip || c.label)}</button>`).join('');
 }
 function renderStats() {
@@ -1244,7 +1249,7 @@ function rowHtml(a) {
   const flags = [
     a.six_qa_on ? `<span class="flag qa" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
     payrollVendors(a).length ? `<span class="flag ${payrollVendors(a).some(v => /paylocity/i.test(v.name)) ? 'client' : 'vendor'}" title="Payroll/HR vendor: ${esc(payrollVendors(a).map(v => v.name + ' (' + v.source + ')').join(', '))}. Confirm in Salesforce.">💼 ${esc(payrollVendors(a).map(v => v.name).join(' / '))}</span>` : '',
-    a.past_process ? `<span class="flag hist" title="${esc(a.history_note || 'Previous sales process')}">★ Past deal</span>` : '',
+    a.past_process ? `<span class="flag hist" title="Previous sales process: see notes">★ Past deal</span>` : '',
     bfRenewingSoon(a) ? `<span class="flag trig" title="${esc(bfRenewalText(a))}${a.bf.broker ? ' · broker ' + esc(a.bf.broker) : ''}">📅 Renews ${esc(fmtDate(bfRenewal(a).date).replace(/\/\d{4}$/, ''))}</span>` : '',
     hasLeaderTrigger(a) ? `<span class="flag trig" title="${esc(triggers(a).map(t => t.text).join(' | '))}">🔔 Trigger</span>` : '',
     ziConfirmed(a).length ? `<span class="flag ok" title="ZoomInfo intent agrees with 6sense: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span>` : '',
@@ -1364,9 +1369,8 @@ function detailHtml(a) {
           (a.possible_duplicate_of.length ? `<div class="dblock"><div class="dlabel">Possible duplicate of</div><div class="muted">${esc(a.possible_duplicate_of.join(' · '))}. Confirm, then add to ALIASES in optimize_sixsense.py.</div></div>` : ''))}
         ${sec('s-hist', `<div class="dblock"><div class="dlabel">Previous sales process${a.past_process && a.past_process_on ? ' · marked ' + fmtDate(a.past_process_on) : ''}</div>
           ${share.mode === 'reader'
-            ? (a.past_process ? `<div class="hist-text">${a.history_note ? esc(a.history_note) : '<span class="muted">Marked as a past sales process. No details added yet.</span>'}</div>` : '<div class="muted">No previous sales process.</div>')
-            : `<button class="btn sm hist-btn ${a.past_process ? 'on' : ''}" data-hist="${esc(a.company)}">${a.past_process ? '★ Past sales process (click to remove)' : '☆ Mark as past sales process'}</button>
-               ${a.past_process ? `<textarea class="notes" style="margin-top:6px" id="hist-${esc(slug(a.company))}" data-histnote="${esc(a.company)}" placeholder="Sales history for your SDR: when you engaged, who you worked with, why it stalled or was lost, competitor they chose, contract or renewal timing…">${esc(a.history_note || '')}</textarea>` : ''}`}
+            ? (a.past_process ? '<div class="muted">Yes: details are in Notes.</div>' : '<div class="muted">No previous sales process.</div>')
+            : `<button class="btn sm hist-btn ${a.past_process ? 'on' : ''}" data-hist="${esc(a.company)}">${a.past_process ? '★ Past sales process (click to remove)' : '☆ Mark as past sales process'}</button>`}
         </div>`)}
         ${share.mode === 'reader' ? '' : sec('s-remove', `<div class="dblock"><div class="dlabel">Not your account?</div>
           <button class="btn sm rm-btn ${removeArm.name === a.company ? 'armed' : ''}" data-remove="${esc(a.company)}">${removeArm.name === a.company ? 'Click again to remove' : '🗑 Remove account'}</button>
@@ -1578,18 +1582,18 @@ document.addEventListener('click', e => {
 
 let notesTimer;
 document.addEventListener('input', e => {
-  const ta = e.target.closest('textarea[data-notes], textarea[data-histnote]');
+  const ta = e.target.closest('textarea[data-notes]');
   if (!ta) return;
-  const a = byName(ta.dataset.notes || ta.dataset.histnote);
+  const a = byName(ta.dataset.notes);
   if (!a) return;
-  if (ta.dataset.histnote) a.history_note = ta.value; else a.notes = ta.value;
+  a.notes = ta.value;
   clearTimeout(notesTimer);
   setSaveState('', 'Saving…');
   if (share.mode === 'writer') { setSaveState('', 'Unsaved note: click outside the box to share it'); return; }
   notesTimer = setTimeout(persist, 500);
 });
 document.addEventListener('change', e => {
-  if (e.target.closest('textarea[data-notes], textarea[data-histnote]') && share.mode === 'writer') schedulePublish(0);
+  if (e.target.closest('textarea[data-notes]') && share.mode === 'writer') schedulePublish(0);
 });
 
 function clearFilters(rerender = true) {
@@ -1632,11 +1636,11 @@ document.getElementById('btnSave').addEventListener('click', () => {
 });
 document.getElementById('btnCsv').addEventListener('click', () => {
   const cell = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Industry', 'Employees', 'Revenue', 'HQ', 'Payroll vendor', 'Benefits renewal', 'Broker', 'Carrier', 'Recent news', 'Past sales process', 'Sales history', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
+  const rows = [['Rank', 'Company', 'Score', 'Tier', 'Action', 'Stage', 'Fit', 'Last activity', 'Days since', 'Active days (30d)', 'Trend', 'Competitors', 'Hot pages', 'Top keywords', 'Industry', 'Employees', 'Revenue', 'HQ', 'Payroll vendor', 'Benefits renewal', 'Broker', 'Carrier', 'Recent news', 'Past sales process', 'Who to call', 'Triggers', 'ZoomInfo intent', 'ZoomInfo confirms', 'Website', 'Worked on', 'Notes']];
   sortList(filtered()).forEach((a, i) => {
     const p = a.priority;
     rows.push([i + 1, a.company, p.score, p.tier, p.action, a.stage, a.fit, p.last_activity, p.days_since_activity, p.active_days_30d, p.trend,
-      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), (a.zi && a.zi.firmo && a.zi.firmo.sub_industry) || '', (a.zi && a.zi.firmo && a.zi.firmo.employees) || '', (a.zi && a.zi.firmo && a.zi.firmo.revenue_range) || '', (a.zi && a.zi.firmo && a.zi.firmo.hq) || '', payrollVendors(a).map(v => v.name).join(' / '), bfRenewal(a) ? bfRenewal(a).date : '', (a.bf && a.bf.broker) || '', (a.bf && a.bf.carrier) || '', newsItems(a).slice(0, 2).map(n => `${n.date} ${n.title} ${n.url}`).join('; '), a.past_process ? 'Yes' : '', a.history_note || '', buyers(a).map(p => { const rv = p.bf_id && a.bf && a.bf.revealed && a.bf.revealed[p.bf_id]; return `${p.name} (${p.title}${p.accuracy != null ? ', accuracy ' + p.accuracy : ''})${rv ? ' ' + [rv.email, rv.phone].filter(Boolean).join(' ') : ''} ${liUrl(p.name, a, p)}`; }).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
+      a.competitor_keywords.join('; '), p.hot_pages.join('; '), a.keywords.slice(0, 6).join('; '), (a.zi && a.zi.firmo && a.zi.firmo.sub_industry) || '', (a.zi && a.zi.firmo && a.zi.firmo.employees) || '', (a.zi && a.zi.firmo && a.zi.firmo.revenue_range) || '', (a.zi && a.zi.firmo && a.zi.firmo.hq) || '', payrollVendors(a).map(v => v.name).join(' / '), bfRenewal(a) ? bfRenewal(a).date : '', (a.bf && a.bf.broker) || '', (a.bf && a.bf.carrier) || '', newsItems(a).slice(0, 2).map(n => `${n.date} ${n.title} ${n.url}`).join('; '), a.past_process ? 'Yes' : '', buyers(a).map(p => { const rv = p.bf_id && a.bf && a.bf.revealed && a.bf.revealed[p.bf_id]; return `${p.name} (${p.title}${p.accuracy != null ? ', accuracy ' + p.accuracy : ''})${rv ? ' ' + [rv.email, rv.phone].filter(Boolean).join(' ') : ''} ${liUrl(p.name, a, p)}`; }).join('; '), triggers(a).map(t => t.text + (t.linkedin ? ' ' + t.linkedin : '')).join('; '), ziRecent(a).map(t => `${t.topic} (${t.score})`).join('; '), ziConfirmed(a).join('; '), a.website, a.worked_on || '', a.notes || '']);
   });
   download(`6sense_call_list_${TODAY}.csv`, rows.map(r => r.map(cell).join(',')).join('\r\n'), 'text/csv');
 });
