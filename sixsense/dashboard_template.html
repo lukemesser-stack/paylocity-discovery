@@ -259,6 +259,9 @@
   .dlabel { font-size: 11px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; margin: 0 0 6px; }
   .dblock + .dblock, .dcol > .sec + .sec { margin-top: 14px; }
   .detail-grid > .dcol { min-width: 0; }
+  .detail-flow { columns: 3 300px; column-gap: 32px; }
+  .detail-flow > .sec { break-inside: avoid; display: block; margin-bottom: 18px; min-width: 0; }
+  .detail-flow > .sec:has(.bf-more[open]) { break-inside: auto; }
   /* Score breakdown: one chip per factor, darker green = closer to full points */
   .bd-chips { display: flex; flex-wrap: wrap; gap: 4px; }
   .bd-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; color: var(--text); background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-bright); }
@@ -382,9 +385,7 @@
     .detail-grid > .dcol { display: contents; }
     .dcol > .sec + .sec { margin-top: 0; }
     .sec { min-width: 0; }
-    .s-who { order: 1; } .s-trig { order: 2; } .s-notes { order: 3; } .s-hist { order: 4; } .s-contacts { order: 5; }
-    .s-bf { order: 6; } .s-snap { order: 7; } .s-news { order: 8; } .s-pages { order: 9; } .s-kw { order: 10; }
-    .s-zi { order: 11; } .s-surge { order: 12; } .s-dup { order: 13; } .s-score { order: 14; } .s-weeks { order: 15; } .s-sig { order: 16; } .s-remove { order: 17; }
+    .detail-flow { columns: 1; }
 
     /* One font and three sizes in the detail: 11px labels, 13px text, 15px names */
     .snap, .trig-row, .news-row, .buyer-row, .zi-row, .pages, .about, .muted, .hist-text, .bd-sum, .careers, .rev { font-size: 13px !important; font-family: var(--font) !important; }
@@ -1267,6 +1268,11 @@ function rowHtml(a) {
   </tr>`;
 }
 
+// Account detail, top to bottom (and down the columns on wide screens):
+// notes and sales history, company snapshot, pages visited, intent keywords, ZoomInfo intent, trigger events,
+// recent news, who to call (+ known contacts), BenefitFlow, Bombora, then score, activity weeks, duplicates and Remove.
+const DETAIL_ORDER = ['s-notes', 's-hist', 's-snap', 's-pages', 's-kw', 's-zi', 's-trig', 's-news', 's-who', 's-contacts',
+  's-bf', 's-surge', 's-score', 's-weeks', 's-sig', 's-dup', 's-remove'];
 function detailHtml(a) {
   const p = a.priority, b = p.breakdown;
   const max = { recency: 25, momentum: 15, stage: 20, fit: 15, pages: 15, volume: 5, competitor: 5, known_contact: 2 };
@@ -1280,7 +1286,9 @@ function detailHtml(a) {
   const group = test => keys.filter(test).map(k => label[k]).join(', ');
   const full = group(k => frac(k) >= 1), part = group(k => frac(k) > 0 && frac(k) < 1), none = group(k => !frac(k));
   const summary = `<div class="bd-sum">${[full && `<b>Full points:</b> ${full}.`, part && `<b>Partly:</b> ${part}.`, none && `<b>Nothing yet:</b> ${none}.`].filter(Boolean).join(' ')}</div>`;
-  const sec = (cls, html) => html && html.trim() ? `<div class="sec ${cls}">${html}</div>` : '';
+  // Each section registers itself here; they are then laid out in DETAIL_ORDER (same order on phone and desktop).
+  const parts = {};
+  const sec = (cls, html) => { if (html && html.trim()) parts[cls] = `<div class="sec ${cls}">${html}</div>`; return ''; };
 
   // 13-week activity heat strip
   const set = [...a.dates, ...a.activity_dates];
@@ -1303,7 +1311,7 @@ function detailHtml(a) {
 
   const contacts = a.contacts.map(c => `<div>${esc(c.name || '?')}${c.title ? ' · ' + esc(c.title) : ''}${c.email ? ` · <a href="mailto:${esc(c.email)}" style="color:var(--accent)">${esc(c.email)}</a>` : ''}</div>`).join('');
 
-  return `<tr class="detail"><td colspan="7">
+  void `<tr class="detail"><td colspan="7">
     <div class="detail-grid">
       <div class="dcol">
         ${sec('s-score', `<div class="dblock"><div class="dlabel">Score breakdown · ${p.score}/100</div>${bars}${summary}</div>`)}
@@ -1367,6 +1375,7 @@ function detailHtml(a) {
       </div>
     </div>
   </td></tr>`;
+  return `<tr class="detail"><td colspan="7"><div class="detail-flow">${DETAIL_ORDER.map(k => parts[k] || '').join('')}</div></td></tr>`;
 }
 
 // Getting-started panel, shown only while the dashboard has no accounts.
