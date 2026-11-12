@@ -1079,7 +1079,6 @@ const VENDOR_CANON = [[/\badp\b|automatic data|workforce now/i, 'ADP'], [/payche
 function vendorCanon(name) { const n = String(name || '').trim(); const hit = VENDOR_CANON.find(([re]) => re.test(n)); return hit ? hit[1] : n; }
 function payrollVendors(a) {
   const out = new Map();
-  if (a.vendor_list && !/^missing$/i.test(a.vendor_list)) out.set(vendorCanon(a.vendor_list), 'your vendor list');
   for (const v of ((a.zi && a.zi.payroll_tech && a.zi.payroll_tech.vendors) || [])) out.set(v, 'ZoomInfo tech stack');
   for (const t of triggers(a)) if (t.kind === 'Vendor clue') { const m = t.text.match(/Likely uses ([^:]+):/); if (m && !out.has(m[1])) out.set(m[1], 'job-post site'); }
   if (a.bf) for (const [nm, src] of [[a.bf.peo, 'PEO on benefit filings'], [a.bf.secondary_broker, 'benefit filings']]) {
@@ -1087,6 +1086,8 @@ function payrollVendors(a) {
     if (v && !out.has(v[1])) out.set(v[1], src);
     else if (nm && src.startsWith('PEO') && !v) out.set(nm + ' (PEO)', src);
   }
+  // the owner's territory list fills in only when nothing else found a vendor
+  if (!out.size && a.vendor_list && !/^(missing|other|unknown|new business)$/i.test(a.vendor_list)) out.set(vendorCanon(a.vendor_list), 'your territory list');
   return [...out.entries()].map(([name, source]) => ({ name, source }));
 }
 // Careers: a real job-board link from ZoomInfo job-post Scoops when there is one, plus a free web search
