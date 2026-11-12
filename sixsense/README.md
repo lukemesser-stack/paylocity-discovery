@@ -105,7 +105,8 @@ Built by rules from the account's own data, with no AI (`openerPlan` in the temp
 - The middle sentence turns their research into a plain pain (`OP_TOPIC_PAIN`, e.g. COBRA → "COBRA and benefits continuation"). It never says we saw them researching, and **page visits are never mentioned**. Finance leaders and finance hires get a payroll-cost angle.
 - The closing question uses their current payroll vendor when known (`OP_VENDORS`).
 - **Talking points, newest first** sit underneath with dates and source links. These include the events, intent and competitor research (marked "don't mention"), the payroll vendor, and the BenefitFlow renewal as an optional "If useful" line.
-- Openers don't change the score. A future option: an AI-written opener for Call today accounts only (not built).
+- Openers don't change the score.
+- **✨ AI openers (owner only, the one exception to "no AI tokens"):** on Call today and Top 50 accounts, a **✨ AI openers** button beside "Suggested openers" asks Claude (quick model) for three openers. It uses the **owner's** Claude account: an AI call always spends the account of whoever clicks, so only the owner gets the button. The result is saved to the page (`ai_openers: {on, at, items:[{angle, text}]}`), so the SDR sees it without a Claude account. It's capped at 15 a day per browser (`AI_DAILY_CAP`), and each call is about 600 tokens in and 250 out. Claude gets the same facts as the rule-built openers (`aiPrompt`), never notes, with the same never-mention rules. The first click asks you to allow Claude for the page. The rule-built openers stay underneath.
 
 ## Previous sales process (owner, manual)
 - In an account's detail, **☆ Mark as past sales process** sets `past_process: true` and `past_process_on`. Write the details in the regular **Notes** box.
@@ -113,7 +114,7 @@ Built by rules from the account's own data, with no AI (`openerPlan` in the temp
 - The old separate sales-history box is gone. Any text it held (`history_note`) is moved into Notes as "Sales history: …" the first time the page or the Python script reads it, so nothing is lost.
 
 ## Cost
-- The page's buttons, email auto-refresh and LinkedIn links run in the browser against ZoomInfo directly. They use **no AI tokens** and only free ZoomInfo calls (search, plus enrichment of companies already under management).
+- The page's buttons, email auto-refresh and LinkedIn links run in the browser against ZoomInfo directly. Apart from the owner-only ✨ AI openers button, they use **no AI tokens** and only free ZoomInfo calls (search, plus enrichment of companies already under management).
 - Asking Claude in chat to refresh or republish does use tokens. Use the page buttons for day-to-day work, and start a fresh session for dashboard changes.
 - Refresh buttons and email auto-refresh pull Scoops in the same free call as intent, then run the leader search. Triggers don't change the score.
 
@@ -148,7 +149,7 @@ Change the weights, competitor list, page patterns and aliases in the config blo
 
 ## Working notes for the next session
 
-**Live dashboard:** https://claude.ai/artifact/Us82tGvEWGgk8eCeUpbDkX. It's owned by Luke and shared view-only with the SDR. The page saves itself, so **always re-read it before publishing** and build from its data. Publish without `capabilities`, so its current permissions stay (ZoomInfo: search_companies, enrich_company_signals, search_contacts, enrich_companies; BenefitFlow: search_employers, search_contacts, get_contact; artifact, downloads, user).
+**Live dashboard:** https://claude.ai/artifact/Us82tGvEWGgk8eCeUpbDkX. It's owned by Luke and shared view-only with the SDR. The page saves itself, so **always re-read it before publishing** and build from its data. Publish without `capabilities`, so its current permissions stay (ZoomInfo: search_companies, enrich_company_signals, search_contacts, enrich_companies; BenefitFlow: search_employers, search_contacts, get_contact; artifact, downloads, user, sample). `sample` (✨ AI openers) was added on 2026-11-12; if you ever pass `capabilities`, restate all of them.
 
 **State on 2026-11-12:**
 - 293 accounts: 248 on the prospect list (`book`) and 12 from 6sense that aren't on it. 34 are removed.

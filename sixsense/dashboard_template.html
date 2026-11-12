@@ -470,6 +470,12 @@
   .note-box + .note-box { margin-top: 10px; }
   .note-on { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-dim); margin-left: 8px; font-size: 11px; }
   .opener { margin-top: 4px; }
+  .op-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .op-head > span:first-child { flex: 1 1 auto; }
+  .ai-btn { text-transform: none; letter-spacing: 0; background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+  .ai-btn:hover { background: var(--brand-2); }
+  .ai-left { font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-dim); }
+  .ai-block { background: var(--surface); border-radius: 10px; padding: 10px 12px; margin: 6px 0 12px; box-shadow: inset 0 0 0 1px var(--border); }
   button.bdg-x { font-family: inherit; border: 0; cursor: pointer; line-height: inherit; }
   button.bdg-x:hover { filter: brightness(0.92); text-decoration: line-through; }
   .bdg.new { color: var(--green); background: var(--green-dim); box-shadow: none; }
@@ -1260,6 +1266,7 @@ function mergeInto(ex, inc, mode) {
   if ((inc.worked_on || '') > (ex.worked_on || '')) ex.worked_on = inc.worked_on;
   if (!ex.notes && inc.notes) ex.notes = inc.notes;
   if (!ex.sdr_notes && inc.sdr_notes) { ex.sdr_notes = inc.sdr_notes; ex.sdr_notes_on = inc.sdr_notes_on; }
+  if (inc.ai_openers && (inc.ai_openers.at || '') > ((ex.ai_openers && ex.ai_openers.at) || '')) ex.ai_openers = inc.ai_openers;
   if ((inc.top50_on || '') > (ex.top50_on || '')) { ex.top50 = !!inc.top50; ex.top50_on = inc.top50_on; }
   if (inc.past_process) { ex.past_process = true; if ((inc.past_process_on || '') > (ex.past_process_on || '')) ex.past_process_on = inc.past_process_on; }
   for (const f of ['removed_at', 'restored_at']) if ((inc[f] || '') > (ex[f] || '')) ex[f] = inc[f];
@@ -1850,6 +1857,88 @@ function openerPlan(a) {
   return { openers, points };
 }
 
+// ── ✨ AI openers (owner only): one quick-tier Claude call on the OWNER's Claude account, for Call today and Top 50
+// accounts. The result is saved to the page (a.ai_openers), so the SDR sees it without Claude. Notes are never sent.
+const AI_DAILY_CAP = 15;
+const aiMem = {};
+function aiUsed() { try { return Number(localStorage.getItem('tn_ai_' + TODAY)) || 0; } catch (e) { return aiMem[TODAY] || 0; } }
+function aiBump() { const n = aiUsed() + 1; aiMem[TODAY] = n; try { localStorage.setItem('tn_ai_' + TODAY, String(n)); } catch (e) { /* in-memory only */ } }
+function aiEligible(a) { return tierLetter(a) === 'A' || !!a.top50; }
+function aiCanRun() { return share.mode === 'writer' && !!share.sample; }
+const aiState = { busy: null, msg: {} };
+function aiPrompt(a) {
+  const buyer = buyers(a)[0], f = (a.zi && a.zi.firmo) || {};
+  const ev = opEvents(a).slice(0, 6), vendor = opVendor(a), pv = payrollVendors(a).filter(v => !/paylocity/i.test(v.name));
+  const zt = ziRecent(a).slice(0, 4).map(t => shortTopic(t.topic));
+  const comp = [...new Set([...a.competitor_keywords, ...zidAct(a, 60).map(it => (it.text.match(/competitor - (.+)$/i) || [])[1]).filter(Boolean)])].slice(0, 4);
+  const rn = bfRenewal(a);
+  const lines = [
+    `Company: ${opShortName(a)}${f.sub_industry || f.industry ? ' · ' + (f.sub_industry || f.industry) : ''}${f.employees ? ' · ' + f.employees + ' employees' : ''}${f.hq ? ' · HQ ' + f.hq : ''}`,
+    f.about ? `About: ${String(f.about).slice(0, 300)}` : '',
+    buyer ? `Calling: ${buyer.name}, ${buyer.title}` : 'Calling: unknown contact (start with "Hi,")',
+    ev.length ? 'Recent events, best first:\n' + ev.map(e => `- ${e.date ? e.date + ' ' : ''}${e.label}: ${e.text}`).join('\n') : 'Recent events: none',
+    pv.length ? `Likely payroll vendor (unconfirmed): ${pv.map(v => v.name).join(', ')}` : '',
+    zt.length ? `Topics they are researching (use only to pick the angle, NEVER mention): ${zt.join(', ')}` : '',
+    comp.length ? `Vendors they are comparing (use only to pick the angle, NEVER mention that we know): ${comp.join(', ')}` : '',
+    `Likely pain to build on: ${opPain(a)}`,
+    rn ? `Benefits renewal (optional, low priority): ${rn.date}` : '',
+  ].filter(Boolean).join('\n');
+  return `You write cold-call openers for an experienced SDR at Paylocity (HR, payroll, benefits and time software for US mid-size companies). Today is ${TODAY}.
+
+Write 3 different openers for this account.
+Rules:
+- Start each with "Hi ${buyer ? buyer.name.split(' ')[0] : ''}," then get straight to it.
+- Lead with the most recent specific event, using its real details (names, roles, headline). If there are no events, use the industry and size angle.
+- Sound like a sharp, experienced rep on the phone: plain, specific, conversational. No buzzwords, no flattery, no exclamation marks.
+- 2-3 sentences, under 60 words each, ending with one open question.
+- NEVER say or hint that they visited our website, looked at our pages or resources, or that we can see what they research or which vendors they compare.
+- Don't lead with the benefits renewal. Don't name Paylocity's competitors as bad.
+- Use only the facts below. Don't invent anything.
+- Give each opener a 1-3 word angle label, e.g. "New CFO", "Acquisition", "Hiring push", "Competitor".
+
+Account facts:
+${lines}
+
+Reply with only JSON: [{"angle": "...", "text": "..."}, {"angle": "...", "text": "..."}, {"angle": "...", "text": "..."}]`;
+}
+function aiBtnHtml(a) {
+  if (!aiCanRun() || !aiEligible(a)) return '';
+  const left = AI_DAILY_CAP - aiUsed(), busy = aiState.busy === a.company;
+  return `<button class="btn sm ai-btn" data-ai="${esc(a.company)}" ${busy || left <= 0 ? 'disabled' : ''} title="Uses your Claude account (quick model). Saved to the page so your SDR sees it. ${left} of ${AI_DAILY_CAP} left today.">${busy ? '✨ Writing…' : a.ai_openers ? '✨ Rewrite with AI' : '✨ AI openers'}</button><span class="ai-left">${left <= 0 ? 'Daily limit reached' : left + ' left today'}</span>`;
+}
+function aiBlockHtml(a) {
+  const ai = a.ai_openers, msg = aiState.msg[a.company];
+  if (!(ai && Array.isArray(ai.items) && ai.items.length) && !msg) return '';
+  return `<div class="ai-block">${msg ? `<div class="muted">${esc(msg)}</div>` : ''}${ai && ai.items ? `<div class="op-angle">✨ AI openers · written ${fmtDate(ai.on)}</div>` +
+    ai.items.map((o, k) => `<div class="op"><div class="op-angle">${esc(o.angle)}</div><p id="aiText${k}">${esc(o.text)}</p><button class="btn sm" data-copy="aiText${k}">Copy</button></div>`).join('') : ''}</div>`;
+}
+const AI_ERR = { not_granted: 'Claude wasn’t allowed for this page. Allow it next time to use AI openers.', rate_limited: 'Claude is busy. Try again in a minute.',
+  upstream_error: 'Claude had a problem. Try again in a minute.', invalid_json: 'Claude’s answer came back garbled. Try once more.', cancelled: '' };
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-ai]');
+  if (!b || !aiCanRun() || aiState.busy) return;
+  e.stopPropagation();
+  const a = byName(b.dataset.ai);
+  if (!a || !aiEligible(a) || aiUsed() >= AI_DAILY_CAP) return;
+  aiState.busy = a.company; delete aiState.msg[a.company]; renderDrawer();
+  try {
+    const out = await share.sample.json(aiPrompt(a), { modelTier: 'quick', cache: false });
+    aiBump();
+    const items = (Array.isArray(out) ? out : []).filter(o => o && typeof o.text === 'string' && o.text.trim())
+      .slice(0, 3).map(o => ({ angle: String(o.angle || 'Opener').slice(0, 40), text: o.text.trim().slice(0, 600) }));
+    if (!items.length) throw { code: 'invalid_json' };
+    a.ai_openers = { on: TODAY, at: new Date().toISOString(), items };
+    persist();
+  } catch (err) {
+    const code = err && err.code;
+    if (code && code !== 'cancelled' && code !== 'invalid_json' && code !== 'not_granted') aiBump();   // a call that reached Claude counts
+    aiState.msg[a.company] = AI_ERR[code] ?? AI_ERR.upstream_error;
+    if (code === 'not_granted') share.sample = null;
+  } finally {
+    aiState.busy = null; renderDrawer();
+  }
+});
+
 const DRAWER_TABS = {
   prep:    { label: 'Call prep', parts: ['s-notes', 's-who', 's-contacts', 's-hist'] },
   signals: { label: 'Signals', parts: ['s-zid', 's-pages', 's-kw', 's-zi', 's-trig', 's-news', 's-surge'] },
@@ -1877,7 +1966,7 @@ function renderDrawer() {
     content = `${parts['s-notes'] || ''}
       ${why.length ? `<div class="sec"><div class="dlabel">Why now</div><ul class="d-why">${why.map(r => `<li class="${r.t}">${r.html || esc(r.s)}</li>`).join('')}</ul></div>` : ''}
       ${['s-who', 's-contacts', 's-hist'].map(k => parts[k] || '').join('')}
-      <div class="opener"><div class="dlabel">Suggested openers</div>
+      <div class="opener"><div class="dlabel op-head"><span>Suggested openers</span>${aiBtnHtml(a)}</div>${aiBlockHtml(a)}
         ${plan.openers.map((o, k) => `<div class="op"><div class="op-angle">${esc(o.angle)}</div><p id="openerText${k}">${esc(o.text)}</p><button class="btn sm" data-copy="openerText${k}">Copy</button></div>`).join('')}
         ${plan.points.length ? `<div class="op-pts"><div class="op-angle">Talking points, newest first</div>${plan.points.map(t => `<div class="op-pt${t.muted ? ' muted' : ''}"><span class="d num">${t.date ? shortDate(t.date) : ''}</span><span><b>${esc(t.label)}</b> · ${esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}</div>` : ''}
         <div class="muted">Built from this account's latest events and signals, no AI. Edit to your voice.</div></div>`;
@@ -2672,7 +2761,7 @@ function cap(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slic
 // Editors' changes (Worked, notes, imports) republish it, and everyone with
 // the link sees the update. Viewers get a read-only mirror.
 // ═══════════════════════════════════════════════════════════════════════════
-const share = { mode: 'local', artifact: null, downloads: null, timer: null, sdr: false };   // sdr: an editor who isn't the owner (SDR notes + Worked only)
+const share = { mode: 'local', artifact: null, downloads: null, timer: null, sdr: false, sample: null };   // sdr: an editor who isn't the owner (SDR notes + Worked only)
 const canSave = () => share.mode === 'writer' || share.sdr;
 const isAE = () => share.mode !== 'reader';        // owner, or local file
 const isSDR = () => share.sdr || share.mode === 'local';
@@ -2706,7 +2795,7 @@ function restoreSessionUi() {
 
 async function initShare() {
   const use = n => window.claude.use(n).catch(() => null);
-  const [art, dl, user] = await Promise.all([use('artifact'), use('downloads'), use('user')]);
+  const [art, dl, user, smp] = await Promise.all([use('artifact'), use('downloads'), use('user'), use('sample')]);
   share.downloads = dl;
   if (!art || !PAGE_SRC) return;            // not running as a shared page: stay local
   share.artifact = art;
@@ -2716,7 +2805,9 @@ async function initShare() {
   try { owner = user && typeof user.isOwner === 'function' ? await user.isOwner() : canEdit; } catch (e) { owner = canEdit; }
   // Editors who aren't the owner (the SDR) get the read-only view plus SDR notes and Worked; owner tools stay with the owner
   share.sdr = canEdit && !owner;
+  share.sample = canEdit && owner ? smp : null;   // ✨ AI openers: owner only, on the owner's Claude account
   setShareMode(canEdit && owner ? 'writer' : 'reader');
+  if (share.sample) renderDrawer();
   initZi();
   initBf();
 }
