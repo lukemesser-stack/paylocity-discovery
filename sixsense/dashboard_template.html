@@ -470,6 +470,7 @@
   .soc-row.off .soc { opacity: .3; filter: grayscale(1); }
   .soc-row .soc-find { color: var(--text-dim); text-decoration: none; }
   .soc-row .soc-find:hover { color: var(--accent); text-decoration: underline; }
+  .vendor-pick { width: 100%; max-width: 360px; padding: 7px 10px; border-radius: 999px; font-size: 13px; }
   .soc-add { display: flex; gap: 6px; margin-top: 8px; }
   .soc-add .search { flex: 1 1 auto; min-width: 0; padding: 6px 10px; font-size: 12px; }
   .vendors { display: inline-flex; gap: 8px; align-items: center; }
@@ -1078,6 +1079,7 @@ const VENDOR_CANON = [[/\badp\b|automatic data|workforce now/i, 'ADP'], [/payche
   [/dayforce|ceridian/i, 'Dayforce'], [/paylocity/i, 'Paylocity'], [/gusto/i, 'Gusto'], [/workday/i, 'Workday'], [/bamboo/i, 'BambooHR']];
 function vendorCanon(name) { const n = String(name || '').trim(); const hit = VENDOR_CANON.find(([re]) => re.test(n)); return hit ? hit[1] : n; }
 function payrollVendors(a) {
+  if (a.vendor_manual) return [{ name: a.vendor_manual, source: 'set by you' + (isISO(String(a.vendor_manual_on || '').slice(0, 10)) ? ' on ' + fmtDate(String(a.vendor_manual_on).slice(0, 10)) : '') }];
   const out = new Map();
   for (const v of ((a.zi && a.zi.payroll_tech && a.zi.payroll_tech.vendors) || [])) out.set(v, 'ZoomInfo tech stack');
   for (const t of triggers(a)) if (t.kind === 'Vendor clue') { const m = t.text.match(/Likely uses ([^:]+):/); if (m && !out.has(m[1])) out.set(m[1], 'job-post site'); }
@@ -1293,6 +1295,7 @@ function mergeInto(ex, inc, mode) {
   if (inc.ai_openers && (inc.ai_openers.at || '') > ((ex.ai_openers && ex.ai_openers.at) || '')) ex.ai_openers = inc.ai_openers;
   if ((inc.social_manual_on || '') > (ex.social_manual_on || '')) { ex.social_manual = inc.social_manual; ex.social_manual_on = inc.social_manual_on; }
   if (inc.web_social && (inc.web_social.on || '') >= ((ex.web_social && ex.web_social.on) || '')) ex.web_social = inc.web_social;
+  if ((inc.vendor_manual_on || '') > (ex.vendor_manual_on || '')) { ex.vendor_manual = inc.vendor_manual || null; ex.vendor_manual_on = inc.vendor_manual_on; }
   if (inc.vendor_list && (inc.vendor_list_on || '') >= (ex.vendor_list_on || '')) { ex.vendor_list = inc.vendor_list; ex.vendor_list_on = inc.vendor_list_on; }
   if ((inc.top50_on || '') > (ex.top50_on || '')) { ex.top50 = !!inc.top50; ex.top50_on = inc.top50_on; }
   if (inc.past_process) { ex.past_process = true; if ((inc.past_process_on || '') > (ex.past_process_on || '')) ex.past_process_on = inc.past_process_on; }
@@ -1742,6 +1745,28 @@ function vendorHtml(a) {
   const title = esc('Payroll / HR vendor: ' + pv.map(v => `${v.name} (${v.source})`).join(', ') + '. Confirm in Salesforce.');
   return `<span class="vendors" title="${title}">${pv.map(v => VENDOR_LOGOS[v.name] ? `<img class="vlogo" src="${VENDOR_LOGOS[v.name]}" alt="${esc(v.name)}">` : `<span class="bdg">💼 ${esc(v.name)}</span>`).join('')}</span>`;
 }
+// Payroll vendor pull-down (owner): what you learn on a call overrides every other source
+const VENDOR_CHOICES = ['ADP', 'Paychex', 'Paycor', 'Paycom', 'UKG', 'isolved', 'Rippling', 'ProLiant', 'Dayforce', 'Paylocity',
+  'Gusto', 'Workday', 'BambooHR', 'QuickBooks', 'CompuPay', 'Insperity (PEO)', 'TriNet (PEO)', 'Justworks (PEO)', 'PEO (other)', 'In House', 'Other'];
+function vendorSectionHtml(a) {
+  const auto = (() => { const m = a.vendor_manual; a.vendor_manual = null; const v = payrollVendors(a); a.vendor_manual = m; return v; })();
+  const autoText = auto.length ? auto.map(v => `${v.name} (${v.source})`).join(', ') : 'nothing found yet';
+  const pick = share.mode !== 'reader'
+    ? `<select class="vendor-pick" data-vendor="${esc(a.company)}" aria-label="Payroll vendor"><option value="">Not set: use ${auto.length ? esc(auto.map(v => v.name).join(' / ')) : 'the automatic sources'}</option>${VENDOR_CHOICES.map(v => `<option ${a.vendor_manual === v ? 'selected' : ''}>${esc(v)}</option>`).join('')}${a.vendor_manual && !VENDOR_CHOICES.includes(a.vendor_manual) ? `<option selected>${esc(a.vendor_manual)}</option>` : ''}</select>`
+    : '';
+  return `<div class="dblock"><div class="dlabel">Payroll vendor</div>${vendorHtml(a) ? `<div style="margin-bottom:6px">${vendorHtml(a)}</div>` : ''}${pick}
+    <div class="muted" style="margin-top:4px">${a.vendor_manual ? `Set by you. Automatic sources say: ${esc(autoText)}.` : `From: ${esc(autoText)}.`}${share.mode !== 'reader' ? ' Learned something on a call? Pick it here and the card shows it.' : ''}</div></div>`;
+}
+document.addEventListener('change', e => {
+  const sel = e.target.closest('select[data-vendor]');
+  if (!sel || share.mode === 'reader') return;
+  const a = byName(sel.dataset.vendor);
+  if (!a) return;
+  a.vendor_manual = sel.value || null;
+  a.vendor_manual_on = new Date().toISOString();
+  persist(); render();
+  setSaveState(share.mode === 'writer' ? '' : 'ok', sel.value ? `${a.company}: payroll vendor set to ${sel.value}` : `${a.company}: back to the automatic vendor`);
+});
 function socialSectionHtml(a) {
   const have = new Map(socials(a).map(x => [x.k, x]));
   const name = opShortName(a);
@@ -2059,7 +2084,7 @@ document.addEventListener('click', async e => {
 const DRAWER_TABS = {
   prep:    { label: 'Call prep', parts: ['s-notes', 's-who', 's-contacts', 's-hist'] },
   signals: { label: 'Signals', parts: ['s-zid', 's-pages', 's-kw', 's-zi', 's-trig', 's-news', 's-surge'] },
-  company: { label: 'Company', parts: ['s-snap', 's-social', 's-bf'] },
+  company: { label: 'Company', parts: ['s-snap', 's-vendor', 's-social', 's-bf'] },
   history: { label: 'History', parts: ['s-score', 's-weeks', 's-sig', 's-dup', 's-remove'] },
 };
 function drawerList() { return sortList(filtered()); }
@@ -2168,7 +2193,7 @@ function detailParts(a) {
         ${sec('s-sig', `<div class="dblock muted">${a.signal_count} signals · ${a.web_visits} web visits · reach ${esc(a.reach || '?')}${a.source_files.length ? ` · ${a.source_files.length} source email${a.source_files.length === 1 ? '' : 's'}` : ''}</div>`)}
       </div>
       <div class="dcol">
-        ${sec('s-social', socialSectionHtml(a))}${sec('s-snap', a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} Company snapshot${a.zi.firmo.src === 'book' ? ' · from your prospect list' : ''}</div>
+        ${sec('s-vendor', vendorSectionHtml(a))}${sec('s-social', socialSectionHtml(a))}${sec('s-snap', a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} Company snapshot${a.zi.firmo.src === 'book' ? ' · from your prospect list' : ''}</div>
           <dl class="snap">
             <dt>Industry</dt><dd>${esc(a.zi.firmo.industry)}${a.zi.firmo.sub_industry ? ' · ' + esc(a.zi.firmo.sub_industry) : ''}</dd>
             <dt>Employees</dt><dd>${a.zi.firmo.employees ? Number(a.zi.firmo.employees).toLocaleString() : '—'}</dd>

@@ -143,6 +143,8 @@ def merge_into(dst, src):
         dst["social_manual"], dst["social_manual_on"] = src.get("social_manual") or {}, src["social_manual_on"]
     if src.get("web_social") and (src["web_social"].get("on") or "") >= ((dst.get("web_social") or {}).get("on") or ""):   # links read from their website
         dst["web_social"] = src["web_social"]
+    if (src.get("vendor_manual_on") or "") > (dst.get("vendor_manual_on") or ""):   # vendor the owner picked after a call
+        dst["vendor_manual"], dst["vendor_manual_on"] = src.get("vendor_manual"), src["vendor_manual_on"]
     if src.get("vendor_list") and (src.get("vendor_list_on") or "") >= (dst.get("vendor_list_on") or ""):   # owner's current-vendor list
         dst["vendor_list"], dst["vendor_list_on"] = src["vendor_list"], src.get("vendor_list_on")
     if (src.get("top50_on") or "") > (dst.get("top50_on") or ""):   # owner's Top 50 ABM mark
