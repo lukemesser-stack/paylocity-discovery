@@ -531,6 +531,12 @@
   .d-body .muted, .d-body .about { font-size: 12px; }
   .opener { background: var(--accent-dim); border-radius: 12px; padding: 12px 14px; }
   .opener p { font-size: 14px; line-height: 1.5; color: var(--text); margin: 4px 0 8px; }
+  .op + .op { border-top: 1px solid rgba(0,71,42,.12); margin-top: 10px; padding-top: 10px; }
+  .op-angle { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+  .op-pts { margin: 12px 0 6px; padding-top: 10px; border-top: 1px solid rgba(0,71,42,.12); display: flex; flex-direction: column; gap: 4px; }
+  .op-pt { display: grid; grid-template-columns: 44px 1fr; gap: 8px; font-size: 12px; color: var(--text); }
+  .op-pt .d { color: var(--text-dim); }
+  .op-pt a { color: var(--accent); text-decoration: none; font-weight: 600; }
   .d-why { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--text); }
   .d-why .hot { font-weight: 600; }
   .d-hint { font-size: 11px; color: var(--text-dim); text-align: right; padding: 0 18px 8px; }
@@ -1646,27 +1652,187 @@ function acctHtml(a) {
   </article>`;
 }
 
-// Suggested opener: built from rules and the account's own signals (no AI). Edit it to your voice.
-function openerText(a) {
+// ── Suggested openers: rules only, no AI. Built from the newest real event (leader, M&A, funding, news, hiring),
+// what their research usually means (never "we saw you researching"), and the payroll vendor. Never mentions page visits.
+// BenefitFlow renewal stays out of the openers; it's listed under talking points as optional.
+const OP_VENDORS = [
+  [/\badp\b|automatic data processing/i, 'ADP', 'paying for an add-on for every piece and getting a different rep every time they call'],
+  [/paychex/i, 'Paychex', 'outgrowing it once they pass a couple hundred people, with HR still living in spreadsheets'],
+  [/paycor/i, 'Paycor', 'reporting and integrations that take more workarounds than they should'],
+  [/\bukg\b|ultimate software|ultipro/i, 'UKG', 'a system that takes a specialist to keep running day to day'],
+  [/paycom/i, 'Paycom', 'more manual follow-up on HR’s side than they expected'],
+  [/rippling/i, 'Rippling', 'the bill climbing with every module, and support that’s hard to reach'],
+  [/gusto/i, 'Gusto', 'outgrowing it as headcount and states pile up'],
+  [/workday/i, 'Workday', 'a heavy system for a team their size'],
+  [/dayforce|ceridian/i, 'Dayforce', 'a lot of configuration just to keep it running'],
+  [/isolved/i, 'isolved', 'service that depends on which reseller they bought it from'],
+  [/insperity|trinet|justworks|vensure|oasis|\(peo\)/i, 'a PEO', 'PEO fees climbing as they grow, and wanting control of their own benefits'],
+  [/bamboohr/i, 'BambooHR', 'payroll and benefits bolted onto an HR tool'],
+];
+// What a research topic usually means, as a pain in plain words (topic-specific first, then broad themes)
+const OP_TOPIC_PAIN = [
+  [/cobra/i, 'COBRA and benefits continuation'],
+  [/\baca\b|affordable care/i, 'ACA tracking and filings'],
+  [/open enrollment|enrollment/i, 'open enrollment'],
+  [/401k|retirement/i, '401(k) deductions and contributions'],
+  [/learning|training|lms|pluralsight|canvas/i, 'training and compliance tracking'],
+  [/labor and employment|compliance|policy/i, 'keeping up with state labor rules'],
+  [/workforce management|scheduling|time|attendance/i, 'time and scheduling flowing into payroll'],
+  [/recruit|talent|candidate|applicant|onboard|on boarding/i, 'recruiting and onboarding'],
+  [/compensation|pay transparency|performance/i, 'comp planning and reviews'],
+  [/engagement|communication|retention|culture|recognition/i, 'keeping everyone informed and engaged'],
+  [/airbase|corporate card|expense|spend/i, 'expenses and corporate cards'],
+  [/benefit|insurance/i, 'benefits administration'],
+  [/payroll|hris|hcm|vendors and competitors/i, 'payroll and HR running on separate systems'],
+];
+const OP_DEFAULT_PAIN = 'HR, payroll and benefits running on separate systems';
+function opPain(a) {
+  const cands = [
+    ...ziRecent(a).map(t => t.topic),
+    ...zidItems(a).filter(it => isISO(it.date) && daysBetween(TODAY, it.date) <= 60 && /research/i.test(it.text) && !/competitor - /i.test(it.text)).map(it => it.text.replace(/^.*research(?:ing|ed)(?: intent topics:)?\s*/i, '')),
+    ...a.surge_topics.map(t => t.topic),
+    ...a.keywords.filter(k => !OP_VENDORS.some(([re]) => re.test(k))),
+  ];
+  for (const c of cands) { const hit = OP_TOPIC_PAIN.find(([re]) => re.test(c)); if (hit) return hit[1]; }
+  return OP_DEFAULT_PAIN;
+}
+function opVendor(a) {
+  const cur = payrollVendors(a).filter(v => !/paylocity/i.test(v.name)).map(v => OP_VENDORS.find(([re]) => re.test(v.name))).find(Boolean);
+  if (cur) return { name: cur[1], pain: cur[2], current: true };
+  const researched = [...a.competitor_keywords, ...zidAct(a, 60).map(it => (it.text.match(/competitor - (.+)$/i) || [])[1]).filter(Boolean), ...ziRecent(a).map(t => t.topic)];
+  for (const r of researched) { const v = OP_VENDORS.find(([re]) => re.test(r)); if (v) return { name: v[1], pain: v[2], current: false }; }
+  return null;
+}
+function opMonth(d, withYear) { return new Date(utc(d)).toLocaleString('en-US', { month: 'long', ...(withYear ? { year: 'numeric' } : {}), timeZone: 'UTC' }); }
+function opClean(a, s) {
+  let t = String(s || '').replace(/\s+/g, ' ').replace(/\s*\([^)]*,\s*United States\)\s*$/i, '').trim().replace(/\.$/, '');
+  for (const nm of [a.zi && a.zi.name, a.company]) if (nm && t.toLowerCase().startsWith(nm.toLowerCase() + ' ')) { t = t.slice(nm.length + 1); break; }
+  return t;
+}
+// Every recent dated event worth opening on, newest and strongest first
+function opEvents(a) {
+  const out = [], seen = new Set();
+  const add = e => { const k = (e.person || e.text).toLowerCase().slice(0, 50); if (seen.has(k)) return; seen.add(k); out.push(e); };
+  const age = d => isISO(d) ? daysBetween(TODAY, d) : null;
+  const hireKind = role => /controller|cfo|finance|accounting/i.test(role) ? 'finhire' : /\bhr\b|human resources|people|talent|benefits|payroll/i.test(role) ? 'hrhire' : /chief|president|\bvp\b|vice president/i.test(role) ? 'exechire' : 'hiring';
+  const z = a.zi || {};
+  for (const p of (z.new_leaders || [])) {
+    const g = leaderGroup(p.title); if (!g) continue;
+    add({ kind: 'leader', group: g, person: p.name, title: p.title, date: null, age: p.window_days <= 90 ? 30 : 120, label: 'New leader',
+      text: `${p.name} started as ${p.title} (last ${p.window_days <= 90 ? '90 days' : '6 months'})`,
+      hook: `Saw that ${p.name} recently came on as ${p.title}.` });
+  }
+  for (const it of zidItems(a)) {
+    const d = age(it.date); if (d == null || d > 60 || it.kind === 'noise') continue;
+    const t = it.text; let m;
+    if (/visited a webpage|research/i.test(t)) continue;   // never reference our site or their research
+    if ((m = t.match(/^(.+?),\s*(.+?),\s*has joined the company/i))) {
+      const g = leaderGroup(m[2]);
+      add({ kind: g ? 'leader' : 'team', group: g, person: m[1], title: m[2], date: it.date, age: d, label: g ? 'New leader' : 'New hire', text: `${m[1]} joined as ${m[2]}`,
+        hook: `Saw that ${m[1]} recently joined as ${m[2]}.` });
+    } else if ((m = t.match(/^Funding:\s*(.+?)(?: on (\d{1,2})\/(\d{1,2})\/(\d{4}))?$/i))) {
+      const when = m[4] ? opMonth(`${m[4]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`) : '';
+      add({ kind: 'funding', date: it.date, age: d, label: 'Funding', text: t, hook: `Congrats on the ${m[1].replace(/ in /i, ' ').toLowerCase().replace(/\$(\S+)/, '$$$1')} financing${when ? ' in ' + when : ''}.` });
+    } else if ((m = t.match(/more open roles in (.+?) than/i))) {
+      add({ kind: 'hiring', date: it.date, age: d, label: 'Hiring push', text: t.replace(/^Hiring Plans:\s*/i, '').replace(/\.\s.*$/, '.'), hook: `Looks like you’re hiring more in ${m[1]} than at any point this year.` });
+    } else if ((m = t.match(/Mergers & Acquisitions \(M&A\):\s*(.+)$/i))) {
+      add({ kind: 'mna', date: it.date, age: d, label: 'M&A', text: m[1], hook: `Saw the news that ${opClean(a, m[1])}.` });
+    } else if (/appointed|named|promoted/i.test(t)) {
+      add({ kind: 'leadnews', date: it.date, age: d, label: 'Leadership news', text: t, hook: `Saw the news that ${opClean(a, t)}.` });
+    } else if (/departed the company/i.test(t)) {
+      add({ kind: 'departure', date: it.date, age: d, label: 'Departure', text: t, hook: null });
+    }
+  }
+  for (const sc of (z.scoops || [])) {
+    const d = age(sc.date); if (d != null && d > 120) continue;
+    const types = (sc.types || []).join(' '), s = opClean(a, sc.summary); let m;
+    if (!s) continue;
+    if (/open position/i.test(types) && (m = s.match(/seeking (?:an? )?(.+)$/i))) {
+      add({ kind: hireKind(m[1]), role: m[1], date: sc.date, age: d ?? 60, label: 'Open role', text: `Hiring: ${m[1]}`, link: sc.link, hook: `Saw you’re hiring a ${m[1]}.` });
+    } else if (/hiring plans/i.test(types) && (m = s.match(/more open roles in (.+?) than/i))) {
+      add({ kind: 'hiring', date: sc.date, age: d ?? 60, label: 'Hiring push', text: s.replace(/\.\s.*$/, '.'), link: sc.link, hook: `Looks like you’re hiring more in ${m[1]} than at any point this year.` });
+    } else if (EXEC_SCOOP.test(types) || /\bappointed\b.+\bas\b|\bnamed\b.+\bas\b|promoted to|has joined (the|as)\b/i.test(s)) {
+      add({ kind: 'leadnews', date: sc.date, age: d ?? 60, label: 'Leadership news', text: s, link: sc.link, hook: `Saw the news that ${s.replace(/\bits\b/, 'your')}.` });
+    } else {
+      // other ZoomInfo person-based news: a hook only when it's a real company move, otherwise a talking point
+      const move = /\b(launch|open(s|ed|ing)|expan|acquir|award|partner|announc|celebrat|new location|grand opening)/i.test(s);
+      add({ kind: 'news', date: sc.date, age: d ?? 60, label: 'News', text: s, link: sc.link, hook: move ? `Saw that ${s.replace(/\bits\b/g, 'your')}.` : null });
+    }
+  }
+  for (const n of newsItems(a, 365)) {
+    const d = age(n.date), mna = MNA.test(n.title + ' ' + (n.summary || ''));
+    if (d > (mna ? 365 : 90)) continue;
+    const title = n.title.replace(/\s*(\.\.\.|…)\s*$/, '').replace(/[\s:,;.\-–]+$/, '').trim();
+    const kind = mna ? 'mna' : /earnings|quarterly results|\bq[1-4]\b|fiscal/i.test(title) ? 'earnings' : /expand|opens|opening|new (location|office|facility|plant|headquarters)|relocat/i.test(n.title) ? 'expansion'
+      : /raises|funding|investment|series [a-e]\b|capital/i.test(n.title) ? 'funding' : 'news';
+    add({ kind, date: n.date, age: d, label: mna ? 'Acquisition' : 'News', text: title, link: n.url,
+      hook: kind === 'earnings' ? `Saw the highlights from your latest earnings call.` : `Saw ${d > 90 ? 'the ' + opMonth(n.date, true) : 'your ' + opMonth(n.date)} news, “${title.replace(/[”"]+$/, '')}.”` });
+  }
+  for (const x of bfSignals(a)) {
+    const d = age(x.date);
+    if (!['funding_event', 'linkedin_headcount_growth', 'job_openings_surge'].includes(x.type) || d == null || d > 120) continue;
+    add({ kind: x.type === 'funding_event' ? 'funding' : 'growth', date: x.date, age: d, label: 'BenefitFlow signal', text: x.label,
+      hook: x.type === 'funding_event' ? 'Congrats on the recent funding.' : x.type === 'job_openings_surge' ? 'Looks like you’re hiring at a good clip right now.' : 'Looks like the team has been growing fast.' });
+  }
+  const pen = { leader: 0, mna: 0, funding: 4, earnings: 10, leadnews: 6, expansion: 6, finhire: 8, hrhire: 8, exechire: 10, news: 12, hiring: 14, team: 24, growth: 28, departure: 99 };
+  return out.sort((x, y) => (x.age + (pen[x.kind] ?? 30)) - (y.age + (pen[y.kind] ?? 30)));
+}
+const OP_FIN_PAIN = 'payroll costs, reporting and the manual work behind them';
+function opBridge(e, pain) {
+  if ((e.group === 'Finance' || e.kind === 'finhire') && !/payroll|benefit|aca|401|expense|separate systems/i.test(pain)) pain = OP_FIN_PAIN;
+  switch (e.kind) {
+    case 'leader': return `New ${e.group === 'Executive' ? '' : e.group === 'HR' ? 'HR ' : e.group.toLowerCase() + ' '}leaders usually take a hard look at ${pain}.`;
+    case 'leadnews': return `Leadership changes are usually when ${pain} gets a fresh look.`;
+    case 'exechire': return `Senior hires usually come with a push to tighten things up, and ${pain} tends to be on that list.`;
+    case 'earnings': return `Public-company reporting puts a lot of weight on clean people data, and ${pain} is often where it gets messy.`;
+    case 'news': return `Moments like that put more weight on the people side, and ${pain} is usually where it shows.`;
+    case 'mna': return `Bringing teams together usually means two payroll setups and two benefits plans to merge, and ${pain} gets harder before it gets easier.`;
+    case 'funding': return `New capital usually comes with hiring plans, and that’s when ${pain} starts to slow things down.`;
+    case 'expansion': return `New locations bring new state tax and labor rules, on top of ${pain}.`;
+    case 'finhire': return `When a new ${e.role} comes in, ${pain} is usually near the top of their cleanup list.`;
+    case 'hrhire': return `Whoever steps into that ${e.role} role usually inherits ${pain}, and wants it fixed fast.`;
+    case 'hiring': return `Hiring at that pace is usually where ${pain} starts to hurt.`;
+    default: return `Growth like that tends to put pressure on the people side, especially ${pain}.`;
+  }
+}
+function opShortName(a) { return String((a.zi && a.zi.name) || a.company).replace(/,?\s+(inc|llc|l\.l\.c|ltd|corp|co|company|corporation|incorporated|lp|llp|pllc|pa)\.?$/i, '').trim(); }
+// Returns { openers: [{ angle, text }], points: [{ date, label, text, link, muted }] }
+function openerPlan(a) {
   const buyer = buyers(a)[0];
   const first = buyer ? buyer.name.split(' ')[0] : '';
-  const vis = recentVisits(a, 90);
-  const bits = [];
-  const paths = vis.filter(u => pageKind(u) === 'hand').map(u => pagePath(u.decoded || u.raw));
-  const named = [['demo', /demo/], ['pricing', /pricing|quote/], ['contact', /contact/]].filter(([, re]) => paths.some(x => re.test(x))).map(([n]) => n);
-  if (named.length) bits.push(`noticed your team looking at our ${named.join(' and ')} page${named.length > 1 ? 's' : ''}`);
-  else if (vis.length) bits.push('saw your team checking out our HR and payroll resources');
-  if (a.competitor_keywords.length) bits.push(`comparing options like ${a.competitor_keywords.slice(0, 2).join(' and ')}`);
-  else { const z = ziRecent(a)[0]; if (z) bits.push(`looking into ${shortTopic(z.topic)}`); }
-  const tr = triggers(a).find(t => t.kind === 'Acquisition' || t.kind === 'Leadership change');
-  const rn = bfRenewal(a);
-  const month = rn ? new Date(utc(rn.date)).toLocaleString('en-US', { month: 'long', timeZone: 'UTC' }) : '';
-  const pv = payrollVendors(a).find(v => !/paylocity/i.test(v.name));
-  let s1 = bits.length ? `I ${bits.join(' and ')}.` : `I work with HR and finance leaders at companies like ${a.zi && a.zi.name || a.company} on payroll, HR and benefits.`;
-  if (tr && bits.length < 2) s1 += tr.kind === 'Acquisition' ? ' With the recent acquisition, I imagine HR and payroll are on the list to sort out.' : ' Saw the recent leadership change, too.';
-  const s2 = rn && rn.days <= 180 ? `With your benefits renewing in ${month}, is it worth 15 minutes to see how we'd bring HR, payroll and benefits into one place?`
-    : pv ? `Curious how ${pv.name} is working for you. Worth 15 minutes to compare notes?` : 'Worth 15 minutes to compare notes?';
-  return `${first ? 'Hi ' + first + ', ' : 'Hi, '}${s1} ${s2}`;
+  const hi = first ? `Hi ${first}, ` : 'Hi, ';
+  const pain = opPain(a), vendor = opVendor(a), events = opEvents(a);
+  const vName = vendor && vendor.name === 'a PEO' ? 'your PEO' : vendor && vendor.name;
+  const ask = vendor && vendor.current ? `Is ${vName} keeping up with that, or is it starting to feel like a workaround?` : 'How are you handling that today?';
+  const lc = t => t.charAt(0).toLowerCase() + t.slice(1);
+  const openers = [];
+  const ev = events.find(e => e.hook);
+  if (ev) {
+    const isThem = buyer && ev.person && buyer.name.toLowerCase() === ev.person.toLowerCase();
+    const hook = isThem ? `Congrats on stepping into the ${ev.title} role.` : ev.hook;
+    const mna = ev.kind !== 'mna' && events.find(e => e.kind === 'mna');
+    const bridge = mna ? 'On top of the acquisition, ' + lc(opBridge(ev, pain)) : opBridge(ev, pain);
+    openers.push({ angle: `Latest event · ${ev.label}${ev.date ? ' ' + shortDate(ev.date) : ''}`, text: `${hi}${lc(hook)} ${bridge} ${ask}` });
+  }
+  const f = (a.zi && a.zi.firmo) || {};
+  const ind = f.sub_industry || f.industry, emp = Number(f.employees) || 0;
+  const indLc = ind ? String(ind).split(' ').map(w => /^[A-Z&]{2,4}$/.test(w) ? w : w.toLowerCase()).join(' ') : '';
+  const size = emp ? `${emp < 100 ? Math.round(emp / 10) * 10 : Math.round(emp / 50) * 50}-person` : '';
+  const state = (String(f.hq || '').split(',')[1] || '').trim();
+  openers.push({ angle: 'Industry', text: `${hi}I talk with a lot of ${state ? state + ' ' : ''}companies ${size ? 'your size' : 'like yours'}${indLc ? ' in ' + indLc : ''}, and ${pain} keeps coming up. Is that on your radar at ${opShortName(a)}, or is it handled?` });
+  if (vendor) openers.push({ angle: vendor.current ? `Competitor · on ${vendor.name}` : `Competitor · ${vendor.name}`,
+    text: vendor.current ? `${hi}teams your size on ${vendor.name} often tell us it’s ${vendor.pain}. How’s it working for you these days?`
+      : `${hi}a lot of teams your size are on ${vendor.name}, and what we hear most is ${vendor.pain}. What are you running payroll on today, and is it keeping up?` });
+
+  const points = events.map(e => ({ date: e.date, label: e.label, text: e.text, link: e.link }));
+  const zt = ziRecent(a).slice(0, 3);
+  if (zt.length) points.push({ label: 'Researching (don’t mention)', text: zt.map(t => `${shortTopic(t.topic)} ${t.score}`).join(' · '), date: zt[0].date });
+  const comp = [...new Set([...a.competitor_keywords, ...zidAct(a, 60).map(it => (it.text.match(/competitor - (.+)$/i) || [])[1]).filter(Boolean)])];
+  if (comp.length) points.push({ label: 'Comparing (don’t mention)', text: comp.slice(0, 4).join(', ') });
+  const pv = payrollVendors(a);
+  if (pv.length) points.push({ label: 'Payroll vendor', text: pv.map(v => `${v.name} (${v.source})`).join(', ') + '. Confirm in Salesforce.' });
+  if (bfRenewal(a)) points.push({ label: 'If useful', text: bfRenewalText(a) + (a.bf.broker ? ` · broker ${a.bf.broker}` : ''), muted: true });
+  return { openers, points };
 }
 
 const DRAWER_TABS = {
@@ -1692,8 +1858,11 @@ function renderDrawer() {
   let content = DRAWER_TABS[ui.dtab].parts.map(k => parts[k] || '').join('');
   if (ui.dtab === 'prep') {
     const why = [...zidAct(a).map(it => ({ t: 'hot', s: `ZoomInfo digest ${shortDate(it.date)}: ${it.text}` })), ...reasons(a)];
-    content = `<div class="opener"><div class="dlabel">Suggested opener</div><p id="openerText">${esc(openerText(a))}</p>
-        <button class="btn sm" data-copy="openerText">Copy</button> <span class="muted">Built from this account's signals. Edit to your voice.</span></div>
+    const plan = openerPlan(a);
+    content = `<div class="opener"><div class="dlabel">Suggested openers</div>
+        ${plan.openers.map((o, k) => `<div class="op"><div class="op-angle">${esc(o.angle)}</div><p id="openerText${k}">${esc(o.text)}</p><button class="btn sm" data-copy="openerText${k}">Copy</button></div>`).join('')}
+        ${plan.points.length ? `<div class="op-pts"><div class="op-angle">Talking points, newest first</div>${plan.points.map(t => `<div class="op-pt${t.muted ? ' muted' : ''}"><span class="d num">${t.date ? shortDate(t.date) : ''}</span><span><b>${esc(t.label)}</b> · ${esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}</div>` : ''}
+        <div class="muted">Built from this account's latest events and signals, no AI. Edit to your voice.</div></div>
       ${parts['s-notes'] || ''}
       ${why.length ? `<div class="sec"><div class="dlabel">Why now</div><ul class="d-why">${why.map(r => `<li class="${r.t}">${r.html || esc(r.s)}</li>`).join('')}</ul></div>` : ''}
       ${['s-who', 's-contacts', 's-hist'].map(k => parts[k] || '').join('')}`;
