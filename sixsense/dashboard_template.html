@@ -465,6 +465,8 @@
   .a-l3 .when { color: var(--text-dim); }
   .bdg { font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--border); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
   .bdg.warn { color: var(--b); background: var(--b-dim); box-shadow: none; }
+  button.bdg-x { font-family: inherit; border: 0; cursor: pointer; line-height: inherit; }
+  button.bdg-x:hover { filter: brightness(0.92); text-decoration: line-through; }
   .bdg.new { color: var(--green); background: var(--green-dim); box-shadow: none; }
   .sigs { display: inline-flex; gap: 3px; }
   .sigs i { font-style: normal; font-size: 10px; font-weight: 700; min-width: 30px; text-align: center; padding: 1px 4px; border-radius: 5px;
@@ -1249,6 +1251,8 @@ function mergeInto(ex, inc, mode) {
   if (inc.past_process) { ex.past_process = true; if ((inc.past_process_on || '') > (ex.past_process_on || '')) ex.past_process_on = inc.past_process_on; }
   for (const f of ['removed_at', 'restored_at']) if ((inc[f] || '') > (ex[f] || '')) ex[f] = inc[f];
   if (inc.book && !ex.book) ex.book = inc.book;
+  if (inc.book_ok_on && !ex.book_ok_on) ex.book_ok_on = inc.book_ok_on;
+  if (inc.dup_ok) ex.dup_ok = union(ex.dup_ok, inc.dup_ok);
   if (inc.zid) { const have = new Set((ex.zid || []).map(e => e.date)); ex.zid = [...(ex.zid || []), ...inc.zid.filter(e => !have.has(e.date))]; }
 }
 
@@ -1491,7 +1495,14 @@ function renderTable() {
 let bookLoaded = false;                       // set each render: true once a prospect list has been imported
 const ZID_FRESH_DAYS = 14;                    // a digest signal counts as current for two weeks
 function inBook(a) { return !!a.book; }
-function notMine(a) { return bookLoaded && !a.book; }
+function notMine(a) { return bookLoaded && !a.book && !a.book_ok_on; }
+// possible duplicates the owner hasn't cleared
+function dupList(a) { const ok = new Set(a.dup_ok || []); return a.possible_duplicate_of.filter(n => !ok.has(n)); }
+// owner / editors can click a warning badge to clear it
+function clearBadge(kind, a, label, title) {
+  if (share.mode === 'reader') return `<span class="bdg warn" title="${esc(title)}">${label}</span>`;
+  return `<button type="button" class="bdg warn bdg-x" data-stop data-clearbadge="${kind}" data-name="${esc(a.company)}" title="${esc(title)}. Click to clear.">${label} <span aria-hidden="true">×</span></button>`;
+}
 // Every digest line for the account, oldest digest first, marked new the first week it appears
 function zidItems(a) {
   const seen = new Set(), out = [];
@@ -1567,7 +1578,7 @@ function badges(a) {
   const rn = bfRenewal(a);
   const agree = sourcesAgree(a);
   return [
-    notMine(a) ? '<span class="bdg warn" title="Not on your ZoomInfo prospect list. Keep it, or remove it from History.">Not in my book</span>' : '',
+    notMine(a) ? clearBadge('book', a, 'Not in my book', 'Not on your ZoomInfo prospect list') : '',
     pv.some(v => /paylocity/i.test(v.name)) ? '<span class="bdg warn" title="ZoomInfo detects Paylocity: check Salesforce before calling">⚠ May be a client</span>' : '',
     agree.length >= 2 ? `<span class="bdg agree" title="${esc(agree.join(' + '))} all point to this account right now">✓ ${agree.length} sources</span>` : '',
     a.past_process ? '<span class="bdg" title="Previous sales process: see notes">★ Past deal</span>' : '',
@@ -1576,7 +1587,7 @@ function badges(a) {
     pv.length && !pv.some(v => /paylocity/i.test(v.name)) ? `<span class="bdg" title="Payroll/HR vendor. Confirm in Salesforce.">💼 ${esc(pv.map(v => v.name).join(' / '))}</span>` : '',
     a.six_qa_on ? `<span class="bdg" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
     a.zi && a.zi.note ? `<span class="bdg warn" title="${esc(a.zi.note)}">Check fit</span>` : '',
-    a.possible_duplicate_of.length ? `<span class="bdg warn" title="Possible duplicate of ${esc(a.possible_duplicate_of.join(', '))}">Dup?</span>` : '',
+    dupList(a).length ? clearBadge('dup', a, 'Dup?', `Possible duplicate of ${dupList(a).join(', ')}`) : '',
   ].filter(Boolean);
 }
 // The few strongest reasons to call right now, in plain words
@@ -1809,7 +1820,7 @@ function detailParts(a) {
       <div class="dcol">
         ${sec('s-contacts', contacts ? `<div class="dblock"><div class="dlabel">Known contacts</div><div style="font-size:12px">${contacts}</div></div>` : '')}
         ${sec('s-dup', (a.aliases.length ? `<div class="dblock"><div class="dlabel">Also appears as</div><div class="muted">${esc(a.aliases.join(' · '))}</div></div>` : '') +
-          (a.possible_duplicate_of.length ? `<div class="dblock"><div class="dlabel">Possible duplicate of</div><div class="muted">${esc(a.possible_duplicate_of.join(' · '))}. Confirm, then add to ALIASES in optimize_sixsense.py.</div></div>` : ''))}
+          (dupList(a).length ? `<div class="dblock"><div class="dlabel">Possible duplicate of</div><div class="muted">${esc(dupList(a).join(' · '))}. Confirm, then add to ALIASES in optimize_sixsense.py.</div></div>` : ''))}
         ${sec('s-hist', `<div class="dblock"><div class="dlabel">Previous sales process${a.past_process && a.past_process_on ? ' · marked ' + fmtDate(a.past_process_on) : ''}</div>
           ${share.mode === 'reader'
             ? (a.past_process ? '<div class="muted">Yes: details are in Notes.</div>' : '<div class="muted">No previous sales process.</div>')
@@ -2037,6 +2048,18 @@ document.addEventListener('click', e => {
   partitionRemoved();
   persist(); render();
   setSaveState(share.mode === 'writer' ? '' : 'ok', `Removed ${name}. Restore it from Removed accounts at the bottom.`);
+});
+// Clear a "Not in my book" or "Dup?" badge (owner / editors): one click, saved for everyone
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-clearbadge]');
+  if (!b || share.mode === 'reader') return;
+  e.stopPropagation();
+  const a = byName(b.dataset.name);
+  if (!a) return;
+  if (b.dataset.clearbadge === 'book') a.book_ok_on = TODAY;
+  else a.dup_ok = uniqSorted([...(a.dup_ok || []), ...a.possible_duplicate_of]);
+  persist(); render();
+  setSaveState(share.mode === 'writer' ? '' : 'ok', `Cleared "${b.dataset.clearbadge === 'book' ? 'Not in my book' : 'Dup?'}" on ${a.company}`);
 });
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-hist]');
