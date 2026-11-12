@@ -271,6 +271,11 @@
   .bd-sum b { color: var(--text); font-weight: 600; }
   .filters { display: contents; }
   .m-work { display: none; }
+  .rm-btn:hover { border-color: var(--a); color: var(--a); }
+  .rm-btn.armed { border-color: var(--a); color: var(--on-accent); background: var(--a); }
+  .removed-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 13px; }
+  .removed-row:first-child { border-top: 0; }
+  #removedPanel summary { cursor: pointer; font-weight: 600; font-size: 13px; }
   /* Desktop table: let long cells wrap so Next step and Worked stay on screen */
   td.td-co { max-width: 300px; }
   td.td-co .co { flex-wrap: wrap; row-gap: 3px; }
@@ -378,7 +383,7 @@
     .sec { min-width: 0; }
     .s-who { order: 1; } .s-trig { order: 2; } .s-notes { order: 3; } .s-hist { order: 4; } .s-contacts { order: 5; }
     .s-bf { order: 6; } .s-snap { order: 7; } .s-news { order: 8; } .s-pages { order: 9; } .s-kw { order: 10; }
-    .s-zi { order: 11; } .s-surge { order: 12; } .s-dup { order: 13; } .s-score { order: 14; } .s-weeks { order: 15; } .s-sig { order: 16; }
+    .s-zi { order: 11; } .s-surge { order: 12; } .s-dup { order: 13; } .s-score { order: 14; } .s-weeks { order: 15; } .s-sig { order: 16; } .s-remove { order: 17; }
 
     /* One font and three sizes in the detail: 11px labels, 13px text, 15px names */
     .snap, .trig-row, .news-row, .buyer-row, .zi-row, .pages, .about, .muted, .hist-text, .bd-sum, .careers, .rev { font-size: 13px !important; font-family: var(--font) !important; }
@@ -488,6 +493,8 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+
+  <section id="removedPanel" class="panel hidden" aria-label="Removed accounts"></section>
 </div>
 
 <footer id="footer"></footer>
@@ -939,6 +946,15 @@ function reasons(a) {
 // Store + merge
 // ═══════════════════════════════════════════════════════════════════════════
 let accounts = [];          // array of account objects (each has .priority)
+let removedAccounts = [];   // accounts the owner removed: kept (so later emails merge into them and stay hidden), never shown
+const removeArm = { name: null, timer: null };   // two-click confirm for 🗑 Remove account
+function isRemoved(a) { return !!a.removed_at && a.removed_at > (a.restored_at || ''); }
+function allAccounts() { return [...accounts, ...removedAccounts]; }
+function partitionRemoved() {
+  const all = allAccounts();
+  accounts = all.filter(a => !isRemoved(a));
+  removedAccounts = all.filter(isRemoved).sort((x, y) => (y.removed_at || '').localeCompare(x.removed_at || ''));
+}
 const NAME_SUFFIXES = ['incorporated', 'company', 'corporation', 'inc', 'llc', 'corp', 'ltd', 'co'];
 function normName(name) {
   let s = String(name || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -953,15 +969,15 @@ function domainOf(url) { return String(url || '').toLowerCase().replace(/^https?
 
 function findExisting(inc) {
   const names = [inc.company, ...(inc.aliases || [])];
-  // 1) exact company / alias match
-  for (const a of accounts) {
+  // 1) exact company / alias match (removed accounts included, so their emails stay hidden)
+  for (const a of allAccounts()) {
     const own = [a.company, ...(a.aliases || [])];
     if (names.some(n => own.includes(n))) return a;
   }
   // 2) normalized name match, only when websites agree (or one is missing)
   const keys = new Set(names.map(normName));
   const dom = domainOf(inc.website);
-  for (const a of accounts) {
+  for (const a of allAccounts()) {
     const own = [a.company, ...(a.aliases || [])].map(normName);
     if (!own.some(k => keys.has(k))) continue;
     const d2 = domainOf(a.website);
@@ -1007,6 +1023,7 @@ function mergeInto(ex, inc, mode) {
   if (!ex.notes && inc.notes) ex.notes = inc.notes;
   if (inc.past_process) { ex.past_process = true; if ((inc.past_process_on || '') > (ex.past_process_on || '')) ex.past_process_on = inc.past_process_on; }
   if (!ex.history_note && inc.history_note) ex.history_note = inc.history_note;
+  for (const f of ['removed_at', 'restored_at']) if ((inc[f] || '') > (ex[f] || '')) ex[f] = inc[f];
 }
 
 // mode 'snapshot': a cumulative JSON (re-loading is a no-op). mode 'increment': one newly parsed email.
@@ -1020,14 +1037,15 @@ function ingest(data, mode) {
     if (ex) { mergeInto(ex, inc, mode); merged++; }
     else { accounts.push(inc); added++; }
   }
+  partitionRemoved();
   rescore();
   return { added, merged };
 }
 
-function rescore() { accounts.forEach(a => { a.priority = score(a); }); }
+function rescore() { allAccounts().forEach(a => { a.priority = score(a); }); }
 
 function toObject() {
-  const sorted = accounts.slice().sort((x, y) => y.priority.score - x.priority.score || x.company.localeCompare(y.company));
+  const sorted = allAccounts().sort((x, y) => y.priority.score - x.priority.score || x.company.localeCompare(y.company));
   const out = {};
   sorted.forEach(a => { out[a.company] = a; });
   return out;
@@ -1136,6 +1154,19 @@ function render() {
   renderStats();
   renderFocus();
   renderTable();
+  renderRemoved();
+}
+
+function renderRemoved() {
+  const el = document.getElementById('removedPanel');
+  if (!el) return;
+  if (share.mode === 'reader' || !removedAccounts.length) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  el.classList.remove('hidden');
+  const open = el.querySelector('details') && el.querySelector('details').open;
+  el.innerHTML = `<details ${open ? 'open' : ''}><summary>Removed accounts (${removedAccounts.length})</summary>
+    <div class="muted" style="margin:6px 0 4px">Only you see this list. Your SDR doesn't see these accounts.</div>
+    ${removedAccounts.map(a => `<div class="removed-row"><span><b>${esc(a.company)}</b> <span class="muted">${a.website ? esc(domainOf(a.website)) + ' · ' : ''}removed ${fmtDate(String(a.removed_at).slice(0, 10))}</span></span><button class="btn sm" data-unremove="${esc(a.company)}">↩ Restore</button></div>`).join('')}
+  </details>`;
 }
 
 function renderHeader() {
@@ -1147,7 +1178,7 @@ function renderHeader() {
   document.getElementById('subline').innerHTML =
     `Scored for <b>${fmtDate(TODAY)}</b> · activity ${esc(range)} · <b>${accounts.length}</b> accounts${esc(updText)}`;
   document.getElementById('footer').textContent =
-    `${accounts.length} accounts · ${files} source emails · score = recency 25 + momentum 15 + stage 20 + fit 15 + pages 15 + volume 5 + competitor 5 (+2 known contact). Tier A ≥ 65, B ≥ 45, C ≥ 28; silent 60+ days caps at C.`;
+    `${accounts.length} accounts${removedAccounts.length ? ` (${removedAccounts.length} removed)` : ''} · ${files} source emails · score = recency 25 + momentum 15 + stage 20 + fit 15 + pages 15 + volume 5 + competitor 5 (+2 known contact). Tier A ≥ 65, B ≥ 45, C ≥ 28; silent 60+ days caps at C.`;
   document.title = `Target Now · ${fmtDate(TODAY)}`;
 }
 
@@ -1350,6 +1381,9 @@ function detailHtml(a) {
             : `<button class="btn sm hist-btn ${a.past_process ? 'on' : ''}" data-hist="${esc(a.company)}">${a.past_process ? '★ Past sales process (click to remove)' : '☆ Mark as past sales process'}</button>
                ${a.past_process ? `<textarea class="notes" style="margin-top:6px" id="hist-${esc(slug(a.company))}" data-histnote="${esc(a.company)}" placeholder="Sales history for your SDR: when you engaged, who you worked with, why it stalled or was lost, competitor they chose, contract or renewal timing…">${esc(a.history_note || '')}</textarea>` : ''}`}
         </div>`)}
+        ${share.mode === 'reader' ? '' : sec('s-remove', `<div class="dblock"><div class="dlabel">Not your account?</div>
+          <button class="btn sm rm-btn ${removeArm.name === a.company ? 'armed' : ''}" data-remove="${esc(a.company)}">${removeArm.name === a.company ? 'Click again to remove' : '🗑 Remove account'}</button>
+          <div class="muted" style="margin-top:4px">Hides it for you and your SDR. Later 6sense emails about it stay hidden. Restore it from "Removed accounts" at the bottom of the page.</div></div>`)}
         ${sec('s-notes', `<div class="dblock"><div class="dlabel">Notes</div>
           <textarea class="notes" id="notes-${esc(slug(a.company))}" data-notes="${esc(a.company)}" ${share.mode === 'reader' ? 'readonly' : ''} placeholder="${share.mode === 'reader' ? 'No notes yet' : 'Call notes, next step, who you spoke with…'}">${esc(a.notes || '')}</textarea>
           <div class="muted" style="margin-top:4px">${isISO(a.worked_on) ? 'Last worked ' + fmtDate(a.worked_on) : 'Not worked yet'}</div></div>`)}
@@ -1505,6 +1539,38 @@ document.addEventListener('click', e => {
   }
 });
 
+// Remove account (owner / editors only): two clicks, then hidden for everyone. Restore from the list at the bottom.
+document.addEventListener('click', e => {
+  const rm = e.target.closest('[data-remove]');
+  const un = e.target.closest('[data-unremove]');
+  if ((!rm && !un) || share.mode === 'reader') return;
+  e.stopPropagation();
+  if (un) {
+    const a = removedAccounts.find(x => x.company === un.dataset.unremove);
+    if (!a) return;
+    a.restored_at = new Date().toISOString();
+    partitionRemoved();
+    persist(); render();
+    setSaveState(share.mode === 'writer' ? '' : 'ok', `Restored ${a.company}`);
+    return;
+  }
+  const name = rm.dataset.remove;
+  clearTimeout(removeArm.timer);
+  if (removeArm.name !== name) {
+    removeArm.name = name;
+    removeArm.timer = setTimeout(() => { removeArm.name = null; renderTable(); }, 5000);
+    renderTable();
+    return;
+  }
+  removeArm.name = null;
+  const a = byName(name);
+  if (!a) return;
+  a.removed_at = new Date().toISOString();
+  ui.open.delete(name);
+  partitionRemoved();
+  persist(); render();
+  setSaveState(share.mode === 'writer' ? '' : 'ok', `Removed ${name}. Restore it from Removed accounts at the bottom.`);
+});
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-hist]');
   if (!b || share.mode === 'reader') return;
@@ -1638,14 +1704,14 @@ document.getElementById('restoreInput').addEventListener('change', async e => {
   if (!f) return;
   try {
     const data = JSON.parse(await f.text());
-    accounts = [];
+    accounts = []; removedAccounts = [];
     ingest(data, 'snapshot');
     persist(); render();
     log('ok', `✓ Restored ${esc(f.name)}: ${accounts.length} accounts`);
   } catch (err) { log('err', `✗ ${esc(f.name)}: ${esc(err.message)}`); }
 });
 
-function loadedFiles() { return new Set(accounts.flatMap(a => a.source_files)); }
+function loadedFiles() { return new Set(allAccounts().flatMap(a => a.source_files)); }
 function stagedFiles() { return new Set(staged.flatMap(s => s.files || [])); }
 
 async function handleFiles(fileList) {
@@ -1699,19 +1765,20 @@ async function applyStaged() {
   applyBtn.disabled = true;
   const before = new Map(accounts.map(a => [a.company, a.priority.score]));
   let added = 0, merged = 0;
-  const touched = new Set();
+  const touched = new Set(), hiddenHits = new Set();
   for (const s of staged) {
     const r = ingest(s.data, s.mode); added += r.added; merged += r.merged;
     for (const raw of Object.values(s.data || {})) {
       if (!raw || !raw.company) continue;
       const a = findExisting(clean(raw));
-      if (a) touched.add(a);
+      if (a && !isRemoved(a)) touched.add(a); else if (a) hiddenHits.add(a.company);
     }
   }
   staged = [];
   render();
   const jumped = accounts.filter(a => before.has(a.company) && a.priority.score - before.get(a.company) >= 10).map(a => a.company);
   log('ok', `✓ Applied: ${added} new accounts, ${merged} updated.${jumped.length ? ' Big movers: ' + esc(jumped.slice(0, 5).join(', ')) : ''}`);
+  if (hiddenHits.size) log('info', `Kept hidden (you removed ${hiddenHits.size === 1 ? 'it' : 'them'}): ${esc([...hiddenHits].join(', '))}`);
 
   // Auto ZoomInfo: every account in these emails, whatever its tier (free accounts only, once a day), highest score first
   const targets = [...touched].filter(a => !(a.zi && a.zi.pulled_on === TODAY && !a.zi.skipped)).sort((x, y) => y.priority.score - x.priority.score);

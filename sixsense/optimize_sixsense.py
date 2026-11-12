@@ -125,6 +125,9 @@ def merge_into(dst, src):
         dst["history_note"] = src["history_note"]
     if (src.get("worked_on") or "") > (dst.get("worked_on") or ""):
         dst["worked_on"] = src["worked_on"]
+    for f in ("removed_at", "restored_at"):   # owner removed / restored the account on the page
+        if (src.get(f) or "") > (dst.get(f) or ""):
+            dst[f] = src[f]
     if src.get("notes") and src["notes"] not in (dst.get("notes") or ""):
         dst["notes"] = "\n".join(filter(None, [dst.get("notes"), src["notes"]]))
 
@@ -297,6 +300,11 @@ def recommended_action(a, since, hand, ad, d30, today):
     return "P4 Monitor"
 
 
+def is_removed(a):
+    """Removed on the dashboard (🗑 Remove account) and not restored since. Still scored and kept, just not listed."""
+    return bool(a.get("removed_at")) and a["removed_at"] > (a.get("restored_at") or "")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("json_file")
@@ -346,7 +354,8 @@ def main():
     order = ["company", "priority", "stage", "fit", "reach", "website", "signal_count", "web_visits",
              "competitor_keywords", "keywords", "surge_topics", "zi", "bf", "contacts", "form_fills", "decoded_urls",
              "activity_date", "email_date", "_latest_date", "dates", "activity_dates", "source_files",
-             "aliases", "possible_duplicate_of", "six_qa_on", "past_process", "past_process_on", "history_note", "worked_on", "notes"]
+             "aliases", "possible_duplicate_of", "six_qa_on", "past_process", "past_process_on", "history_note", "worked_on", "notes",
+             "removed_at", "restored_at"]
     out = {a["company"]: {**{k: a[k] for k in order if k in a}, **{k: v for k, v in a.items() if k not in order}}
            for a in ranked}
 
@@ -360,7 +369,7 @@ def main():
         w = csv.writer(f)
         w.writerow(["Rank", "Company", "Score", "Tier", "Action", "Stage", "Fit", "Last activity",
                     "Days since", "Active days (30d)", "Trend", "Competitors", "Hot pages", "Top keywords", "Website"])
-        for i, a in enumerate(ranked, 1):
+        for i, a in enumerate([a for a in ranked if not is_removed(a)], 1):
             p = a["priority"]
             w.writerow([i, a["company"], p["score"], p["tier"], p["action"], a["stage"], a["fit"],
                         p["last_activity"], p["days_since_activity"], p["active_days_30d"], p["trend"],
@@ -385,10 +394,13 @@ def main():
                              '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n</head>\n<body>\n'
                              + page + '\n</body>\n</html>\n', encoding="utf-8")
 
+    removed = [a for a in ranked if is_removed(a)]
+    ranked = [a for a in ranked if not is_removed(a)]
     tiers = {}
     for a in ranked:
         tiers[a["priority"]["tier"]] = tiers.get(a["priority"]["tier"], 0) + 1
-    print(f"{len(data)} rows in -> {len(accounts)} accounts out (scored as of {today})")
+    print(f"{len(data)} rows in -> {len(accounts)} accounts out (scored as of {today})"
+          + (f", {len(removed)} removed on the dashboard and not listed" if removed else ""))
     print("  " + " | ".join(f"{t}: {n}" for t, n in sorted(tiers.items())))
     print(f"  wrote {dst}\n  wrote {csv_path}" + (f"\n  wrote {html_path}" if html_path else "") + "\n")
     print(f"{'#':>3} {'Score':>5}  {'Company':<38} {'Stage':<13} {'Fit':<9} {'Last':>10} {'30d':>3}  Action")
