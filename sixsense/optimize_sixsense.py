@@ -132,6 +132,7 @@ def merge_into(dst, src):
     if src.get("zid"):   # ZoomInfo weekly digest entries, one per digest date
         have = {e.get("date") for e in dst.get("zid", [])}
         dst["zid"] = dst.get("zid", []) + [e for e in src["zid"] if e.get("date") not in have]
+    if src.get("purged_on"): dst["purged_on"] = src["purged_on"]   # deleted for good: only a marker is kept
     for f in ("removed_at", "restored_at"):   # owner removed / restored the account on the page
         if (src.get(f) or "") > (dst.get(f) or ""):
             dst[f] = src[f]

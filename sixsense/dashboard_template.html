@@ -1219,6 +1219,13 @@ let removedAccounts = [];   // accounts the owner removed: kept (so later emails
 const removeArm = { name: null, timer: null };   // two-click confirm for 🗑 Remove account
 function isRemoved(a) { return !!a.removed_at && a.removed_at > (a.restored_at || ''); }
 function allAccounts() { return [...accounts, ...removedAccounts]; }
+function shownRemoved() { return removedAccounts.filter(a => !a.purged_on); }   // purged = deleted for good: only a name/website marker is kept so later emails stay hidden
+// Strip a removed account down to the marker that keeps later emails about it hidden
+function purgeAccount(a) {
+  const keep = { company: a.company, website: a.website || '', aliases: a.aliases || [], removed_at: a.removed_at, purged_on: TODAY, zi: a.zi && a.zi.company_id ? { company_id: a.zi.company_id, name: a.zi.name || '', intent: [] } : undefined };
+  Object.keys(a).forEach(k => { if (k !== 'priority') delete a[k]; });
+  Object.assign(a, clean(keep));
+}
 function partitionRemoved() {
   const all = allAccounts();
   accounts = all.filter(a => !isRemoved(a));
@@ -1462,12 +1469,14 @@ function render() {
 function renderRemoved() {
   const el = document.getElementById('removedPanel');
   if (!el) return;
-  if (share.mode === 'reader' || !removedAccounts.length) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  const list = shownRemoved();
+  if (share.mode === 'reader' || !list.length) { el.classList.add('hidden'); el.innerHTML = ''; return; }
   el.classList.remove('hidden');
   const open = el.querySelector('details') && el.querySelector('details').open;
-  el.innerHTML = `<details ${open ? 'open' : ''}><summary>Removed accounts (${removedAccounts.length})</summary>
+  el.innerHTML = `<details ${open ? 'open' : ''}><summary>Removed accounts (${list.length})</summary>
     <div class="muted" style="margin:6px 0 4px">Only you see this list. Your SDR doesn't see these accounts.</div>
-    ${removedAccounts.map(a => `<div class="removed-row"><span><b>${esc(a.company)}</b> <span class="muted">${a.website ? esc(domainOf(a.website)) + ' · ' : ''}removed ${fmtDate(String(a.removed_at).slice(0, 10))}</span></span><button class="btn sm" data-unremove="${esc(a.company)}">↩ Restore</button></div>`).join('')}
+    <div style="margin:4px 0 8px"><button class="btn sm rm-btn ${purgeArm ? 'armed' : ''}" data-purge>${purgeArm ? `Click again to delete all ${list.length} for good` : '🗑 Clear this list (delete for good)'}</button> <span class="muted">Deletes their data. Later emails about them stay hidden.</span></div>
+    ${list.map(a => `<div class="removed-row"><span><b>${esc(a.company)}</b> <span class="muted">${a.website ? esc(domainOf(a.website)) + ' · ' : ''}removed ${fmtDate(String(a.removed_at).slice(0, 10))}</span></span><button class="btn sm" data-unremove="${esc(a.company)}">↩ Restore</button></div>`).join('')}
   </details>`;
 }
 
@@ -1480,7 +1489,7 @@ function renderHeader() {
   document.getElementById('subline').innerHTML =
     `<span class="hide-sm">Scored for <b>${fmtDate(TODAY)}</b> · activity ${esc(range)} · </span><b>${accounts.length}</b> accounts${esc(updText)}`;
   document.getElementById('footer').textContent =
-    `${accounts.length} accounts${removedAccounts.length ? ` (${removedAccounts.length} removed)` : ''} · ${files} source emails · score = recency 25 + momentum 15 + stage 20 + fit 15 + pages 15 + volume 5 + competitor 5 (+2 known contact). Tier A ≥ 65, B ≥ 45, C ≥ 28; silent 60+ days caps at C.`;
+    `${accounts.length} accounts${shownRemoved().length ? ` (${shownRemoved().length} removed)` : ''} · ${files} source emails · score = recency 25 + momentum 15 + stage 20 + fit 15 + pages 15 + volume 5 + competitor 5 (+2 known contact). Tier A ≥ 65, B ≥ 45, C ≥ 28; silent 60+ days caps at C.`;
   document.title = `Target Now · ${fmtDate(TODAY)}`;
 }
 
@@ -2430,6 +2439,19 @@ document.getElementById('fSort').addEventListener('change', e => {
 });
 
 // Remove account (owner / editors only): two clicks, then hidden for everyone. Restore from the list at the bottom.
+let purgeArm = false, purgeTimer;
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-purge]');
+  if (!b || share.mode === 'reader') return;
+  e.stopPropagation(); e.preventDefault();
+  clearTimeout(purgeTimer);
+  if (!purgeArm) { purgeArm = true; purgeTimer = setTimeout(() => { purgeArm = false; render(); }, 5000); render(); return; }
+  purgeArm = false;
+  const list = shownRemoved();
+  list.forEach(purgeAccount);
+  persist(); render();
+  setSaveState(share.mode === 'writer' ? '' : 'ok', `Deleted ${list.length} removed accounts for good`);
+});
 document.addEventListener('click', e => {
   const rm = e.target.closest('[data-remove]');
   const un = e.target.closest('[data-unremove]');
@@ -2715,7 +2737,7 @@ async function applyStaged() {
     if (s.mode === 'zid') {   // ZoomInfo digest: one dated entry per matched account
       for (const c of s.accs) {
         const a = byName(c.company) || removedAccounts.find(x => x.company === c.company);
-        if (!a || (a.zid || []).some(e => e.date === s.date)) continue;
+        if (!a || a.purged_on || (a.zid || []).some(e => e.date === s.date)) continue;
         a.zid = [...(a.zid || []), { date: s.date, cat: c.cat, items: c.items }];
         zidAdded++;
         if (!isRemoved(a)) touched.add(a); else hiddenHits.add(a.company);
