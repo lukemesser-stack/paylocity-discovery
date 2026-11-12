@@ -497,6 +497,25 @@
   .logo-link:hover { outline: 2px solid var(--accent-dim); }
   .logo-btn { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; text-decoration: none; }
   .dlabel-logo { display: flex; align-items: center; gap: 6px; }
+  .views { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .acct { grid-template-columns: minmax(0, 1fr); }
+  .acct > div { min-width: 0; }
+  .score.none { background: var(--surface-3); color: var(--text-dim); box-shadow: inset 0 0 0 1px var(--border); font-weight: 700; }
+  .bdg.agree { color: var(--brand); background: var(--green-dim); box-shadow: none; }
+  .scorecard { display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; }
+  .sc-item { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sc-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim); }
+  .sc-val { font-size: 13px; color: var(--text-2); }
+  .sc-val b { color: var(--text); font-size: 15px; }
+  .sc-val b.ok { color: var(--green); } .sc-val b.due { color: var(--a); }
+  .sc-bar { width: 120px; height: 6px; background: var(--track); border-radius: 999px; overflow: hidden; display: inline-block; }
+  .sc-bar i { display: block; height: 100%; background: var(--accent); }
+  .sc-note { flex-basis: 100%; font-size: 11px; color: var(--text-dim); }
+  .zid-week { margin-bottom: 10px; }
+  .zid-date { font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 2px; }
+  .zid-it { font-size: 13px; color: var(--text-2); padding-left: 14px; position: relative; line-height: 1.45; }
+  .zid-it.act { color: var(--text); font-weight: 600; padding-left: 14px; }
+  .zid-dot { position: absolute; left: 2px; top: 7px; width: 6px; height: 6px; border-radius: 50%; background: #e0352b; }
   /* side panel */
   .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(580px, 100vw); z-index: 40; display: flex; flex-direction: column;
     background: var(--surface); box-shadow: -14px 0 40px rgba(19,34,27,.14); transform: translateX(105%); transition: transform .2s ease; visibility: hidden; }
@@ -535,6 +554,8 @@
     .a-l2 { flex-direction: column; gap: 2px; }
     .a-why { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .views { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .views .vcard:last-child { grid-column: 1 / -1; }
+    .scorecard { padding: 10px 12px; gap: 8px; }
     .vcard { padding: 8px 12px; }
     .vc-n { font-size: 22px; }
     .drawer { width: 100vw; }
@@ -626,6 +647,8 @@
     </div></div>
     <div><button class="chip on hidden" id="fHideWorked">Hide worked</button><button class="btn sm hidden" id="fClear">✕ Clear all filters</button></div>
   </section>
+
+  <section class="scorecard hidden" id="scorecard" aria-label="Scorecard"></section>
 
   <div class="list" id="list"></div>
 
@@ -1179,6 +1202,8 @@ function mergeInto(ex, inc, mode) {
   if (!ex.notes && inc.notes) ex.notes = inc.notes;
   if (inc.past_process) { ex.past_process = true; if ((inc.past_process_on || '') > (ex.past_process_on || '')) ex.past_process_on = inc.past_process_on; }
   for (const f of ['removed_at', 'restored_at']) if ((inc[f] || '') > (ex[f] || '')) ex[f] = inc[f];
+  if (inc.book && !ex.book) ex.book = inc.book;
+  if (inc.zid) { const have = new Set((ex.zid || []).map(e => e.date)); ex.zid = [...(ex.zid || []), ...inc.zid.filter(e => !have.has(e.date))]; }
 }
 
 // mode 'snapshot': a cumulative JSON (re-loading is a no-op). mode 'increment': one newly parsed email.
@@ -1232,6 +1257,7 @@ const VIEWS = {
   today:   { label: 'Call today', unit: 'Tier A · score 65+', color: 'var(--a)', test: a => tierLetter(a) === 'A' },
   week:    { label: 'This week', unit: 'Tier B · score 45–64', color: 'var(--b)', test: a => tierLetter(a) === 'B' },
   heating: { label: 'Heating up', unit: 'more active days than prior 30', color: 'var(--green)', test: a => CARDS.heating.test(a) },
+  zisig:   { label: 'ZoomInfo signals', unit: 'new buying signals, last 2 weeks', color: '#e0352b', test: a => zidAct(a).length > 0 },
   all:     { label: 'All accounts', unit: 'every account on the page', color: 'var(--text-dim)', test: () => true },
 };
 
@@ -1266,6 +1292,10 @@ const CARDS = {
   trig:    { label: 'Trigger events', unit: 'new leaders, exec moves, M&A, broker changes', color: 'var(--b)', test: a => hasLeaderTrigger(a) },
   renew:   { noChip: true, chip: 'Renewing ≤ 90 days', label: 'Renewing soon', unit: 'benefits renew in the next 90 days', color: 'var(--stage)', test: a => bfRenewingSoon(a) },
   zi:      { noChip: true, label: 'ZoomInfo confirmed', unit: 'ZoomInfo intent matches 6sense', color: 'var(--green)', test: a => ziConfirmed(a).length > 0 },
+  book:    { label: 'In my book', unit: 'on your ZoomInfo prospect list', color: 'var(--accent)', test: a => inBook(a) },
+  notbook: { label: 'Not in my book', unit: 'not on your prospect list: review or remove', color: 'var(--b)', test: a => notMine(a) },
+  zid:     { label: 'ZoomInfo digest', unit: 'appeared in a ZoomInfo weekly digest', color: 'var(--a)', test: a => (a.zid || []).length > 0 },
+  opensig: { label: 'Open signals', unit: 'new buying signal in the last 2 weeks, not worked since', color: 'var(--a)', test: a => openSignal(a) },
   ziint:   { noChip: true, label: 'ZoomInfo intent', unit: 'HR-related ZoomInfo intent in the last 60 days, any tier', color: 'var(--accent)', test: a => ziRecent(a).length > 0 },
   comp:    { chip: 'Competitor', label: 'Competitor research', unit: 'ADP, Rippling, Paycor…', color: 'var(--comp)', test: a => a.competitor_keywords.length > 0 },
 };
@@ -1395,6 +1425,7 @@ function spark(a) {
 }
 
 function renderTable() {
+  bookLoaded = allAccounts().some(a => a.book);
   const list = sortList(filtered());
   const el = document.getElementById('list');
   const v = ui.q ? 'your search' : VIEWS[ui.view] ? VIEWS[ui.view].label : 'this view';
@@ -1408,7 +1439,92 @@ function renderTable() {
   document.getElementById('fClear').classList.toggle('hidden', !filterCount());
   renderViews();
   renderTags();
+  renderScorecard();
   renderDrawer();
+}
+
+// ── My book (ZoomInfo prospect export) and ZoomInfo weekly digests ──
+let bookLoaded = false;                       // set each render: true once a prospect list has been imported
+const ZID_FRESH_DAYS = 14;                    // a digest signal counts as current for two weeks
+function inBook(a) { return !!a.book; }
+function notMine(a) { return bookLoaded && !a.book; }
+// Every digest line for the account, oldest digest first, marked new the first week it appears
+function zidItems(a) {
+  const seen = new Set(), out = [];
+  for (const e of (a.zid || []).slice().sort((x, y) => x.date.localeCompare(y.date)))
+    for (const it of e.items) {
+      // "Last 7 days" lines are new activity that week; 30/90-day lines repeat what earlier digests already showed
+      out.push({ ...it, date: e.date, cat: e.cat, isNew: it.window === 'Last 7 days' || !seen.has(it.text) });
+      seen.add(it.text);
+    }
+  return out;
+}
+// New buying signals from recent digests (competitor research, payroll/benefits/HR research, site visit, new finance/HR leader, M&A)
+function zidAct(a, days = ZID_FRESH_DAYS) {
+  return zidItems(a).filter(it => it.kind === 'act' && it.isNew && isISO(it.date) && daysBetween(TODAY, it.date) <= days)
+    .sort((x, y) => zidRank(x) - zidRank(y) || y.date.localeCompare(x.date));
+}
+// strongest first: competitor research, a named visit to our site, payroll/benefits/HR research, new finance/HR leader, M&A, hiring
+function zidRank(it) {
+  const t = it.text;
+  return /competitor - /i.test(t) ? 0 : /visited a webpage/i.test(t) ? 1 : /researching (payroll|benefits|human resources|compensation)/i.test(t) ? 2
+    : /researching|researched intent/i.test(t) ? 3 : /has joined|appointed|promoted/i.test(t) ? 4 : /acqui/i.test(t) ? 5 : 6;
+}
+function zidShort(it) {
+  const t = it.text;
+  let m = t.match(/researched competitor - (.+)$/i); if (m) return 'researched ' + m[1];
+  m = t.match(/(?:\+ more )?(?:is|are) researching (.+)$/i); if (m) return 'researching ' + m[1];
+  m = t.match(/^(.+?) has visited a webpage/i); if (m) return m[1].replace(/\s*,\s*/, ', ') + ' visited our site';
+  m = t.match(/^Researched Intent topics: (.+)$/i); if (m) return 'researching ' + m[1];
+  m = t.match(/Mergers & Acquisitions \(M&A\): (.+)$/i); if (m) return 'M&A: ' + m[1].replace(/ has entered into an agreement to/i, ' to').slice(0, 60);
+  m = t.match(/more open roles in (\w[\w &]*?) than/i); if (m) return 'hiring surge in ' + m[1];
+  return t.length > 70 ? t.slice(0, 67).replace(/\s+\S*$/, '') + '…' : t;
+}
+// Which sources currently agree that this account is worth a call
+function sourcesAgree(a) {
+  const p = a.priority, rn = bfRenewal(a);
+  const s = [];
+  if (p.days_since_activity != null && p.days_since_activity <= 30) s.push('6sense');
+  if (ziRecent(a).length || zidAct(a).length) s.push('ZoomInfo');
+  if ((rn && rn.days <= 120) || bfSignals(a).some(x => x.trigger)) s.push('BenefitFlow');
+  return s;
+}
+// Scorecard: the date of the newest buying signal (digest, or a 6sense demo/contact/pricing visit) in the last two weeks
+function signalDate(a) {
+  const d = [...zidAct(a).map(it => it.date), ...recentVisits(a, ZID_FRESH_DAYS).filter(u => pageKind(u) === 'hand').map(u => u.date)];
+  return d.length ? d.sort().pop() : '';
+}
+function openSignal(a) { const d = signalDate(a); return !!d && !(isISO(a.worked_on) && a.worked_on >= d); }
+function renderScorecard() {
+  const el = document.getElementById('scorecard');
+  if (!el) return;
+  const sig = accounts.filter(a => signalDate(a));
+  const done = sig.filter(a => !openSignal(a)).length, open = sig.length - done;
+  const book = accounts.filter(inBook), touched = book.filter(a => isISO(a.worked_on) && daysBetween(TODAY, a.worked_on) <= 30).length;
+  if (!sig.length && !book.length) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  el.innerHTML = `<div class="sc-item"><span class="sc-label">New buying signals · last 2 weeks</span>
+      <span class="sc-val"><b class="num">${sig.length}</b> accounts · <b class="num ok">${done}</b> worked since the signal · <b class="num ${open ? 'due' : ''}">${open}</b> open</span>
+      ${open ? `<button class="btn sm" data-sig-open>Show open</button>` : ''}</div>
+    ${book.length ? `<div class="sc-item"><span class="sc-label">Book coverage · last 30 days</span>
+      <span class="sc-val"><b class="num">${touched}</b> of <b class="num">${book.length}</b> accounts worked</span>
+      <span class="sc-bar"><i style="width:${Math.round(100 * touched / book.length)}%"></i></span></div>` : ''}
+    <div class="sc-note">Counts come from ✓ Worked marks on this page. Log calls and emails in Salesforce as usual.</div>`;
+}
+function zidHtml(a) {
+  const items = zidItems(a);
+  if (!items.length) return '';
+  const byDate = {};
+  for (const it of items) (byDate[it.date] = byDate[it.date] || []).push(it);
+  const dates = Object.keys(byDate).sort().reverse();
+  return `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} ZoomInfo weekly digest · ${dates.length} week${dates.length === 1 ? '' : 's'}</div>
+    ${dates.map(d => {
+      const its = byDate[d], keep = its.filter(it => it.kind !== 'noise'), noise = its.length - keep.length;
+      return `<div class="zid-week"><div class="zid-date">${fmtDate(d)}${its[0].cat ? ' · ' + esc(its[0].cat) : ''}</div>
+        ${keep.map(it => `<div class="zid-it ${it.kind}">${it.kind === 'act' ? '<span class="zid-dot"></span>' : ''}${esc(it.text)}${it.isNew ? '' : ' <span class="muted">(repeat)</span>'}</div>`).join('')}
+        ${noise ? `<div class="muted">+ ${noise} other update${noise === 1 ? '' : 's'} (marketing, posts, commentary)</div>` : ''}</div>`;
+    }).join('')}
+    <div class="muted" style="margin-top:4px">Bold = buying signal (competitor, payroll/benefits/HR research, site visit, new finance/HR leader, M&amp;A). Repeats from earlier weeks are marked.</div></div>`;
 }
 
 // ── Account row: three calm lines (name + 2 badges + signals + score / strongest reasons / who + next step) ──
@@ -1421,14 +1537,16 @@ function pageKind(u) {
 function badges(a) {
   const pv = payrollVendors(a);
   const rn = bfRenewal(a);
+  const agree = sourcesAgree(a);
   return [
+    notMine(a) ? '<span class="bdg warn" title="Not on your ZoomInfo prospect list. Keep it, or remove it from History.">Not in my book</span>' : '',
     pv.some(v => /paylocity/i.test(v.name)) ? '<span class="bdg warn" title="ZoomInfo detects Paylocity: check Salesforce before calling">⚠ May be a client</span>' : '',
+    agree.length >= 2 ? `<span class="bdg agree" title="${esc(agree.join(' + '))} all point to this account right now">✓ ${agree.length} sources</span>` : '',
     a.past_process ? '<span class="bdg" title="Previous sales process: see notes">★ Past deal</span>' : '',
     hasLeaderTrigger(a) ? `<span class="bdg" title="${esc(triggers(a).map(t => t.text).join(' | '))}">🔔 Trigger</span>` : '',
     bfRenewingSoon(a) ? `<span class="bdg" title="${esc(bfRenewalText(a))}">📅 Renews ${esc(shortDate(rn.date))}</span>` : '',
     pv.length && !pv.some(v => /paylocity/i.test(v.name)) ? `<span class="bdg" title="Payroll/HR vendor. Confirm in Salesforce.">💼 ${esc(pv.map(v => v.name).join(' / '))}</span>` : '',
     a.six_qa_on ? `<span class="bdg" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
-    ziConfirmed(a).length ? `<span class="bdg" title="ZoomInfo intent agrees with 6sense: ${esc(ziConfirmed(a).join(', '))}">✓ Confirmed</span>` : '',
     a.zi && a.zi.note ? `<span class="bdg warn" title="${esc(a.zi.note)}">Check fit</span>` : '',
     a.possible_duplicate_of.length ? `<span class="bdg warn" title="Possible duplicate of ${esc(a.possible_duplicate_of.join(', '))}">Dup?</span>` : '',
   ].filter(Boolean);
@@ -1439,11 +1557,14 @@ function callReasons(a) {
   const vis = recentVisits(a, 60);
   const hand = vis.find(u => pageKind(u) === 'hand');
   if (hand) out.push(`Visited ${pagePath(hand.decoded || hand.raw).replace(/\/$/, '')} on ${shortDate(hand.date)}`);
+  const zd = zidAct(a)[0];
+  if (zd) out.push(`ZoomInfo: ${zidShort(zd)} (${shortDate(zd.date)})`);
   const rn = bfRenewal(a);
   if (rn && rn.days <= 120) out.push(`Benefits renew ${shortDate(rn.date)} (${rn.days} days)`);
   const tr = triggers(a).find(t => ['Acquisition', 'Leadership change', 'New leader', 'Broker change', 'Carrier switch'].includes(t.kind) && t.hot);
   if (tr) out.push(tr.kind === 'New leader' ? `New ${shortTitle(tr.title)}: ${tr.person}` : tr.kind);
-  if (a.competitor_keywords.length) out.push('Researching ' + a.competitor_keywords.slice(0, 2).join(', '));
+  const comps = a.competitor_keywords.filter(c => !(zd && zd.text.toLowerCase().includes(c.toLowerCase())));   // don't repeat what the digest line already says
+  if (comps.length) out.push('Researching ' + comps.slice(0, 2).join(', '));
   const z = ziRecent(a)[0];
   if (z) out.push('ZoomInfo intent: ' + shortTopic(z.topic));
   if (!hand) { const ad = vis.find(u => pageKind(u) === 'ad'); if (ad) out.push(`Campaign page ${shortDate(ad.date)}`); }
@@ -1457,11 +1578,18 @@ function sigStrip(a) {
   const bf = bfRenewingSoon(a, 180) || bfSignals(a).some(x => x.trigger);
   const s = [
     ['6s', '6sense', p.days_since_activity != null && p.days_since_activity <= 30, 'activity in the last 30 days'],
-    ['ZI', 'ZoomInfo', ziRecent(a).length > 0, 'HR-related intent in the last 60 days'],
+    ['ZI', 'ZoomInfo', ziRecent(a).length > 0 || zidAct(a).length > 0, 'HR-related intent in the last 60 days, or a new buying signal in a weekly digest'],
     ['BF', 'BenefitFlow', bf, 'benefits renewal within 6 months or a BenefitFlow trigger'],
     ['Web', 'Website', recentVisits(a, 90).length > 0, 'visited a Paylocity page in the last 90 days'],
   ];
   return `<span class="sigs" aria-label="Signals">${s.map(([k, n, on, t]) => `<i class="${on ? 'on' : ''}" title="${n}: ${on ? 'yes' : 'nothing current'} (${t})">${k}</i>`).join('')}</span>`;
+}
+// Book accounts that 6sense has never seen get a dash instead of a 0 score
+function hasSixsense(a) { return a.dates.length > 0 || a.activity_dates.length > 0 || a.signal_count > 0; }
+function scorePill(a) {
+  const p = a.priority, L = tierLetter(a);
+  return hasSixsense(a) ? `<span class="score ${L} num" title="${esc(p.tier)}">${p.score}</span>`
+    : '<span class="score none" title="No 6sense activity yet: on your prospect list only">–</span>';
 }
 function workBtnHtml(a) {
   if (share.mode === 'reader') return '';
@@ -1473,9 +1601,9 @@ function acctHtml(a) {
   const buyer = buyers(a)[0];
   const status = newSinceWorked(a) ? '<span class="bdg new">New since worked</span>' : isISO(a.worked_on) ? `<span class="when">Worked ${shortDate(a.worked_on)}</span>` : '';
   return `<article class="acct ${ui.drawer === a.company ? 'sel' : ''} ${isWorkedRecently(a) ? 'worked' : ''}" data-row="${esc(a.company)}" tabindex="0">
-    <div class="a-l1"><span class="a-name">${esc(a.company)}</span>${badges(a).slice(0, 2).join('')}<span class="a-sp"></span>${sigStrip(a)}<span class="score ${L} num" title="${esc(p.tier)}">${p.score}</span></div>
+    <div class="a-l1"><span class="a-name">${esc(a.company)}</span>${badges(a).slice(0, 2).join('')}<span class="a-sp"></span>${sigStrip(a)}${scorePill(a)}</div>
     <div class="a-l2"><span class="a-why">${esc(callReasons(a).join(' · '))}</span>${p.last_activity ? `<span class="a-last" title="Last 6sense activity">Last active ${shortDate(p.last_activity)} · ${agoText(p.days_since_activity)}</span>` : ''}</div>
-    <div class="a-l3">${buyer ? `<span>👤 ${personHtml(buyer, a)} <span class="t">${esc(shortTitle(buyer.title))}</span></span>` : '<span class="when">No contact found yet</span>'}${status}<span class="a-sp"></span><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>${workBtnHtml(a)}</div>
+    <div class="a-l3">${buyer ? `<span>👤 ${personHtml(buyer, a)} <span class="t">${esc(shortTitle(buyer.title))}</span></span>` : (a.book && a.book.phone ? `<span class="when">No contact yet · <a href="tel:${esc(a.book.phone.replace(/[^\d+]/g, ''))}" data-stop>📞 Call HQ ${esc(a.book.phone)}</a></span>` : '<span class="when">No contact found yet</span>')}${status}<span class="a-sp"></span><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>${workBtnHtml(a)}</div>
   </article>`;
 }
 
@@ -1504,7 +1632,7 @@ function openerText(a) {
 
 const DRAWER_TABS = {
   prep:    { label: 'Call prep', parts: ['s-notes', 's-who', 's-contacts', 's-hist'] },
-  signals: { label: 'Signals', parts: ['s-pages', 's-kw', 's-zi', 's-trig', 's-news', 's-surge'] },
+  signals: { label: 'Signals', parts: ['s-zid', 's-pages', 's-kw', 's-zi', 's-trig', 's-news', 's-surge'] },
   company: { label: 'Company', parts: ['s-snap', 's-bf'] },
   history: { label: 'History', parts: ['s-score', 's-weeks', 's-sig', 's-dup', 's-remove'] },
 };
@@ -1524,7 +1652,7 @@ function renderDrawer() {
   const p = a.priority;
   let content = DRAWER_TABS[ui.dtab].parts.map(k => parts[k] || '').join('');
   if (ui.dtab === 'prep') {
-    const why = reasons(a);
+    const why = [...zidAct(a).map(it => ({ t: 'hot', s: `ZoomInfo digest ${shortDate(it.date)}: ${it.text}` })), ...reasons(a)];
     content = `<div class="opener"><div class="dlabel">Suggested opener</div><p id="openerText">${esc(openerText(a))}</p>
         <button class="btn sm" data-copy="openerText">Copy</button> <span class="muted">Built from this account's signals. Edit to your voice.</span></div>
       ${parts['s-notes'] || ''}
@@ -1538,7 +1666,7 @@ function renderDrawer() {
         <button class="icon-btn" data-nav="1" title="Next account (j)" ${i < 0 || i >= L.length - 1 ? 'disabled' : ''}>›</button>
         <button class="icon-btn" data-close title="Close (Esc)">✕</button>
       </div>
-      <div class="d-meta"><span class="score ${tierLetter(a)} num">${p.score}</span><span>${esc(p.tier.slice(4))}</span>${sigStrip(a)}${badges(a).join('')}</div>
+      <div class="d-meta">${scorePill(a)}<span>${hasSixsense(a) ? esc(p.tier.slice(4)) : 'No 6sense activity yet'}</span>${sigStrip(a)}${badges(a).join('')}</div>
       <div class="d-meta">${a.website ? `<a href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener">${esc(domainOf(a.website))} ↗</a>` : ''}${ziUrl(a) ? `<a class="logo-link" href="${esc(ziUrl(a))}" target="_blank" rel="noopener" title="Open this company in ZoomInfo">${ziLogo(20)}</a>` : ''}${firmoLine(a) ? `<span>${esc(firmoLine(a))}</span>` : ''}</div>
       <div class="d-act"><span class="action ${actionClass(p.action)}">${esc(actionText(p.action))}</span>${workBtnHtml(a)}${i >= 0 ? `<span class="muted">${i + 1} of ${L.length}</span>` : ''}</div>
       <div class="d-tabs" role="tablist">${Object.entries(DRAWER_TABS).map(([k, t]) => `<button class="d-tab ${ui.dtab === k ? 'on' : ''}" data-dtab="${k}" role="tab" aria-selected="${ui.dtab === k}">${t.label}</button>`).join('')}</div>
@@ -1609,18 +1737,21 @@ function detailParts(a) {
         ${sec('s-sig', `<div class="dblock muted">${a.signal_count} signals · ${a.web_visits} web visits · reach ${esc(a.reach || '?')}${a.source_files.length ? ` · ${a.source_files.length} source email${a.source_files.length === 1 ? '' : 's'}` : ''}</div>`)}
       </div>
       <div class="dcol">
-        ${sec('s-snap', a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} Company snapshot</div>
+        ${sec('s-snap', a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} Company snapshot${a.zi.firmo.src === 'book' ? ' · from your prospect list' : ''}</div>
           <dl class="snap">
             <dt>Industry</dt><dd>${esc(a.zi.firmo.industry)}${a.zi.firmo.sub_industry ? ' · ' + esc(a.zi.firmo.sub_industry) : ''}</dd>
             <dt>Employees</dt><dd>${a.zi.firmo.employees ? Number(a.zi.firmo.employees).toLocaleString() : '—'}</dd>
             <dt>Revenue</dt><dd>${esc(a.zi.firmo.revenue_range || '—')}</dd>
             <dt>HQ</dt><dd>${esc(a.zi.firmo.hq || '—')}${a.zi.firmo.locations ? ` · ${a.zi.firmo.locations} location${a.zi.firmo.locations === 1 ? '' : 's'}` : ''}</dd>
             <dt>Founded</dt><dd>${esc(a.zi.firmo.founded || '—')} · ${esc(a.zi.firmo.type || '')}</dd>
+            ${a.book && a.book.phone ? `<dt>HQ phone</dt><dd><a href="tel:${esc(a.book.phone.replace(/[^\d+]/g, ''))}">${esc(a.book.phone)}</a></dd>` : ''}
+            ${a.book && a.book.parent ? `<dt>Parent</dt><dd>${esc(a.book.parent)}</dd>` : ''}
             <dt>Careers</dt><dd>${careersHtml(a)}</dd>
             <dt>Payroll / HR</dt><dd>${payrollVendors(a).length ? esc(payrollVendors(a).map(v => v.name + ' (' + v.source + ')').join(', ')) + (a.zi.payroll_tech && a.zi.payroll_tech.evidence ? '<br><span class="muted">' + esc(a.zi.payroll_tech.evidence) + '</span>' : '') : '<span class="muted">Not detected in ZoomInfo. Check Salesforce.</span>'}</dd>
           </dl>
           ${a.zi.firmo.about ? `<div class="about">${esc(a.zi.firmo.about)}</div>` : ''}</div>`
           : `<div class="dblock"><div class="dlabel">Careers</div><div class="careers" style="font-size:12px">${careersHtml(a)}</div></div>`)}
+        ${sec('s-zid', zidHtml(a))}
         ${sec('s-bf', benefitsHtml(a))}
         ${sec('s-pages', `<div class="dblock"><div class="dlabel">Pages visited (${a.decoded_urls.length})</div>
           ${pages ? `<div class="pages">${pages}</div>
@@ -1634,7 +1765,7 @@ function detailParts(a) {
           ${newsItems(a).slice(0, 4).map(n => `<div class="news-row"><span class="d num">${fmtDate(n.date)}</span><span><a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">${esc(n.title)}</a> <span class="src">${esc(String(n.source || '').replace(/^www\./, ''))}</span></span></div>`).join('')}</div>` : '')}
         ${sec('s-zi', a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>
           ${ziUrl(a) ? `<a class="btn sm logo-btn" href="${esc(ziUrl(a))}" target="_blank" rel="noopener" title="Open this company in ZoomInfo">${ziLogo(16)} Open ↗</a>` : ''}
-          ${!a.zi ? '<div class="muted">Not pulled yet.</div>' : `
+          ${!a.zi || (!a.zi.pulled_on && !a.zi.skipped) ? '<div class="muted">Not pulled yet. ↻ ZoomInfo: all accounts pulls it (free for accounts under management).</div>' : `
           <div class="muted" style="margin-bottom:4px">${esc(a.zi.name)}${a.zi.location ? ' · ' + esc(a.zi.location) : ''}${a.zi.employees ? ' · ' + esc(a.zi.employees) + ' employees' : ''}</div>
           ${a.zi.note ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:4px">${esc(a.zi.note)}</div>` : ''}
           ${a.zi.skipped ? `<div class="muted">${esc(a.zi.skipped)}</div>`
@@ -1789,6 +1920,7 @@ document.addEventListener('click', e => {
   if (view) { ui.view = view.dataset.view; if (ui.q) { ui.q = ''; document.getElementById('q').value = ''; } savePrefs(); renderTable(); window.scrollTo({ top: 0 }); return; }
   if (t.closest('#btnFilters')) { ui.filtersOpen = !ui.filtersOpen; renderTags(); return; }
   if (t.closest('[data-clearall]')) { clearFilters(); return; }
+  if (t.closest('[data-sig-open]')) { ui.view = 'all'; ui.signals.add('opensig'); renderTable(); return; }
   const untag = t.closest('[data-untag]');
   if (untag) {
     const [kind, k] = untag.dataset.untag.split(':');

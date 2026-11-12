@@ -123,6 +123,11 @@ def merge_into(dst, src):
         dst["past_process_on"] = max(filter(None, [dst.get("past_process_on"), src.get("past_process_on")]), default=None)
     if (src.get("worked_on") or "") > (dst.get("worked_on") or ""):
         dst["worked_on"] = src["worked_on"]
+    if src.get("book") and not dst.get("book"):   # on the owner's prospect list
+        dst["book"] = src["book"]
+    if src.get("zid"):   # ZoomInfo weekly digest entries, one per digest date
+        have = {e.get("date") for e in dst.get("zid", [])}
+        dst["zid"] = dst.get("zid", []) + [e for e in src["zid"] if e.get("date") not in have]
     for f in ("removed_at", "restored_at"):   # owner removed / restored the account on the page
         if (src.get(f) or "") > (dst.get(f) or ""):
             dst[f] = src[f]
