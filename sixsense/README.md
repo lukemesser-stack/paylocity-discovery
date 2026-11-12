@@ -132,3 +132,25 @@ Re-running is safe: the output is the same each time, and a `.bak` copy of the p
 Tiers: **A ≥65 Call today · B ≥45 This week · C ≥28 Nurture · D Monitor**. An account with no activity for 60+ days is capped at C. A new ZoomInfo digest buying signal in the last 14 days keeps an account in This week at least, and turns a P3/P4 next step into "Follow up on ZoomInfo signal".
 
 Change the weights, competitor list, page patterns and aliases in the config block at the top of the script.
+
+## Working notes for the next session
+
+**Live dashboard:** https://claude.ai/artifact/Us82tGvEWGgk8eCeUpbDkX. It's owned by Luke and shared view-only with the SDR. The page saves itself, so **always re-read it before publishing** and build from its data. Publish without `capabilities`, so its current permissions stay (ZoomInfo: search_companies, enrich_company_signals, search_contacts, enrich_companies; BenefitFlow: search_employers, search_contacts, get_contact; artifact, downloads, user).
+
+**State on 2026-11-12:**
+- 293 accounts: 248 on the prospect list (`book`) and 12 from 6sense that aren't on it. 34 are removed.
+- Four ZoomInfo weekly digests (10/20–11/10) are loaded in `zid`.
+- The blended score is live (6sense base plus up to +20 for ZoomInfo/BenefitFlow, and a floor that keeps a fresh digest signal in This week).
+- The scorecard section was removed at the owner's request.
+
+**Tools (`tools/`):**
+- `blend_book_digests.py WORKDIR` merges a new prospect-list export and/or new digest `.msg` files into the live data. It's safe to re-run: the same digest week is never loaded twice, and live notes, Worked marks, removals and revealed contacts are never overwritten. Its docstring describes the folder layout.
+- `inject.py TEMPLATE LIVE.html OUT.html` rebuilds the page from the template using the live page's data.
+- `parity.js DIR` checks that Python and JS scores match. Before running it, run `optimize_sixsense.py` on the data in `DIR/py/T.json`.
+- `prodtest.js DIR` loads `DIR/prod.wrap.html` as the owner (desktop) and as the SDR (phone).
+
+**Not done yet:**
+1. Owner-menu buttons for importing a ZoomInfo digest and an updated prospect list, so updates no longer need a session.
+2. A combined "Update ZoomInfo + BenefitFlow" button, with BenefitFlow paced at about 100 accounts a day.
+3. Merging duplicates by website / ZoomInfo ID when emails are imported, plus an owner-only "Merge into…" button. Duplicates still showing: Hillpointe LLC (same company as the removed Hillpointe), Dipasqua Enterprises, Inc. = Di Pasqua Enterprises, and Flextrude Aluminum Shapes = Flextrude. The list rows for Flextrude and Zonal point to UK companies.
+4. Ask the 6sense admin to limit the Hot Accounts alert to CRM-owned accounts.
