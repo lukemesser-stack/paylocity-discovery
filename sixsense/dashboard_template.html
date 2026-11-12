@@ -518,6 +518,7 @@
   .vc-unit { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .a-l2 { display: flex; gap: 12px; align-items: baseline; white-space: normal; overflow: visible; }
   .a-why { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .a-size { color: var(--text-2); font-size: 12px; }
   .a-last { flex: none; font-size: 12px; color: var(--text-dim); white-space: nowrap; }
   ul.d-why { list-style: disc; padding-left: 20px; margin: 0; }
   ul.d-why li { padding-left: 2px; }
@@ -645,7 +646,7 @@
     <input class="search" id="q" type="search" placeholder="Search accounts, people, notes…" autocomplete="off">
     <button class="btn" id="btnFilters" aria-expanded="false">Filters</button>
     <select id="fSort" aria-label="Sort">
-      <option value="score">Sort: Score</option><option value="last">Sort: Last activity</option><option value="company">Sort: Company A–Z</option>
+      <option value="score">Sort: Score</option><option value="last">Sort: Last activity</option><option value="size">Sort: Company size</option><option value="company">Sort: Company A–Z</option>
     </select>
     <span class="count num" id="count"></span>
   </div>
@@ -668,6 +669,9 @@
       </select>
       <select id="fActive" aria-label="Last active" title="When 6sense last saw activity from the account">
         <option value="">Active any time</option><option value="7">Active last 7 days</option><option value="30">Active last 30 days</option><option value="60">Active last 60 days</option><option value="90">Active last 90 days</option><option value="q90">Quiet 90+ days</option>
+      </select>
+      <select id="fSize" aria-label="Company size" title="Employees, from ZoomInfo">
+        <option value="">Any size</option><option value="1-49">1–49 employees</option><option value="50-199">50–199 employees</option><option value="200-499">200–499 employees</option><option value="500-999">500–999 employees</option><option value="1000+">1,000+ employees</option>
       </select>
     </div></div>
     <div><button class="chip on hidden" id="fHideWorked">Hide worked</button><button class="btn sm hidden" id="fClear">✕ Clear all filters</button></div>
@@ -1356,8 +1360,8 @@ function setSaveState(cls, text) {
 // ═══════════════════════════════════════════════════════════════════════════
 // UI state
 // ═══════════════════════════════════════════════════════════════════════════
-const ui = { q: '', tiers: new Set(), signals: new Set(), stage: '', fit: '', active: '', hideWorked: true, sort: 'score', dir: -1, open: new Set(),
-  view: 'today', drawer: null, dtab: 'prep', filtersOpen: false };
+const ui = { q: '', tiers: new Set(), signals: new Set(), stage: '', fit: '', active: '', size: '', hideWorked: true, sort: 'score', dir: -1, open: new Set(),
+  view: 'today', drawer: null, dtab: 'company', filtersOpen: false };
 // Views are the main way in: one tab each, with a live count. Search always looks across every account.
 const VIEWS = {
   today:   { label: 'Call today', unit: 'Tier A · score 65+', color: 'var(--a)', test: a => tierLetter(a) === 'A' },
@@ -1427,7 +1431,7 @@ function filtered(view = ui.view) {
     (!ui.tiers.size || ui.tiers.has(tierLetter(a))) &&
     (!ui.stage || a.stage === ui.stage) &&
     (!ui.fit || a.fit === ui.fit) &&
-    activeMatch(a) &&
+    activeMatch(a) && sizeMatch(a) &&
     [...ui.signals].every(k => CARDS[k].test(a)) &&
     (!ui.hideWorked || ui.q || !isWorkedRecently(a)) &&
     matchesSearch(a, ui.q));
@@ -1437,6 +1441,7 @@ function sortList(list) {
   const key = {
     score: a => a.priority.score,
     company: a => a.company.toLowerCase(),
+    size: a => empCount(a),
     stage: a => (STAGE_RANK[a.stage.toLowerCase()] || 0) * 10 + (FIT_RANK[a.fit.toLowerCase()] || 0),
     last: a => a.priority.last_activity || '',
     action: a => a.priority.action,
@@ -1508,13 +1513,14 @@ function renderViews() {
     `<button class="vcard ${ui.view === k && !ui.q ? 'on' : ''}" data-view="${k}" role="tab" aria-selected="${ui.view === k && !ui.q}" title="${esc(v.unit)}">
       <span class="vc-label"><i style="background:${v.color}"></i>${esc(v.label)}</span><span class="vc-n num">${filtered(k).length}</span><span class="vc-unit">${esc(v.unit)}</span></button>`).join('');
 }
-function filterCount() { return ui.tiers.size + ui.signals.size + (ui.stage ? 1 : 0) + (ui.fit ? 1 : 0) + (ui.active ? 1 : 0); }
+function filterCount() { return ui.tiers.size + ui.signals.size + (ui.stage ? 1 : 0) + (ui.fit ? 1 : 0) + (ui.active ? 1 : 0) + (ui.size ? 1 : 0); }
 function renderTags() {
   const tags = [
     ...[...ui.tiers].map(t => [`tier:${t}`, `Tier ${t}`]),
     ...[...ui.signals].map(k => [`sig:${k}`, CARDS[k] ? (CARDS[k].chip || CARDS[k].label) : k]),
     ...(ui.stage ? [['stage', ui.stage]] : []), ...(ui.fit ? [['fit', ui.fit + ' fit']] : []),
     ...(ui.active ? [['active', document.querySelector(`#fActive option[value="${ui.active}"]`)?.textContent || ui.active]] : []),
+    ...(ui.size ? [['size', document.querySelector(`#fSize option[value="${ui.size}"]`)?.textContent || ui.size]] : []),
   ];
   document.getElementById('tags').innerHTML = tags.map(([k, l]) => `<button class="tag" data-untag="${esc(k)}" title="Remove this filter">${esc(l)} ✕</button>`).join('');
   const n = filterCount(), b = document.getElementById('btnFilters');
@@ -1540,7 +1546,7 @@ function renderTable() {
   el.innerHTML = list.map(acctHtml).join('') ||
     `<div class="empty">Nothing in ${esc(v)}${filterCount() ? ' with these filters' : ''}. ${filterCount() ? '<button class="btn sm" data-clearall>Clear filters</button>' : ui.view !== 'all' ? '<button class="btn sm" data-view="all">See all accounts</button>' : ''}</div>`;
   document.getElementById('count').textContent = `${list.length} account${list.length === 1 ? '' : 's'}`;
-  document.getElementById('fSort').value = ['score', 'last', 'company'].includes(ui.sort) ? ui.sort : 'score';
+  document.getElementById('fSort').value = ['score', 'last', 'size', 'company'].includes(ui.sort) ? ui.sort : 'score';
   document.querySelectorAll('.chip[data-tier]').forEach(c => c.classList.toggle('on', ui.tiers.has(c.dataset.tier)));
   renderSignalChips();
   document.getElementById('fHideWorked').classList.toggle('on', ui.hideWorked);
@@ -1812,14 +1818,24 @@ function workBtnHtml(a) {
   const done = a.worked_on === TODAY;
   return `<button class="work-btn ${done ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${done ? '✓ Worked' : 'Worked?'}</button>`;
 }
+// Employee count from ZoomInfo (snapshot first, then the company match)
+function empCount(a) { const n = Number((a.zi && a.zi.firmo && a.zi.firmo.employees) || (a.zi && a.zi.employees) || 0); return n > 0 ? n : 0; }
+const SIZE_BANDS = { '1-49': [1, 49], '50-199': [50, 199], '200-499': [200, 499], '500-999': [500, 999], '1000+': [1000, Infinity] };
+function sizeMatch(a) { if (!ui.size) return true; const n = empCount(a), b = SIZE_BANDS[ui.size]; return !!b && n >= b[0] && n <= b[1]; }
+// Up to 4 badges on the card; when there are more, the least useful go first (6QA, Check fit, sources, Past deal)
+function cardBadges(a) {
+  let list = badges(a, true);
+  for (const re of [/>6QA</, /Check fit/, /sources</, /Past deal/]) { if (list.length <= 4) break; const i = list.findIndex(h => re.test(h)); if (i >= 0) list.splice(i, 1); }
+  return list.slice(0, 4);
+}
 function acctHtml(a) {
   const p = a.priority;
   const status = newSinceWorked(a) ? '<span class="bdg new">New since worked</span>' : isISO(a.worked_on) ? `<span class="when">Worked ${shortDate(a.worked_on)}</span>` : '';
   const name = a.website ? `<a class="a-name" href="${esc(safeUrl(a.website))}" target="_blank" rel="noopener" data-stop title="Open ${esc(domainOf(a.website))}">${esc(a.company)}<span class="a-ext" aria-hidden="true">↗</span></a>` : `<span class="a-name">${esc(a.company)}</span>`;
   const l3 = socialsHtml(a) + status + '<span class="a-sp"></span>' + vendorHtml(a);
   return `<article class="acct ${ui.drawer === a.company ? 'sel' : ''} ${isWorkedRecently(a) ? 'worked' : ''}" data-row="${esc(a.company)}" tabindex="0">
-    <div class="a-l1">${name}${badges(a, true).slice(0, 2).join('')}<span class="a-sp"></span>${scorePill(a)}</div>
-    <div class="a-l2"><span class="a-why">${esc(callReasons(a).join(' · '))}</span>${p.last_activity ? `<span class="a-last" title="Last 6sense activity">Last active ${shortDate(p.last_activity)} · ${agoText(p.days_since_activity)}</span>` : ''}</div>
+    <div class="a-l1">${name}${cardBadges(a).join('')}<span class="a-sp"></span>${scorePill(a)}</div>
+    <div class="a-l2"><span class="a-why a-size">${empCount(a) ? `${empCount(a).toLocaleString()} employees` : '<span class="muted">Employees unknown</span>'}</span>${p.last_activity ? `<span class="a-last" title="Last 6sense activity">Last active ${shortDate(p.last_activity)} · ${agoText(p.days_since_activity)}</span>` : ''}</div>
     ${socialsHtml(a) || status || vendorHtml(a) ? `<div class="a-l3">${l3}</div>` : ''}
   </article>`;
 }
@@ -2089,10 +2105,10 @@ document.addEventListener('click', async e => {
   }
 });
 
-const DRAWER_TABS = {
-  prep:    { label: 'Call prep', parts: ['s-notes', 's-who', 's-contacts', 's-hist'] },
-  signals: { label: 'Signals', parts: ['s-pages', 's-kw', 's-surge', 's-zid', 's-zi', 's-trig', 's-news'] },   // 6sense first, then ZoomInfo
+const DRAWER_TABS = {   // tab order: Company, Signals, Call prep, History
   company: { label: 'Company', parts: ['s-snap', 's-vendor', 's-social', 's-bf'] },
+  signals: { label: 'Signals', parts: ['s-pages', 's-kw', 's-surge', 's-zid', 's-zi', 's-trig', 's-news'] },   // 6sense first, then ZoomInfo
+  prep:    { label: 'Call prep', parts: ['s-notes', 's-who', 's-contacts', 's-hist'] },
   history: { label: 'History', parts: ['s-score', 's-weeks', 's-sig', 's-dup', 's-remove'] },
 };
 function drawerList() { return sortList(filtered()); }
@@ -2225,7 +2241,7 @@ function detailParts(a) {
         ${sec('s-trig', triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events${a.zi && a.zi.triggers_on ? ' · ZoomInfo checked ' + fmtDate(a.zi.triggers_on) : ''}${a.bf && a.bf.pulled_on && !a.bf.no_match ? ' · BenefitFlow ' + fmtDate(a.bf.pulled_on) : ''}</div>
           ${triggers(a).map(t => `<div class="trig-row"><span class="d num">${t.date ? fmtDate(t.date) : (t.kind === 'New leader' ? 'recent' : '')}</span><span><span class="k">${esc(t.kind)}</span> · ${t.kind === 'New leader' ? leaderHtml(t) : esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}
           ${((a.zi && a.zi.new_leaders) || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. Click a name to search LinkedIn for that person at this company. The right person is usually the first result. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : '')}
-        ${sec('s-news', newsItems(a).length ? `<div class="dblock"><div class="dlabel">Recent news · last 12 months</div>
+        ${sec('s-news', newsItems(a).length ? `<div class="dblock"><div class="dlabel">📰 Recent news · last 12 months</div>
           ${newsItems(a).slice(0, 4).map(n => `<div class="news-row"><span class="d num">${fmtDate(n.date)}</span><span><a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">${esc(n.title)}</a> <span class="src">${esc(String(n.source || '').replace(/^www\./, ''))}</span></span></div>`).join('')}</div>` : '')}
         ${sec('s-zi', a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>
           ${ziUrl(a) ? `<a class="btn sm logo-btn" href="${esc(ziUrl(a))}" target="_blank" rel="noopener" title="Open this company in ZoomInfo">${ziLogo(16)} Open ↗</a>` : ''}
@@ -2387,7 +2403,7 @@ document.addEventListener('click', e => {
   if (untag) {
     const [kind, k] = untag.dataset.untag.split(':');
     if (kind === 'tier') ui.tiers.delete(k); else if (kind === 'sig') ui.signals.delete(k);
-    else { ui[kind] = ''; const sel = { stage: 'fStage', fit: 'fFit', active: 'fActive' }[kind]; if (sel) document.getElementById(sel).value = ''; }
+    else { ui[kind] = ''; const sel = { stage: 'fStage', fit: 'fFit', active: 'fActive', size: 'fSize' }[kind]; if (sel) document.getElementById(sel).value = ''; }
     renderTable(); return;
   }
   const dtab = t.closest('[data-dtab]');
@@ -2545,8 +2561,8 @@ document.addEventListener('change', e => {
 });
 
 function clearFilters(rerender = true) {
-  ui.tiers.clear(); ui.signals.clear(); ui.stage = ''; ui.fit = ''; ui.active = '';
-  document.getElementById('fActive').value = '';
+  ui.tiers.clear(); ui.signals.clear(); ui.stage = ''; ui.fit = ''; ui.active = ''; ui.size = '';
+  document.getElementById('fActive').value = ''; document.getElementById('fSize').value = '';
   document.getElementById('fStage').value = '';
   document.getElementById('fFit').value = '';
   if (rerender) renderTable();
@@ -2557,6 +2573,7 @@ document.getElementById('q').addEventListener('input', e => { ui.q = e.target.va
 document.getElementById('fStage').addEventListener('change', e => { ui.stage = e.target.value; renderTable(); });
 document.getElementById('fFit').addEventListener('change', e => { ui.fit = e.target.value; renderTable(); });
 document.getElementById('fActive').addEventListener('change', e => { ui.active = e.target.value; renderTable(); });
+document.getElementById('fSize').addEventListener('change', e => { ui.size = e.target.value; renderTable(); });
 document.getElementById('fHideWorked').addEventListener('click', () => { ui.hideWorked = !ui.hideWorked; savePrefs(); renderTable(); });
 document.getElementById('fClear').addEventListener('click', () => clearFilters());
 document.addEventListener('keydown', e => {
@@ -3006,7 +3023,7 @@ function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').re
 const SESSION_UI_KEY = 'sixsense_ui_session';
 function saveSessionUi() {
   try {
-    sessionStorage.setItem(SESSION_UI_KEY, JSON.stringify({ q: ui.q, tiers: [...ui.tiers], signals: [...ui.signals], stage: ui.stage, fit: ui.fit, active: ui.active,
+    sessionStorage.setItem(SESSION_UI_KEY, JSON.stringify({ q: ui.q, tiers: [...ui.tiers], signals: [...ui.signals], stage: ui.stage, fit: ui.fit, active: ui.active, size: ui.size,
       hideWorked: ui.hideWorked, sort: ui.sort, dir: ui.dir, open: [...ui.open], y: window.scrollY,
       view: ui.view, drawer: ui.drawer, dtab: ui.dtab, filtersOpen: ui.filtersOpen }));
   } catch (e) { /* ignore */ }
@@ -3016,15 +3033,16 @@ function restoreSessionUi() {
     const s = JSON.parse(sessionStorage.getItem(SESSION_UI_KEY) || 'null');
     if (!s) return;
     sessionStorage.removeItem(SESSION_UI_KEY);
-    Object.assign(ui, { q: s.q || '', stage: s.stage || '', fit: s.fit || '', active: s.active || '', hideWorked: s.hideWorked !== false,
+    Object.assign(ui, { q: s.q || '', stage: s.stage || '', fit: s.fit || '', active: s.active || '', size: SIZE_BANDS[s.size] ? s.size : '', hideWorked: s.hideWorked !== false,
       sort: s.sort || 'score', dir: s.dir || -1, view: VIEWS[s.view] ? s.view : ui.view, drawer: s.drawer || null,
-      dtab: DRAWER_TABS[s.dtab] ? s.dtab : 'prep', filtersOpen: !!s.filtersOpen });
+      dtab: DRAWER_TABS[s.dtab] ? s.dtab : 'company', filtersOpen: !!s.filtersOpen });
     ui.tiers = new Set(s.tiers || []); ui.open = new Set(s.open || []);
     ui.signals = new Set((s.signals || (s.card ? [s.card] : [])).filter(k => CARDS[k] && !CARDS[k].tier));
     document.getElementById('q').value = ui.q;
     document.getElementById('fStage').value = ui.stage;
     document.getElementById('fFit').value = ui.fit;
     document.getElementById('fActive').value = ui.active;
+    document.getElementById('fSize').value = ui.size || '';
     if (s.y) setTimeout(() => window.scrollTo(0, s.y), 0);
   } catch (e) { /* ignore */ }
 }
