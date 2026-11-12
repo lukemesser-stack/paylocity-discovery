@@ -649,7 +649,7 @@ const ziLogo = (h = 18) => `<img class="logo" src="${ZI_LOGO}" alt="ZoomInfo" he
 // Logo that opens the account in ZoomInfo when we have its ZoomInfo id
 const ziLogoLink = (a, h = 14) => ziUrl(a) ? `<a class="logo-link" href="${esc(ziUrl(a))}" target="_blank" rel="noopener" title="Open this company in ZoomInfo">${ziLogo(h)}</a>` : ziLogo(h);
 // BenefitFlow link: set BF_URL_TEMPLATE to the employer-page address with {id} where the employer id goes
-const BF_URL_TEMPLATE = '';
+const BF_URL_TEMPLATE = 'https://benefit-flow.com/search/employer/{id}';
 const bfUrl = a => BF_URL_TEMPLATE && a.bf && a.bf.employer_id ? BF_URL_TEMPLATE.replace('{id}', encodeURIComponent(a.bf.employer_id)) : '';
 const bfLogoLink = (a, h = 18) => bfUrl(a) ? `<a class="logo-link" href="${esc(bfUrl(a))}" target="_blank" rel="noopener" title="Open this employer in BenefitFlow">${bfLogo(h)}</a>` : bfLogo(h);
 const bfLogo = (h = 15) => `<img class="logo" src="${BF_LOGO}" alt="BenefitFlow" height="${h}" width="${Math.round(h * 195 / 42)}">`;   // preview build only: shows a banner, never shares changes
