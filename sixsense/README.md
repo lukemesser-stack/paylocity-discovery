@@ -127,8 +127,8 @@ Re-running is safe: the output is the same each time, and a `.bak` copy of the p
 | Signal volume (log-scaled) | 5 | |
 | Competitor research | 5 | Shows they're shopping, so there's a chance to displace a competitor |
 | Known contact / form fill | +2 | |
-| ZoomInfo + BenefitFlow boost (mock, not live yet) | up to +20 | Weekly-digest buying signals (competitor 8, site visit 8, payroll/benefits/HR research 6, other research 4, new leader 5, M&A 4, hiring surge 3; full for 7 days, half to 14, quarter to 30; leaders/M&A/hiring last longer), ZoomInfo HR intent 80+ in 30 days +3, BenefitFlow renewal ≤90 days +5 / ≤180 +3, broker or carrier change in 6 months +3 |
+| ZoomInfo + BenefitFlow boost | up to +20 | Weekly-digest buying signals (competitor 8, site visit 8, payroll/benefits/HR research 6, other research 4, new leader 5, M&A 4, hiring surge 3; full for 7 days, half to 14, quarter to 30; leaders/M&A/hiring last longer), ZoomInfo HR intent 80+ in 30 days +3, BenefitFlow renewal ≤90 days +5 / ≤180 +3, broker or carrier change in 6 months +3 |
 
-Tiers: **A ≥65 Call today · B ≥45 This week · C ≥28 Nurture · D Monitor**. An account with no activity for 60+ days is capped at C. (Mock, not live yet:) a new ZoomInfo digest buying signal in the last 14 days keeps an account in This week at least, and turns a P3/P4 next step into "Follow up on ZoomInfo signal".
+Tiers: **A ≥65 Call today · B ≥45 This week · C ≥28 Nurture · D Monitor**. An account with no activity for 60+ days is capped at C. A new ZoomInfo digest buying signal in the last 14 days keeps an account in This week at least, and turns a P3/P4 next step into "Follow up on ZoomInfo signal".
 
 Change the weights, competitor list, page patterns and aliases in the config block at the top of the script.
