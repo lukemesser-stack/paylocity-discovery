@@ -1305,6 +1305,7 @@ function mergeInto(ex, inc, mode) {
   if (inc.ai_openers && (inc.ai_openers.at || '') > ((ex.ai_openers && ex.ai_openers.at) || '')) ex.ai_openers = inc.ai_openers;
   if ((inc.social_manual_on || '') > (ex.social_manual_on || '')) { ex.social_manual = inc.social_manual; ex.social_manual_on = inc.social_manual_on; }
   if (inc.web_social && (inc.web_social.on || '') >= ((ex.web_social && ex.web_social.on) || '')) ex.web_social = inc.web_social;
+  if ((inc.emp_manual_on || '') > (ex.emp_manual_on || '')) { ex.emp_manual = inc.emp_manual || null; ex.emp_manual_on = inc.emp_manual_on; }
   if ((inc.vendor_manual_on || '') > (ex.vendor_manual_on || '')) { ex.vendor_manual = inc.vendor_manual || null; ex.vendor_manual_on = inc.vendor_manual_on; }
   if (inc.vendor_list && (inc.vendor_list_on || '') >= (ex.vendor_list_on || '')) { ex.vendor_list = inc.vendor_list; ex.vendor_list_on = inc.vendor_list_on; }
   if ((inc.top50_on || '') > (ex.top50_on || '')) { ex.top50 = !!inc.top50; ex.top50_on = inc.top50_on; }
@@ -1781,6 +1782,26 @@ document.addEventListener('change', e => {
   persist(); render();
   setSaveState(share.mode === 'writer' ? '' : 'ok', sel.value ? `${a.company}: payroll vendor set to ${sel.value}` : `${a.company}: back to the automatic vendor`);
 });
+// Employee count (owner): type the real head count when ZoomInfo's is off; blank goes back to ZoomInfo
+function empSectionHtml(a) {
+  const zi = ziEmp(a);
+  const box = share.mode !== 'reader'
+    ? `<div class="soc-add"><input class="search" type="number" min="1" step="1" inputmode="numeric" data-emp="${esc(a.company)}" value="${a.emp_manual ? esc(String(a.emp_manual)) : ''}" placeholder="${zi ? `ZoomInfo: ${zi.toLocaleString()}` : 'Not known'}" aria-label="Employee count"></div>`
+    : '';
+  return `<div class="dblock"><div class="dlabel">Employees</div><div>${empCount(a) ? `<b>${empCount(a).toLocaleString()}</b>` : '<span class="muted">Unknown</span>'}</div>${box}
+    <div class="muted" style="margin-top:4px">${a.emp_manual ? `Set by you. ZoomInfo says ${zi ? zi.toLocaleString() : 'nothing'}.` : zi ? 'From ZoomInfo.' : 'No count yet.'}${share.mode !== 'reader' ? ' Know the real number? Type it here (clear it to go back to ZoomInfo).' : ''}</div></div>`;
+}
+document.addEventListener('change', e => {
+  const inp = e.target.closest('input[data-emp]');
+  if (!inp || share.mode === 'reader') return;
+  const a = byName(inp.dataset.emp);
+  if (!a) return;
+  const n = Math.round(Number(inp.value));
+  a.emp_manual = n > 0 ? n : null;
+  a.emp_manual_on = new Date().toISOString();
+  persist(); render();
+  setSaveState(share.mode === 'writer' ? '' : 'ok', a.emp_manual ? `${a.company}: ${n.toLocaleString()} employees` : `${a.company}: back to ZoomInfo's employee count`);
+});
 function socialSectionHtml(a) {
   const have = new Map(socials(a).map(x => [x.k, x]));
   const name = opShortName(a);
@@ -1819,7 +1840,9 @@ function workBtnHtml(a) {
   return `<button class="work-btn ${done ? 'done' : ''}" data-work="${esc(a.company)}" title="Mark that you reached out today. Hidden for ${WORKED_HIDE_DAYS} days unless new activity shows up.">${done ? '✓ Worked' : 'Worked?'}</button>`;
 }
 // Employee count from ZoomInfo (snapshot first, then the company match)
-function empCount(a) { const n = Number((a.zi && a.zi.firmo && a.zi.firmo.employees) || (a.zi && a.zi.employees) || 0); return n > 0 ? n : 0; }
+function ziEmp(a) { const n = Number((a.zi && a.zi.firmo && a.zi.firmo.employees) || (a.zi && a.zi.employees) || 0); return n > 0 ? n : 0; }
+// Your own head count (Company tab) wins over ZoomInfo, which often counts only one location
+function empCount(a) { if (Number(a.emp_manual) > 0) return Number(a.emp_manual); const n = Number((a.zi && a.zi.firmo && a.zi.firmo.employees) || (a.zi && a.zi.employees) || 0); return n > 0 ? n : 0; }
 const SIZE_BANDS = { '1-49': [1, 49], '50-199': [50, 199], '200-499': [200, 499], '500-999': [500, 999], '1000+': [1000, Infinity] };
 function sizeMatch(a) { if (!ui.size) return true; const n = empCount(a), b = SIZE_BANDS[ui.size]; return !!b && n >= b[0] && n <= b[1]; }
 // Up to 4 badges on the card; when there are more, the least useful go first (6QA, Check fit, sources, Past deal)
@@ -1835,7 +1858,7 @@ function acctHtml(a) {
   const l3 = socialsHtml(a) + status + '<span class="a-sp"></span>' + vendorHtml(a);
   return `<article class="acct ${ui.drawer === a.company ? 'sel' : ''} ${isWorkedRecently(a) ? 'worked' : ''}" data-row="${esc(a.company)}" tabindex="0">
     <div class="a-l1">${name}${cardBadges(a).join('')}<span class="a-sp"></span>${scorePill(a)}</div>
-    <div class="a-l2"><span class="a-why a-size">${empCount(a) ? `${empCount(a).toLocaleString()} employees` : '<span class="muted">Employees unknown</span>'}</span>${p.last_activity ? `<span class="a-last" title="Last 6sense activity">Last active ${shortDate(p.last_activity)} · ${agoText(p.days_since_activity)}</span>` : ''}</div>
+    <div class="a-l2"><span class="a-why a-size"${a.emp_manual ? ` title="Your count${ziEmp(a) ? ` (ZoomInfo says ${ziEmp(a).toLocaleString()})` : ''}"` : ''}>${empCount(a) ? `${empCount(a).toLocaleString()} employees` : '<span class="muted">Employees unknown</span>'}</span>${p.last_activity ? `<span class="a-last" title="Last 6sense activity">Last active ${shortDate(p.last_activity)} · ${agoText(p.days_since_activity)}</span>` : ''}</div>
     ${socialsHtml(a) || status || vendorHtml(a) ? `<div class="a-l3">${l3}</div>` : ''}
   </article>`;
 }
@@ -2106,7 +2129,7 @@ document.addEventListener('click', async e => {
 });
 
 const DRAWER_TABS = {   // tab order: Company, Signals, Call prep, History
-  company: { label: 'Company', parts: ['s-snap', 's-vendor', 's-social', 's-bf'] },
+  company: { label: 'Company', parts: ['s-snap', 's-vendor', 's-emp', 's-social', 's-bf'] },
   signals: { label: 'Signals', parts: ['s-pages', 's-kw', 's-surge', 's-zid', 's-zi', 's-trig', 's-news'] },   // 6sense first, then ZoomInfo
   prep:    { label: 'Call prep', parts: ['s-notes', 's-who', 's-contacts', 's-hist'] },
   history: { label: 'History', parts: ['s-score', 's-weeks', 's-sig', 's-dup', 's-remove'] },
@@ -2223,7 +2246,7 @@ function detailParts(a) {
         ${sec('s-sig', `<div class="dblock muted">${a.signal_count} signals · ${a.web_visits} web visits · reach ${esc(a.reach || '?')}${a.source_files.length ? ` · ${a.source_files.length} source email${a.source_files.length === 1 ? '' : 's'}` : ''}</div>`)}
       </div>
       <div class="dcol">
-        ${sec('s-vendor', vendorSectionHtml(a))}${sec('s-social', socialSectionHtml(a))}${sec('s-snap', a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} Company snapshot${a.zi.firmo.src === 'book' ? ' · from your prospect list' : ''}</div>
+        ${sec('s-vendor', vendorSectionHtml(a))}${sec('s-emp', empSectionHtml(a))}${sec('s-social', socialSectionHtml(a))}${sec('s-snap', a.zi && a.zi.firmo ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} Company snapshot${a.zi.firmo.src === 'book' ? ' · from your prospect list' : ''}</div>
           <dl class="snap">
             <dt>Industry</dt><dd>${esc(a.zi.firmo.industry)}${a.zi.firmo.sub_industry ? ' · ' + esc(a.zi.firmo.sub_industry) : ''}</dd>
             <dt>Employees</dt><dd>${a.zi.firmo.employees ? Number(a.zi.firmo.employees).toLocaleString() : '—'}</dd>
