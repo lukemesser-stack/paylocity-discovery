@@ -3500,9 +3500,13 @@ const HR_TECH_CATS = [
 ];
 const HR_TECH_STALE_DAYS = 30;
 function hrTechRows(a) {
-  const h = a.zi && a.zi.hr_tech;
-  if (!h || !h.on) return '';
-  return HR_TECH_CATS.map(c => `<dt>${esc(c.label)}</dt><dd>${(h[c.key] || []).length ? esc(h[c.key].join(', ')) : '<span class="muted">None listed in ZoomInfo</span>'}</dd>`).join('');
+  const h = (a.zi && a.zi.hr_tech) || {};
+  const notYet = share.mode === 'writer' ? 'Not checked yet: ⚙ Owner → ↻ ZoomInfo: HR tech' : 'Not checked yet';
+  return HR_TECH_CATS.map(c => {
+    const done = !hrTechDue(a, c) || (h.done && h.done[c.key]);
+    const v = (h[c.key] || []).length ? esc(h[c.key].join(', ')) : `<span class="muted">${done ? 'None listed in ZoomInfo' : esc(notYet)}</span>`;
+    return `<dt>${esc(c.label)}</dt><dd>${v}</dd>`;
+  }).join('');
 }
 // Pull { id, name } pairs out of a lookup answer, whatever its exact nesting
 function ziLookupItems(payload) {
@@ -3541,36 +3545,49 @@ async function ziTechHits(prods, compIds, found, tick) {
   await ziTechHits(prods.slice(0, mid), hits, found, tick);
   await ziTechHits(prods.slice(mid), hits, found, tick);
 }
+// Each category is saved as soon as it finishes, so a stop part-way keeps what was found; a rerun picks up the rest.
+function hrTechDue(a, c) {
+  const d = a.zi && a.zi.hr_tech && a.zi.hr_tech.done && a.zi.hr_tech.done[c.key];
+  return !(isISO(d || '') && daysBetween(TODAY, d) <= HR_TECH_STALE_DAYS);
+}
 async function ziHrTechRun() {
-  if (ziState.busy || !ziCanRefresh() || !ziState.tools.lookup) return;
-  const list = accounts.filter(a => !isRemoved(a) && a.zi && /^\d+$/.test(String(a.zi.company_id || '')) &&
-    !(a.zi.hr_tech && isISO(a.zi.hr_tech.on) && daysBetween(TODAY, a.zi.hr_tech.on) <= HR_TECH_STALE_DAYS));
-  if (!list.length) { setSaveState('ok', `ZoomInfo HR tech: every account was checked in the last ${HR_TECH_STALE_DAYS} days`); return; }
+  if (!ziCanRefresh()) { setSaveState('err', 'ZoomInfo HR tech: ZoomInfo is not connected on this page. Reload the dashboard and try again.'); return; }
+  if (!ziState.tools.lookup) { setSaveState('err', 'ZoomInfo HR tech: this page is not allowed to use ZoomInfo\'s lookup yet. Open the page\'s permissions, allow ZoomInfo, then reload.'); return; }
+  if (ziState.busy) { setSaveState('err', 'ZoomInfo HR tech: another ZoomInfo refresh is still running (it shows in this status line). Click again when it finishes.'); return; }
+  const pool = accounts.filter(a => !isRemoved(a) && a.zi && /^\d+$/.test(String(a.zi.company_id || '')));
+  const cats = HR_TECH_CATS.filter(c => pool.some(a => hrTechDue(a, c)));
+  if (!cats.length) { setSaveState('ok', `ZoomInfo HR tech: every account was checked in the last ${HR_TECH_STALE_DAYS} days`); return; }
   ziState.busy = true;
   const btn = document.getElementById('btnZiTech'); btn.disabled = true;
-  let calls = 0, stopped = '', withAny = 0, catsFound = 0;
+  setSaveState('', 'ZoomInfo HR tech: starting… keep this page open (a few minutes)');
+  let calls = 0, stopped = '', saved = 0;
+  const empty = [];
   const tick = () => { calls++; if (calls % 5 === 0) setSaveState('', `ZoomInfo HR tech: ${calls} searches… keep this page open`); };
-  const res = new Map(list.map(a => [Number(a.zi.company_id), {}]));
   try {
-    for (const cat of HR_TECH_CATS) {
+    for (const cat of cats) {
+      const list = pool.filter(a => hrTechDue(a, cat));
       setSaveState('', `ZoomInfo HR tech: reading the ${cat.sub} product list…`);
       const prods = await ziTechCatalog(cat);
-      if (!prods.length) continue;
-      catsFound++;
+      if (!prods.length) { empty.push(cat.label); continue; }
       const found = new Map();
-      for (const pg of chunk(prods, 25)) for (const cg of chunk([...res.keys()], 50)) await ziTechHits(pg, cg, found, tick);
-      for (const [id, names] of found) res.get(id)[cat.key] = [...names].sort();
-    }
-    if (catsFound) for (const a of list) {
-      const r = res.get(Number(a.zi.company_id));
-      a.zi.hr_tech = { hrms: r.hrms || [], hr_other: r.hr_other || [], ats: r.ats || [], on: TODAY };
-      if (HR_TECH_CATS.some(c => a.zi.hr_tech[c.key].length)) withAny++;
+      const ids = list.map(a => Number(a.zi.company_id));
+      for (const pg of chunk(prods, 25)) for (const cg of chunk(ids, 50)) await ziTechHits(pg, cg, found, tick);
+      for (const a of list) {
+        const h = a.zi.hr_tech = { ...(a.zi.hr_tech || {}) };
+        h[cat.key] = [...(found.get(Number(a.zi.company_id)) || [])].sort();
+        h.done = { ...(h.done || {}), [cat.key]: TODAY };
+        h.on = TODAY;
+      }
+      saved++;
     }
   } catch (err) { stopped = ziErrorText(err); }
   finally { ziState.busy = false; btn.disabled = false; }
-  const msg = !catsFound && !stopped ? 'ZoomInfo HR tech: ZoomInfo returned no product list for these categories, so nothing was changed.'
-    : `ZoomInfo HR tech: ${withAny} of ${list.length} accounts list HR software · ${calls} free searches` + (stopped ? ` · stopped: ${stopped} Nothing was saved; click again to retry.` : '');
-  if (catsFound && !stopped) { persist(); setSaveState('', msg + ' Sharing…'); } else setSaveState(stopped || !catsFound ? 'err' : 'ok', msg);
+  const withAny = pool.filter(a => a.zi.hr_tech && HR_TECH_CATS.some(c => (a.zi.hr_tech[c.key] || []).length)).length;
+  const parts = [`${withAny} of ${pool.length} accounts list HR software`, `${calls} free searches`];
+  if (empty.length) parts.push(`ZoomInfo gave no product list for ${empty.join(', ')}`);
+  if (stopped) parts.push(`stopped: ${stopped} What finished is kept; click again to finish the rest.`);
+  const msg = 'ZoomInfo HR tech: ' + parts.join(' · ');
+  if (saved) { persist(); setSaveState(stopped ? 'err' : '', msg + ' Sharing…'); } else setSaveState('err', msg + (stopped ? '' : ' Nothing was changed.'));
   render();
 }
 document.getElementById('btnZiTech').addEventListener('click', () => ziHrTechRun());
