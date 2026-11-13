@@ -482,6 +482,7 @@
   .a-l3 .when { color: var(--text-dim); }
   .bdg { font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--border); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
   .bdg.warn { color: var(--b); background: var(--b-dim); box-shadow: none; }
+  .bdg.bfint { color: var(--a); background: var(--a-dim); box-shadow: none; }
   .bdg.top50 { color: var(--on-brand); background: var(--brand); box-shadow: none; }
   .top50-btn.on { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
   .note-box + .note-box { margin-top: 10px; }
@@ -612,7 +613,9 @@
         <button class="mi hidden" id="btnZi" title="Refresh ZoomInfo for Call today, This week and Heating up accounts. Free accounts only.">↻ ZoomInfo: hot accounts</button>
         <button class="mi hidden" id="btnZiAll" title="Run ZoomInfo on every account not pulled in the last 7 days, any tier. Free accounts only; the rest are skipped, no credits.">↻ ZoomInfo: all accounts</button>
         <button class="mi hidden" id="btnZiSoc" title="Add LinkedIn, Facebook, X, Instagram and TikTok links from ZoomInfo to accounts that don't have them yet. Free: companies under management only.">↻ ZoomInfo: social links</button>
+        <button class="mi hidden" id="btnZiTech" title="Read each account's HR systems, other HR software and applicant tracking systems from ZoomInfo's technology data. Free searches only.">↻ ZoomInfo: HR tech</button>
         <button class="mi hidden" id="btnBf" title="Refresh BenefitFlow for Call today, This week and Heating up accounts. Free searches only.">↻ BenefitFlow</button>
+        <button class="mi hidden" id="btnBfAll" title="Pull BenefitFlow (intent level, renewal, broker, trigger signals, buyers) for every account not checked in 30 days, up to 200 per click. Free searches only.">↻ BenefitFlow: all accounts</button>
         <button class="mi" id="btnSave" title="Download everything (worked marks, notes, contacts) as a JSON backup">💾 Save JSON backup</button>
       </div>
     </details>
@@ -1639,6 +1642,7 @@ function pageKind(u) {
   const x = pagePath(u.decoded || u.raw);
   return HAND_RAISE_PAGES.some(h => x.includes(h)) ? 'hand' : AD_LANDING_PAGES.some(h => x.includes(h)) ? 'ad' : '';
 }
+function bfIntentStrong(a) { return !!(a.bf && /^(active|intensive)$/i.test(a.bf.intent || '')); }
 function badges(a, card = false) {
   const pv = payrollVendors(a);
   const rn = bfRenewal(a);
@@ -1650,6 +1654,7 @@ function badges(a, card = false) {
     agree.length >= 2 ? `<span class="bdg agree" title="${esc(agree.join(' + '))} all point to this account right now">✓ ${agree.length} sources</span>` : '',
     a.past_process ? '<span class="bdg" title="Previous sales process: see notes">★ Past deal</span>' : '',
     hasLeaderTrigger(a) ? `<span class="bdg" title="${esc(triggers(a).map(t => t.text).join(' | '))}">🔔 Trigger</span>` : '',
+    bfIntentStrong(a) ? `<span class="bdg bfint" title="BenefitFlow intent: ${esc(a.bf.intent)} (benefits research activity, pulled ${fmtDate(a.bf.pulled_on)})">🔥 BF ${esc(a.bf.intent)}</span>` : '',
     bfRenewingSoon(a) ? `<span class="bdg" title="${esc(bfRenewalText(a))}">📅 Renews ${esc(shortDate(rn.date))}</span>` : '',
     !card && pv.length && !pv.some(v => /paylocity/i.test(v.name)) ? vendorHtml(a) : '',
     a.six_qa_on ? `<span class="bdg" title="6sense Qualified Account since ${fmtDate(a.six_qa_on)}">6QA</span>` : '',
@@ -2129,7 +2134,7 @@ document.addEventListener('click', async e => {
 });
 
 const DRAWER_TABS = {   // tab order: Company, Signals, Call prep, History
-  company: { label: 'Company', parts: ['s-snap', 's-vendor', 's-emp', 's-social', 's-bf'] },
+  company: { label: 'Company', parts: ['s-snap', 's-bf', 's-vendor', 's-emp', 's-social'] },
   signals: { label: 'Signals', parts: ['s-pages', 's-kw', 's-surge', 's-zid', 's-zi', 's-trig', 's-news'] },   // 6sense first, then ZoomInfo
   prep:    { label: 'Call prep', parts: ['s-notes', 's-who', 's-contacts', 's-hist'] },
   history: { label: 'History', parts: ['s-score', 's-weeks', 's-sig', 's-dup', 's-remove'] },
@@ -2257,6 +2262,7 @@ function detailParts(a) {
             ${a.book && a.book.parent ? `<dt>Parent</dt><dd>${esc(a.book.parent)}</dd>` : ''}
             <dt>Careers</dt><dd>${careersHtml(a)}</dd>
             <dt>Payroll / HR</dt><dd>${payrollVendors(a).length ? esc(payrollVendors(a).map(v => v.name + ' (' + v.source + ')').join(', ')) + (a.zi.payroll_tech && a.zi.payroll_tech.evidence ? '<br><span class="muted">' + esc(a.zi.payroll_tech.evidence) + '</span>' : '') : '<span class="muted">Not detected in ZoomInfo. Check Salesforce.</span>'}</dd>
+            ${hrTechRows(a)}
           </dl>
           ${a.zi.firmo.about ? `<div class="about">${esc(a.zi.firmo.about)}</div>` : ''}</div>`
           : `<div class="dblock"><div class="dlabel">Careers</div><div class="careers" style="font-size:12px">${careersHtml(a)}</div></div>`)}
@@ -3107,7 +3113,7 @@ function setShareMode(mode) {
     : 'This is a live copy of the owner\'s dashboard. It updates when they make changes.';
   for (const id of ['btnImport', 'btnSave']) document.getElementById(id).classList.toggle('hidden', mode === 'reader');
   document.getElementById('ownerMenu').classList.toggle('hidden', mode === 'reader');
-  if (mode === 'writer') for (const id of ['btnZi', 'btnZiAll', 'btnZiSoc', 'btnBf']) setConnBtn(id, 'checking');
+  if (mode === 'writer') for (const id of ['btnZi', 'btnZiAll', 'btnZiSoc', 'btnZiTech', 'btnBf', 'btnBfAll']) setConnBtn(id, 'checking');
   if (mode === 'reader') document.getElementById('importPanel').classList.add('hidden');
   setSaveState(mode === 'writer' ? 'ok' : '', mode === 'writer' ? 'Up to date' : '');
   render();
@@ -3183,7 +3189,7 @@ function setConnBtn(id, state, reason) {
   const b = document.getElementById(id);
   if (!b) return;
   if (!b.dataset.label) b.dataset.label = b.textContent;
-  const src = id === 'btnBf' ? 'BenefitFlow' : 'ZoomInfo';
+  const src = id.startsWith('btnBf') ? 'BenefitFlow' : 'ZoomInfo';
   b.classList.remove('hidden');
   b.disabled = state !== 'ready';
   b.textContent = state === 'ready' ? b.dataset.label : state === 'checking' ? `${b.dataset.label} · checking…` : `${b.dataset.label} · not connected`;
@@ -3191,7 +3197,7 @@ function setConnBtn(id, state, reason) {
 }
 async function initZi() {
   if (share.mode !== 'writer') return;
-  const off = why => { for (const id of ['btnZi', 'btnZiAll', 'btnZiSoc']) setConnBtn(id, 'off', why); };
+  const off = why => { for (const id of ['btnZi', 'btnZiAll', 'btnZiSoc', 'btnZiTech']) setConnBtn(id, 'off', why); };
   const mcp = await window.claude.use('mcp').catch(() => null);
   if (!mcp) { off(); return; }
   try {
@@ -3203,9 +3209,11 @@ async function initZi() {
     ziState.tools.enrich = names.find(n => /enrich_company_signals$/.test(n)) || ziState.tools.enrich;
     ziState.tools.contacts = names.find(n => /search_contacts$/.test(n)) || null;
     ziState.tools.firmo = names.find(n => /enrich_companies$/.test(n)) || null;
+    ziState.tools.lookup = names.find(n => /(^|_)lookup$/.test(n)) || null;
   } catch (e) { off(); return; }
   ziState.mcp = mcp;
   setConnBtn('btnZi', 'ready'); setConnBtn('btnZiAll', 'ready'); setConnBtn('btnZiSoc', 'ready');
+  if (ziState.tools.lookup) setConnBtn('btnZiTech', 'ready'); else setConnBtn('btnZiTech', 'off', 'ZoomInfo\'s lookup tool is not allowed for this page yet. Open the page\'s permissions and allow ZoomInfo lookup, then reload.');
   setTimeout(ziDailyAuto, 2000);   // once a day: free refresh of hot + Top 50 accounts
   render();
 }
@@ -3480,6 +3488,90 @@ async function ziSocialRun() {
 }
 document.getElementById('btnZiSoc').addEventListener('click', () => ziSocialRun());
 
+// ↻ ZoomInfo: HR tech — the same lists as the Technologies tab in ZoomInfo, for three HR categories.
+// ZoomInfo can't list one company's technologies through the connector, so: look up every product in each
+// category (free lookup), then ask search (free) which of our companies use them, narrowing hits down to the product.
+const HR_TECH_CATS = [
+  { key: 'hrms', label: 'HR system', sub: 'Human Resource Management Systems' },
+  { key: 'hr_other', label: 'Other HR software', sub: 'Other Human Resources Software' },
+  { key: 'ats', label: 'Applicant tracking', sub: 'Applicant Tracking Systems' },
+];
+const HR_TECH_STALE_DAYS = 30;
+function hrTechRows(a) {
+  const h = a.zi && a.zi.hr_tech;
+  if (!h || !h.on) return '';
+  return HR_TECH_CATS.map(c => `<dt>${esc(c.label)}</dt><dd>${(h[c.key] || []).length ? esc(h[c.key].join(', ')) : '<span class="muted">None listed in ZoomInfo</span>'}</dd>`).join('');
+}
+// Pull { id, name } pairs out of a lookup answer, whatever its exact nesting
+function ziLookupItems(payload) {
+  const out = new Map();
+  const walk = v => {
+    if (!v || typeof v !== 'object') return;
+    if (Array.isArray(v)) { v.forEach(walk); return; }
+    const name = (v.attributes && (v.attributes.name || v.attributes.productName)) || v.name || v.productName;
+    if (v.id != null && typeof name === 'string' && name) { out.set(String(v.id), name); return; }
+    Object.values(v).forEach(walk);
+  };
+  walk(payload);
+  return [...out].map(([id, name]) => ({ id, name }));
+}
+async function ziTechCatalog(cat) {
+  const key = 'tn_hrtech_' + cat.key;
+  try { const c = JSON.parse(localStorage.getItem(key) || 'null'); if (c && c.on && daysBetween(TODAY, c.on) <= HR_TECH_STALE_DAYS && c.items.length) return c.items; } catch (e) { /* no cache */ }
+  let items = [];
+  for (const extra of [{ subCategory: cat.sub }, { parentCategory: 'Human Resources', subCategory: cat.sub }]) {
+    items = ziLookupItems(await ziCall(ziState.tools.lookup, { fields: [{ fieldName: 'tech-products' }], ...extra }));
+    if (items.length) break;
+  }
+  try { if (items.length) localStorage.setItem(key, JSON.stringify({ on: TODAY, items })); } catch (e) { /* ignore */ }
+  return items;
+}
+// Which of these companies use which of these products: one search per 25 products x 50 companies, then split hits in half until each is one product
+async function ziTechHits(prods, compIds, found, tick) {
+  if (!prods.length || !compIds.length) return;
+  tick();
+  const p = await ziCall(ziState.tools.search, { companyIdList: compIds, techAttributeTagIdList: prods.map(x => x.id), pageSize: 50 });
+  const hits = (p.data || []).map(r => Number(r.id)).filter(id => compIds.includes(id));
+  if (!hits.length) return;
+  if (prods.length === 1) { for (const id of hits) { if (!found.has(id)) found.set(id, new Set()); found.get(id).add(prods[0].name); } return; }
+  const mid = Math.ceil(prods.length / 2);
+  await ziTechHits(prods.slice(0, mid), hits, found, tick);
+  await ziTechHits(prods.slice(mid), hits, found, tick);
+}
+async function ziHrTechRun() {
+  if (ziState.busy || !ziCanRefresh() || !ziState.tools.lookup) return;
+  const list = accounts.filter(a => !isRemoved(a) && a.zi && /^\d+$/.test(String(a.zi.company_id || '')) &&
+    !(a.zi.hr_tech && isISO(a.zi.hr_tech.on) && daysBetween(TODAY, a.zi.hr_tech.on) <= HR_TECH_STALE_DAYS));
+  if (!list.length) { setSaveState('ok', `ZoomInfo HR tech: every account was checked in the last ${HR_TECH_STALE_DAYS} days`); return; }
+  ziState.busy = true;
+  const btn = document.getElementById('btnZiTech'); btn.disabled = true;
+  let calls = 0, stopped = '', withAny = 0, catsFound = 0;
+  const tick = () => { calls++; if (calls % 5 === 0) setSaveState('', `ZoomInfo HR tech: ${calls} searches… keep this page open`); };
+  const res = new Map(list.map(a => [Number(a.zi.company_id), {}]));
+  try {
+    for (const cat of HR_TECH_CATS) {
+      setSaveState('', `ZoomInfo HR tech: reading the ${cat.sub} product list…`);
+      const prods = await ziTechCatalog(cat);
+      if (!prods.length) continue;
+      catsFound++;
+      const found = new Map();
+      for (const pg of chunk(prods, 25)) for (const cg of chunk([...res.keys()], 50)) await ziTechHits(pg, cg, found, tick);
+      for (const [id, names] of found) res.get(id)[cat.key] = [...names].sort();
+    }
+    if (catsFound) for (const a of list) {
+      const r = res.get(Number(a.zi.company_id));
+      a.zi.hr_tech = { hrms: r.hrms || [], hr_other: r.hr_other || [], ats: r.ats || [], on: TODAY };
+      if (HR_TECH_CATS.some(c => a.zi.hr_tech[c.key].length)) withAny++;
+    }
+  } catch (err) { stopped = ziErrorText(err); }
+  finally { ziState.busy = false; btn.disabled = false; }
+  const msg = !catsFound && !stopped ? 'ZoomInfo HR tech: ZoomInfo returned no product list for these categories, so nothing was changed.'
+    : `ZoomInfo HR tech: ${withAny} of ${list.length} accounts list HR software · ${calls} free searches` + (stopped ? ` · stopped: ${stopped} Nothing was saved; click again to retry.` : '');
+  if (catsFound && !stopped) { persist(); setSaveState('', msg + ' Sharing…'); } else setSaveState(stopped || !catsFound ? 'err' : 'ok', msg);
+  render();
+}
+document.getElementById('btnZiTech').addEventListener('click', () => ziHrTechRun());
+
 async function ziRun(list, { allowCredits = false, single = null } = {}) {
   if (ziState.busy || !ziCanRefresh()) return;
   ziState.busy = true;
@@ -3542,16 +3634,16 @@ function bfButtonHtml(a) {
 async function initBf() {
   if (share.mode !== 'writer') return;
   const mcp = await window.claude.use('mcp').catch(() => null);
-  if (!mcp) { setConnBtn('btnBf', 'off'); return; }
+  if (!mcp) { setConnBtn('btnBf', 'off'); setConnBtn('btnBfAll', 'off'); return; }
   try {
     const lt = await mcp.listTools(BF_SERVER);
     const srv = (lt.servers || []).find(x => x.server === BF_SERVER);
     const names = srv ? srv.tools.map(t => t.name) : [];
-    if (!names.includes('search_employers') || !names.includes('search_contacts')) { setConnBtn('btnBf', 'off'); return; }   // no BenefitFlow connector here
+    if (!names.includes('search_employers') || !names.includes('search_contacts')) { setConnBtn('btnBf', 'off'); setConnBtn('btnBfAll', 'off'); return; }   // no BenefitFlow connector here
     bfState.canReveal = names.includes('get_contact');
-  } catch (e) { setConnBtn('btnBf', 'off'); return; }
+  } catch (e) { setConnBtn('btnBf', 'off'); setConnBtn('btnBfAll', 'off'); return; }
   bfState.mcp = mcp;
-  setConnBtn('btnBf', 'ready');
+  setConnBtn('btnBf', 'ready'); setConnBtn('btnBfAll', 'ready');
   render();
 }
 // BenefitFlow allows 50 calls a minute per user: space calls out.
@@ -3631,23 +3723,26 @@ async function bfRefresh(list, onProgress) {
   }
   return result;
 }
-async function bfRun(list, single = null) {
+async function bfRun(list, single = null, more = 0) {
   if (bfState.busy || !bfCanRefresh()) return;
   bfState.busy = true;
-  const btn = document.getElementById('btnBf');
-  btn.disabled = true;
+  const btn = document.getElementById('btnBf'), btnAll = document.getElementById('btnBfAll');
+  btn.disabled = true; btnAll.disabled = true;
   if (single) { bfState.acctWorking.add(single.company); renderTable(); }
   try {
-    const r = await bfRefresh(list, (i, n, a) => setSaveState('', single ? `BenefitFlow: checking ${a.company}…` : `BenefitFlow: ${i} of ${n} (${a.company})…`));
+    const r = await bfRefresh(list, (i, n, a) => setSaveState('', single ? `BenefitFlow: checking ${a.company}…` : `BenefitFlow: ${i} of ${n} (${a.company})… keep this page open`));
     const parts = [`${r.pulled.length} updated`];
     if (r.noMatch.length) parts.push(`${r.noMatch.length} not found`);
+    const hot = r.pulled.filter(bfIntentStrong).length;
+    if (!single && r.pulled.length) parts.push(`${hot} with Active or Intensive intent`);
+    if (more) parts.push(`${more} more left: click again to continue`);
     persist();
     setSaveState('', 'BenefitFlow: ' + parts.join(' · ') + '. Sharing…');
   } catch (err) {
     setSaveState('err', bfErrorText(err));
   } finally {
     bfState.busy = false;
-    btn.disabled = false;
+    btn.disabled = false; btnAll.disabled = false;
     if (single) bfState.acctWorking.delete(single.company);
     render();
   }
@@ -3698,6 +3793,14 @@ document.getElementById('btnBf').addEventListener('click', () => {
   if (!list.length) { setSaveState('ok', 'BenefitFlow: every Call today, This week and Heating up account is already up to date today.'); return; }
   bfRun(list);
 });
+// ↻ BenefitFlow: all accounts. Free name searches, 2 calls an account; 200 a click stays inside BenefitFlow's 500 calls a day.
+const BF_ALL_MAX = 200;
+document.getElementById('btnBfAll').addEventListener('click', () => {
+  const due = a => !isRemoved(a) && (!(a.bf && isISO(a.bf.pulled_on)) || daysBetween(TODAY, a.bf.pulled_on) > BF_STALE_DAYS);
+  const list = accounts.filter(due).sort((x, y) => y.priority.score - x.priority.score);
+  if (!list.length) { setSaveState('ok', `BenefitFlow: every account was checked in the last ${BF_STALE_DAYS} days.`); return; }
+  bfRun(list.slice(0, BF_ALL_MAX), null, Math.max(0, list.length - BF_ALL_MAX));
+});
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-bf]');
   if (b) { e.stopPropagation(); const a = byName(b.dataset.bf); if (a) bfRun([a], a); return; }
@@ -3707,7 +3810,7 @@ document.addEventListener('click', e => {
 
 // Preview build: a banner, and a switch to see the page the way the SDR does (read-only)
 function renderPreviewBanner() {
-  if (share.mode !== 'reader') for (const id of ['btnZi', 'btnZiAll', 'btnZiSoc', 'btnBf']) setConnBtn(id, 'off', 'Refresh buttons work on the live dashboard, not in this preview.');
+  if (share.mode !== 'reader') for (const id of ['btnZi', 'btnZiAll', 'btnZiSoc', 'btnZiTech', 'btnBf', 'btnBfAll']) setConnBtn(id, 'off', 'Refresh buttons work on the live dashboard, not in this preview.');
   const b = document.getElementById('previewBanner');
   b.classList.remove('hidden');
   const sdr = share.mode === 'reader';
