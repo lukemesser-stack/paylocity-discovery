@@ -4,7 +4,7 @@ You are continuing work on **Target Now**, Luke's 6sense / ZoomInfo / BenefitFlo
 
 ## Where things are
 - **Live dashboard:** https://claude.ai/artifact/Us82tGvEWGgk8eCeUpbDkX (owned by Luke, shared view-only with his SDR).
-- **Code:** GitHub `lukemesser-stack/paylocity-discovery`, folder `sixsense/`, branch `claude/vibrant-curie-3x34pg` (or `main` once merged).
+- **Code:** GitHub `lukemesser-stack/paylocity-discovery`, folder `sixsense/`, branch `main` (new work goes on a new branch, then a pull request into `main`).
 - **Read first:** `sixsense/README.md`. It describes every feature, data field and tool.
 - Main file: `sixsense/dashboard_template.html`. Scoring: `sixsense/optimize_sixsense.py`. Tools: `sixsense/tools/` (inject.py, prodtest.js, parity.js, add_web_news.py, news_queue.py and others). Saved web news: `sixsense/data/web_news_*.json`.
 
