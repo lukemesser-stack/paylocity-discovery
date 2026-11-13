@@ -482,6 +482,8 @@
   .a-l3 .when { color: var(--text-dim); }
   .bdg { font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--border); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
   .bdg.warn { color: var(--b); background: var(--b-dim); box-shadow: none; }
+  button[data-wn-del] { padding: 0 6px; font-size: 10px; line-height: 16px; margin-left: 4px; color: var(--text-dim); }
+  .wn-add summary { cursor: pointer; margin-top: 6px; }
   .bdg.bfint { color: var(--a); background: var(--a-dim); box-shadow: none; }
   .bdg.top50 { color: var(--on-brand); background: var(--brand); box-shadow: none; }
   .top50-btn.on { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
@@ -1004,6 +1006,50 @@ const VENDOR_HOSTS = [
   [/icims\.com/i, 'iCIMS'], [/greenhouse\.io/i, 'Greenhouse'], [/lever\.co/i, 'Lever'],
 ];
 const EXEC_SCOOP = /executive move|new hire|promotion|management move|left company|lateral move/i;
+// Web news triggers: found by web searches outside ZoomInfo and BenefitFlow (loaded by Claude, or added here by the owner).
+// a.web_news = { on, items: [{ date, kind, text, url, src }] }; newest 3 shown.
+const WEB_NEWS_MAX = 3;
+const WEB_NEWS_KINDS = ['Leadership change', 'New location', 'Growth', 'Award', 'Acquisition', 'Funding', 'Hiring', 'Partnership', 'Other'];
+function webNews(a) {
+  const it = ((a.web_news && a.web_news.items) || []).filter(n => n && n.text);
+  const key = n => /^\d{4}/.test(String(n.date || '')) ? String(n.date) : '';   // undated ('recent') items sort after dated ones
+  return it.slice().sort((x, y) => key(y).localeCompare(key(x))).slice(0, WEB_NEWS_MAX);
+}
+function webNewsHtml(a) {
+  const it = webNews(a), own = share.mode !== 'reader';
+  if (!it.length && !own) return '';
+  const rows = it.map(n => {
+    const host = n.src || (String(n.url || '').match(/^https?:\/\/(?:www\.)?([^/]+)/) || [])[1] || '';
+    const ds = String(n.date || ''), d = isISO(ds.slice(0, 10)) ? fmtDate(ds.slice(0, 10)) : /^\d{4}-\d{2}$/.test(ds) ? ds.slice(5) + '/' + ds.slice(0, 4) : esc(ds);
+    const i = ((a.web_news && a.web_news.items) || []).indexOf(n);
+    return `<div class="trig-row"><span class="d num">${d}</span><span>${n.kind ? `<span class="k">${esc(n.kind)}</span> · ` : ''}${esc(n.text)}${n.url && /^https?:/i.test(n.url) ? ` <a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">${esc(host || 'source')} ↗</a>` : ''}${own ? ` <button class="btn sm" data-wn-del="${i}" data-name="${esc(a.company)}" title="Remove this item">✕</button>` : ''}</span></div>`;
+  }).join('');
+  const form = own ? `<details class="wn-add"><summary class="muted">+ Add a news item</summary>
+      <div class="soc-add" style="flex-wrap:wrap"><input class="search" type="date" data-wn-date style="flex:0 0 150px"><select data-wn-kind>${WEB_NEWS_KINDS.map(k => `<option>${esc(k)}</option>`).join('')}</select>
+      <input class="search" data-wn-text placeholder="What happened (e.g. New CFO: Jane Smith)" style="flex:1 1 220px"><input class="search" data-wn-url placeholder="Link (https://…)" style="flex:1 1 220px">
+      <button class="btn sm" data-wn-add="${esc(a.company)}">Add</button></div></details>` : '';
+  return `<div class="dblock"><div class="dlabel">🔎 In the news · web search${a.web_news && a.web_news.on ? ' · checked ' + fmtDate(String(a.web_news.on).slice(0, 10)) : ''}</div>
+    ${rows || '<div class="muted">No news found yet.</div>'}${form}</div>`;
+}
+document.addEventListener('click', e => {
+  const add = e.target.closest('[data-wn-add]'), del = e.target.closest('[data-wn-del]');
+  if (!(add || del) || share.mode === 'reader') return;
+  e.stopPropagation();
+  const a = byName((add || del).dataset.wnAdd || (add || del).dataset.name); if (!a) return;
+  const wn = a.web_news = { items: [], ...(a.web_news || {}) };
+  wn.items = [...(wn.items || [])];
+  if (del) wn.items.splice(Number(del.dataset.wnDel), 1);
+  else {
+    const box = add.closest('.wn-add'), v = s => (box.querySelector(s).value || '').trim();
+    const text = v('[data-wn-text]'), url = v('[data-wn-url]');
+    if (!text) { setSaveState('err', 'Add a short description of the news first.'); return; }
+    if (url && !/^https?:\/\//i.test(url)) { setSaveState('err', 'The link should start with https://'); return; }
+    wn.items.push({ date: v('[data-wn-date]') || TODAY, kind: v('[data-wn-kind]'), text, url, added_by: 'owner' });
+  }
+  wn.on = new Date().toISOString();
+  persist(); render();
+  setSaveState(share.mode === 'writer' ? '' : 'ok', `${a.company}: news ${del ? 'removed' : 'added'}`);
+});
 function triggers(a) {
   const out = [];
   const recent = d => !isISO(d) || daysBetween(TODAY, d) <= 120;
@@ -1308,6 +1354,7 @@ function mergeInto(ex, inc, mode) {
   if (inc.ai_openers && (inc.ai_openers.at || '') > ((ex.ai_openers && ex.ai_openers.at) || '')) ex.ai_openers = inc.ai_openers;
   if ((inc.social_manual_on || '') > (ex.social_manual_on || '')) { ex.social_manual = inc.social_manual; ex.social_manual_on = inc.social_manual_on; }
   if (inc.web_social && (inc.web_social.on || '') >= ((ex.web_social && ex.web_social.on) || '')) ex.web_social = inc.web_social;
+  if (inc.web_news && ((inc.web_news.on || '') > ((ex.web_news && ex.web_news.on) || ''))) ex.web_news = inc.web_news;
   if ((inc.emp_manual_on || '') > (ex.emp_manual_on || '')) { ex.emp_manual = inc.emp_manual || null; ex.emp_manual_on = inc.emp_manual_on; }
   if ((inc.vendor_manual_on || '') > (ex.vendor_manual_on || '')) { ex.vendor_manual = inc.vendor_manual || null; ex.vendor_manual_on = inc.vendor_manual_on; }
   if (inc.vendor_list && (inc.vendor_list_on || '') >= (ex.vendor_list_on || '')) { ex.vendor_list = inc.vendor_list; ex.vendor_list_on = inc.vendor_list_on; }
@@ -2135,7 +2182,7 @@ document.addEventListener('click', async e => {
 
 const DRAWER_TABS = {   // tab order: Company, Signals, Call prep, History
   company: { label: 'Company', parts: ['s-snap', 's-bf', 's-vendor', 's-emp', 's-social'] },
-  signals: { label: 'Signals', parts: ['s-pages', 's-kw', 's-surge', 's-zid', 's-zi', 's-trig', 's-news'] },   // 6sense first, then ZoomInfo
+  signals: { label: 'Signals', parts: ['s-pages', 's-kw', 's-surge', 's-zid', 's-zi', 's-trig', 's-web', 's-news'] },   // 6sense first, then ZoomInfo
   prep:    { label: 'Call prep', parts: ['s-notes', 's-who', 's-contacts', 's-hist'] },
   history: { label: 'History', parts: ['s-score', 's-weeks', 's-sig', 's-dup', 's-remove'] },
 };
@@ -2276,6 +2323,7 @@ function detailParts(a) {
         ${sec('s-trig', triggers(a).length ? `<div class="dblock"><div class="dlabel">Trigger events${a.zi && a.zi.triggers_on ? ' · ZoomInfo checked ' + fmtDate(a.zi.triggers_on) : ''}${a.bf && a.bf.pulled_on && !a.bf.no_match ? ' · BenefitFlow ' + fmtDate(a.bf.pulled_on) : ''}</div>
           ${triggers(a).map(t => `<div class="trig-row"><span class="d num">${t.date ? fmtDate(t.date) : (t.kind === 'New leader' ? 'recent' : '')}</span><span><span class="k">${esc(t.kind)}</span> · ${t.kind === 'New leader' ? leaderHtml(t) : esc(t.text)}${t.link && /^https?:/i.test(t.link) ? ` <a href="${esc(t.link)}" target="_blank" rel="noopener">source ↗</a>` : ''}</span></div>`).join('')}
           ${((a.zi && a.zi.new_leaders) || []).some(p => leaderGroup(p.title)) ? '<div class="muted" style="margin-top:4px">Names and titles from ZoomInfo. Click a name to search LinkedIn for that person at this company. The right person is usually the first result. Look up phone and email in ZoomInfo before calling.</div>' : ''}</div>` : '')}
+        ${sec('s-web', webNewsHtml(a))}
         ${sec('s-news', newsItems(a).length ? `<div class="dblock"><div class="dlabel">📰 Recent news · last 12 months</div>
           ${newsItems(a).slice(0, 4).map(n => `<div class="news-row"><span class="d num">${fmtDate(n.date)}</span><span><a href="${esc(safeUrl(n.url))}" target="_blank" rel="noopener">${esc(n.title)}</a> <span class="src">${esc(String(n.source || '').replace(/^www\./, ''))}</span></span></div>`).join('')}</div>` : '')}
         ${sec('s-zi', a.zi || ziCanRefresh() ? `<div class="dblock"><div class="dlabel dlabel-logo">${ziLogoLink(a)} ZoomInfo intent${a.zi && a.zi.pulled_on ? ' · pulled ' + fmtDate(a.zi.pulled_on) : ''}</div>

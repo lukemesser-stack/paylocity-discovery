@@ -144,6 +144,8 @@ def merge_into(dst, src):
         dst["social_manual"], dst["social_manual_on"] = src.get("social_manual") or {}, src["social_manual_on"]
     if src.get("web_social") and (src["web_social"].get("on") or "") >= ((dst.get("web_social") or {}).get("on") or ""):   # links read from their website
         dst["web_social"] = src["web_social"]
+    if src.get("web_news") and (src["web_news"].get("on") or "") > ((dst.get("web_news") or {}).get("on") or ""):   # web news triggers
+        dst["web_news"] = src["web_news"]
     if (src.get("emp_manual_on") or "") > (dst.get("emp_manual_on") or ""):   # head count the owner typed
         dst["emp_manual"], dst["emp_manual_on"] = src.get("emp_manual"), src["emp_manual_on"]
     if (src.get("vendor_manual_on") or "") > (dst.get("vendor_manual_on") or ""):   # vendor the owner picked after a call

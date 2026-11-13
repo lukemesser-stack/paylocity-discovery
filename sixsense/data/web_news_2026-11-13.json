@@ -1,0 +1,26 @@
+{
+  "_note": "Web news triggers from web searches on 2026-11-13 (outside ZoomInfo and BenefitFlow). Up to 3 per account; only items dated within about 12 months. Accounts with [] were searched and nothing dated recent enough was found.",
+  "CAMPUS USA Credit Union": [
+    {"date": "2026-10-06", "kind": "Leadership change", "text": "CEO Jerry Benton retires at the end of 2026; COO Jeff Thieman becomes President & CEO on 1/1/2027 (his COO seat opens up)", "url": "https://www.cuinsight.com/?p=216324", "src": "cuinsight.com"},
+    {"date": "recent", "kind": "Growth", "text": "Passed $4 billion in assets; now serves members across 25 Florida counties (exact date not given, say \"recently\")", "url": "https://www.mainstreetdailynews.com/business/campus-usa-surpasses-4-billion-assets", "src": "mainstreetdailynews.com"},
+    {"date": "2025-10-09", "kind": "New location", "text": "Opened the Leesburg Service Center (32612 Vista Ave), moving into Lake County; just outside 12 months, use as a growth sign", "url": "https://campuscu.com/grand-opening", "src": "campuscu.com"}
+  ],
+  "Coastal": [
+    {"date": "2026-01-14", "kind": "Acquisition", "text": "Coastal (formerly Coastal Cloud) completed its acquisition by Tata Consultancy Services, a $700M all-cash deal announced in December 2025; HR and payroll are often folded into the buyer's systems after a deal like this", "url": "https://pulse2.com/coastal-joins-tata-consultancy-services-to-expand-salesforce-led-transformation-work-globally/amp/", "src": "pulse2.com"}
+  ],
+  "Frontline Performance Group": [
+    {"date": "2026-07", "kind": "Partnership", "text": "Shiji is building FPG's CheckMax AI coaching into its Infrasys POS for hotel restaurants", "url": "https://www.shijigroup.com/press-news/shiji-and-fpg-transform-hospitality-dining-with-ai-powered-performance-integration-between-infrasys-pos-and-checkmax", "src": "shijigroup.com"}
+  ],
+  "Entec Polymers": [
+    {"date": "2026", "kind": "Award", "text": "Purchasing manager Maggie Kelley named a Plastics News 2026 Women Breaking the Mold honoree", "url": "https://www.plasticsnews.com/special-reports/women-breaking-mold-award/2026/pn-2026-wbtm-kelley/", "src": "plasticsnews.com"}
+  ],
+  "Park Square Homes": [
+    {"date": "2026", "kind": "Growth", "text": "Selling its newest community, Highfield at Twisted Oaks in Wildwood near The Villages (about 130 homes from the low $300Ks)", "url": "https://www.parksquarehomes.com/new-homes/fl/wildwood/highfield-at-twisted-oaks/", "src": "parksquarehomes.com"}
+  ],
+  "Quality Labor Management": [
+    {"date": "2026", "kind": "Award", "text": "Earned ClearlyRated's 2026 Best of Staffing Client award (client-satisfaction rating)", "url": "https://www.clearlyrated.com/staffing/fl-usa/sanford-fl", "src": "clearlyrated.com"}
+  ],
+  "InterMed": [],
+  "Orthomerica": [],
+  "Ocala Eye": []
+}
