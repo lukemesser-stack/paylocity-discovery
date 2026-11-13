@@ -541,7 +541,7 @@
   .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(580px, 100vw); z-index: 40; display: flex; flex-direction: column;
     background: var(--surface); box-shadow: -14px 0 40px rgba(19,34,27,.14); transform: translateX(105%); transition: transform .2s ease; visibility: hidden; }
   body.drawer-open .drawer { transform: none; visibility: visible; }
-  .scrim { position: fixed; inset: 0; background: rgba(19,34,27,.18); z-index: 39; display: none; }
+  .scrim { position: fixed; inset: 0; background: rgba(19,34,27,.08); z-index: 39; display: none; pointer-events: none; }   /* a light tint only: clicks pass through to the cards, so clicking another card switches the panel */
   .d-head { padding: max(14px, env(safe-area-inset-top, 0px)) 18px 0; border-bottom: 1px solid var(--border); }
   .d-top { display: flex; align-items: center; gap: 6px; }
   .d-name { font-size: 18px; font-weight: 700; flex: 1 1 auto; min-width: 0; line-height: 1.25; }
@@ -2167,6 +2167,12 @@ function stepDrawer(dir) {
   if (n) openDrawer(n.company);
 }
 function closeDrawer() { ui.drawer = null; renderTable(); }
+// With the panel open, a click on empty page background closes it; clicks on cards switch it, and controls work as usual
+document.addEventListener('click', e => {
+  if (!ui.drawer) return;
+  if (e.target.closest('#drawer, .acct, button, a, input, select, textarea, label, summary, details, .fpanel, .bar, .views, .tags, .hdr, #importPanel, #removedPanel')) return;
+  closeDrawer();
+});
 
 function detailParts(a) {
   const p = a.priority, b = p.breakdown;
