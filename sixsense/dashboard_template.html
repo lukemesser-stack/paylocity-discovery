@@ -3222,7 +3222,9 @@ async function ziCall(tool, input) {
   const res = await ziState.mcp.callTool(ZI_SERVER, tool,
     { ...input, userIntent: 'Refresh intent signals for accounts on the owner\'s 6sense call-prioritization dashboard.' }, { cache: false });
   let p = res && res.payload;
-  if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { /* leave as text */ } }
+  if (typeof p === 'string') {   // some answers put a line of text before the JSON
+    try { p = JSON.parse(p); } catch (e) { const i = p.indexOf('{'); if (i > 0) { try { p = JSON.parse(p.slice(i)); } catch (e2) { /* leave as text */ } } }
+  }
   return p || {};
 }
 
@@ -3519,7 +3521,8 @@ async function ziTechCatalog(cat) {
   const key = 'tn_hrtech_' + cat.key;
   try { const c = JSON.parse(localStorage.getItem(key) || 'null'); if (c && c.on && daysBetween(TODAY, c.on) <= HR_TECH_STALE_DAYS && c.items.length) return c.items; } catch (e) { /* no cache */ }
   let items = [];
-  for (const extra of [{ subCategory: cat.sub }, { parentCategory: 'Human Resources', subCategory: cat.sub }]) {
+  // ZoomInfo needs the parent category plus the category name (checked against the live connector, 11/13/2026)
+  for (const extra of [{ parentCategory: 'Human Resources', category: cat.sub }, { parentCategory: 'Human Resources', subCategory: cat.sub }]) {
     items = ziLookupItems(await ziCall(ziState.tools.lookup, { fields: [{ fieldName: 'tech-products' }], ...extra }));
     if (items.length) break;
   }
