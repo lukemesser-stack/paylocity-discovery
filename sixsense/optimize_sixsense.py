@@ -129,9 +129,9 @@ def merge_into(dst, src):
         dst["book_ok_on"] = src["book_ok_on"]
     if src.get("dup_ok"):   # possible duplicates the owner cleared
         dst["dup_ok"] = sorted(set(dst.get("dup_ok", [])) | set(src["dup_ok"]))
-    if src.get("zid"):   # ZoomInfo weekly digest entries, one per digest date
-        have = {e.get("date") for e in dst.get("zid", [])}
-        dst["zid"] = dst.get("zid", []) + [e for e in src["zid"] if e.get("date") not in have]
+    if src.get("zid"):   # ZoomInfo weekly digest entries (one per digest date) and breaking alerts (one per event)
+        have = {zid_key(e) for e in dst.get("zid", [])}
+        dst["zid"] = dst.get("zid", []) + [e for e in src["zid"] if zid_key(e) not in have]
     if src.get("purged_on"): dst["purged_on"] = src["purged_on"]   # deleted for good: only a marker is kept
     for f in ("removed_at", "restored_at"):   # owner removed / restored the account on the page
         if (src.get(f) or "") > (dst.get(f) or ""):
@@ -236,6 +236,13 @@ THEMES = [r"\badp\b|automatic data processing|paychex|ukg|ultimate software|payc
           r"attendance|time clock|timekeeping|\bhours\b|scheduling",
           r"asset",
           r"airbase|corporate card|credit card|expense|spend management"]
+
+
+def zid_key(e):
+    """Same as the dashboard's zidKey: digests are keyed by date, breaking alerts by date + their line."""
+    if e.get("src") == "alert":
+        return "alert|%s|%s" % (e.get("date"), ((e.get("items") or [{}])[0] or {}).get("text", ""))
+    return str(e.get("date"))
 
 
 def digest_kind(text):

@@ -87,7 +87,7 @@ for fp in sorted(glob.glob(S + '/digests/*.msg')):
         a = bydom.get(d)
         if not a: counts['digest account not matched'] += 1; continue
         seen = set(); items = [it for it in c['items'] if not (it['text'] in seen or seen.add(it['text']))]
-        if any(e['date'] == date for e in a.get('zid', [])): counts['digest week already loaded'] += 1; continue
+        if any(e['date'] == date and e.get('src') != 'alert' for e in a.get('zid', [])): counts['digest week already loaded'] += 1; continue
         a.setdefault('zid', []).append({'date': date, 'cat': c['cat'], 'items': items})
         counts['digest entries'] += 1
 json.dump(D, open(S + '/blended.json', 'w'), ensure_ascii=False)
