@@ -646,7 +646,7 @@
     <input class="search" id="q" type="search" placeholder="Search accounts, people, notes…" autocomplete="off">
     <button class="btn" id="btnFilters" aria-expanded="false">Filters</button>
     <select id="fSort" aria-label="Sort">
-      <option value="score">Sort: Score</option><option value="last">Sort: Last activity</option><option value="size">Sort: Company size</option><option value="company">Sort: Company A–Z</option>
+      <option value="score">Sort: Score</option><option value="last">Sort: Last activity</option><option value="size">Sort: Size, largest first</option><option value="size-asc">Sort: Size, smallest first</option><option value="company">Sort: Company A–Z</option>
     </select>
     <span class="count num" id="count"></span>
   </div>
@@ -1441,7 +1441,7 @@ function sortList(list) {
   const key = {
     score: a => a.priority.score,
     company: a => a.company.toLowerCase(),
-    size: a => empCount(a),
+    size: a => empCount(a) || (ui.dir > 0 ? Infinity : -1),   // no employee count: last in either direction
     stage: a => (STAGE_RANK[a.stage.toLowerCase()] || 0) * 10 + (FIT_RANK[a.fit.toLowerCase()] || 0),
     last: a => a.priority.last_activity || '',
     action: a => a.priority.action,
@@ -1546,7 +1546,7 @@ function renderTable() {
   el.innerHTML = list.map(acctHtml).join('') ||
     `<div class="empty">Nothing in ${esc(v)}${filterCount() ? ' with these filters' : ''}. ${filterCount() ? '<button class="btn sm" data-clearall>Clear filters</button>' : ui.view !== 'all' ? '<button class="btn sm" data-view="all">See all accounts</button>' : ''}</div>`;
   document.getElementById('count').textContent = `${list.length} account${list.length === 1 ? '' : 's'}`;
-  document.getElementById('fSort').value = ['score', 'last', 'size', 'company'].includes(ui.sort) ? ui.sort : 'score';
+  document.getElementById('fSort').value = ui.sort === 'size' && ui.dir > 0 ? 'size-asc' : ['score', 'last', 'size', 'company'].includes(ui.sort) ? ui.sort : 'score';
   document.querySelectorAll('.chip[data-tier]').forEach(c => c.classList.toggle('on', ui.tiers.has(c.dataset.tier)));
   renderSignalChips();
   document.getElementById('fHideWorked').classList.toggle('on', ui.hideWorked);
@@ -2457,7 +2457,8 @@ document.addEventListener('click', e => {
   if (m && m.open && (!m.contains(e.target) || e.target.closest('.mi'))) m.open = false;
 });
 document.getElementById('fSort').addEventListener('change', e => {
-  ui.sort = e.target.value; ui.dir = ui.sort === 'company' ? 1 : -1; savePrefs(); renderTable();
+  const v = e.target.value;
+  ui.sort = v === 'size-asc' ? 'size' : v; ui.dir = v === 'company' || v === 'size-asc' ? 1 : -1; savePrefs(); renderTable();
 });
 
 // Remove account (owner / editors only): two clicks, then hidden for everyone. Restore from the list at the bottom.
