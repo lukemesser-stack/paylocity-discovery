@@ -2523,7 +2523,7 @@ const SETUP_PROMPT = `Publish the attached file Target_Now_Starter.html as a new
 - Title: Target Now
 - Icon: chart
 - Capabilities (pass exactly this):
-{"artifact":{},"downloads":{},"user":{},"mcp":{"servers":[{"server":"ZoomInfo","tools":["search_companies","enrich_company_signals","search_contacts","enrich_companies"]},{"server":"BenefitFlow","tools":["search_employers","search_contacts","get_contact"]}]}}
+{"artifact":{},"downloads":{},"user":{},"sample":{},"mcp":{"servers":[{"server":"ZoomInfo","tools":["search_companies","enrich_company_signals","search_contacts","enrich_companies","lookup"]},{"server":"BenefitFlow","tools":["search_employers","search_contacts","get_contact"]}]}}
 When it is published, give me the link.`;
 function renderWelcome() {
   const el = document.getElementById('welcome');
@@ -2536,7 +2536,7 @@ function renderWelcome() {
       <ol>
         <li><b>Connect ZoomInfo and BenefitFlow</b> in claude.ai → Settings → Connectors (skip any you already have). Keep their names as <b>ZoomInfo</b> and <b>BenefitFlow</b>.</li>
         <li><b>Open Claude Code</b> at claude.ai/code and start a new session (no repository needed), <b>attach this file</b> (Target_Now_Starter.html) and <b>paste the prompt below</b>. Approve the publish when Claude asks. <button class="btn sm" id="btnCopyPrompt">Copy prompt</button></li>
-        <li><b>Open the link Claude gives you.</b> That's your dashboard. Click <b>⬆ Add emails</b> and drop in your 6sense alert emails (drag them from Outlook to your desktop first; they save as .msg files), then click <b>✓ Apply</b>.</li>
+        <li><b>Open the link Claude gives you.</b> That's your dashboard. Click <b>⬆ Import</b> (top right) and drop in your 6sense alert emails (drag them from Outlook to your desktop first; they save as .msg files), then click <b>✓ Apply</b>. ZoomInfo weekly digests and ZoomInfo 🚨 alert emails go in the same way.</li>
         <li><b>Share with your SDR:</b> on the dashboard page, open <b>Share</b> → anyone with the link (view only), and send them the link.</li>
       </ol>
       <textarea class="prompt-box" id="promptBox" readonly>${esc(SETUP_PROMPT)}</textarea>
@@ -2546,7 +2546,7 @@ function renderWelcome() {
   } else {
     el.innerHTML = `<h3>Welcome to Target Now</h3>
       <ol>
-        <li><b>Add your 6sense emails:</b> drag the alert emails from Outlook to your desktop (they save as .msg files), drop them in the box below, then click <b>✓ Apply</b>. Add each day's email the same way.</li>
+        <li><b>Add your 6sense emails:</b> drag the alert emails from Outlook to your desktop (they save as .msg files), drop them in the box below (or click <b>⬆ Import</b>, top right), then click <b>✓ Apply</b>. Add each day's email the same way, plus ZoomInfo weekly digests and ZoomInfo 🚨 alert emails.</li>
         <li><b>ZoomInfo and BenefitFlow fill in by themselves</b> for every account in the emails you apply. The first time, Claude asks you to allow each one for this page: choose Allow. Only free lookups run on their own; anything that costs credits asks you first.</li>
         <li><b>Share with your SDR:</b> Share → anyone with the link (view only). They see your ranking, notes and revealed contacts but can't change anything.</li>
       </ol>
@@ -3309,7 +3309,7 @@ function parseZiAlert(raw) {
   return out;
 }
 // Which dashboard account an alert is about: logo domain, then the usual name match, then the name squeezed together
-// against company names and website names ("Visit Orlando" = "VisitOrlando" = visitorlando.com)
+// against company names and website names ("Acme Foods" = "AcmeFoods" = acmefoods.com)
 function ziAlertAccount(al) {
   const a = zidAccount({ name: al.name, domain: al.domain });
   if (a) return a;
