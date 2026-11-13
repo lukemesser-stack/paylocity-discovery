@@ -191,3 +191,10 @@ Change the weights, competitor list, page patterns and aliases in the config blo
 - **Owner and editors** can add an item by hand (`+ Add a news item`: date, kind, text, link) or remove one (✕). The SDR sees the list only.
 - First batch (11/13/2026): the 9 Call today accounts. CAMPUS USA's three items came from the owner's own research chat (CEO succession 10/6/2026, $4B assets, Leesburg branch 10/9/2025); Coastal (TCS acquisition closed 1/14/2026), Frontline Performance Group (Shiji CheckMax integration, July 2026), Entec (Plastics News 2026 honoree), Park Square Homes (Highfield at Twisted Oaks), Quality Labor Management (2026 ClearlyRated award). InterMed, Orthomerica and Ocala Eye: nothing dated recent enough (InterMed's PE deal was January 2023, its CEO hire May 2024).
 
+### News refresh queue (added 2026-11-13)
+
+- **↻ Request news refresh** (owner and editors) in each account's In the news block sets `web_news.requested_on` (and `req_changed`, so the request survives a merge); **Cancel** removes it.
+- **⚙ Owner → 🔎 In the news: refresh queue (N)** shows the queue (`newsQueue()`): accounts with an open request, plus **Call today** accounts never searched or not searched in 14 days (`NEWS_STALE_DAYS`). So every account that moves into Call today after a 6sense or ZoomInfo import joins the queue on its own. **Copy request** puts a ready-to-paste line for a Claude session on the clipboard.
+- The page itself never searches the web (no web access, and no AI use for this). A Claude session runs the searches: `python3 tools/news_queue.py <live.html>` prints the same queue, the findings go in `data/web_news_<date>.json`, and `tools/add_web_news.py` loads them (which clears the requests, since `on` is then newer).
+- Second batch (11/13/2026): 40 Top 50 accounts, saved in `data/web_news_2026-11-13_top50.json`; 23 had dated, linked news. 49 accounts have now been searched, and 29 have news.
+

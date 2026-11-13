@@ -618,6 +618,7 @@
         <button class="mi hidden" id="btnZiTech" title="Read each account's HR systems, other HR software and applicant tracking systems from ZoomInfo's technology data. Free searches only.">↻ ZoomInfo: HR tech</button>
         <button class="mi hidden" id="btnBf" title="Refresh BenefitFlow for Call today, This week and Heating up accounts. Free searches only.">↻ BenefitFlow</button>
         <button class="mi hidden" id="btnBfAll" title="Pull BenefitFlow (intent level, renewal, broker, trigger signals, buyers) for every account not checked in 30 days, up to 200 per click. Free searches only.">↻ BenefitFlow: all accounts</button>
+        <button class="mi hidden" id="btnNewsQ" title="Accounts waiting for a fresh web news search: ones you requested, plus Call today accounts not searched in 14 days">🔎 In the news: refresh queue</button>
         <button class="mi" id="btnSave" title="Download everything (worked marks, notes, contacts) as a JSON backup">💾 Save JSON backup</button>
       </div>
     </details>
@@ -628,6 +629,13 @@
 <div class="wrap">
 
   <section id="welcome" class="panel welcome hidden" aria-label="Getting started"></section>
+
+  <section id="newsQPanel" class="panel hidden" aria-label="News refresh queue">
+    <div class="dlabel">🔎 In the news: refresh queue</div>
+    <div class="muted" id="newsQInfo"></div>
+    <textarea class="prompt-box" id="newsQText" readonly style="min-height:90px"></textarea>
+    <div class="panel-actions"><button class="btn primary" id="btnNewsQCopy">Copy request</button><button class="btn" id="btnNewsQClose">Close</button></div>
+  </section>
 
   <section id="importPanel" class="panel hidden" aria-label="Import">
     <div class="drop" id="drop" tabindex="0" role="button">
@@ -1009,6 +1017,23 @@ const EXEC_SCOOP = /executive move|new hire|promotion|management move|left compa
 // Web news triggers: found by web searches outside ZoomInfo and BenefitFlow (loaded by Claude, or added here by the owner).
 // a.web_news = { on, items: [{ date, kind, text, url, src }] }; newest 3 shown.
 const WEB_NEWS_MAX = 3;
+const NEWS_STALE_DAYS = 14;   // Call today accounts get a fresh news search when the last one is older than this
+function newsRequested(a) { const w = a.web_news || {}; return !!w.requested_on && w.requested_on > (w.on || ''); }
+function newsWhen(w) { return [w && w.on, w && w.requested_on].filter(Boolean).sort().pop() || ''; }
+// The refresh queue: accounts you asked for, plus Call today accounts never searched or not searched in NEWS_STALE_DAYS days
+function newsQueue() {
+  return accounts.filter(a => !isRemoved(a) && (newsRequested(a) || (tierLetter(a) === 'A' &&
+    !(a.web_news && isISO(String(a.web_news.on || '').slice(0, 10)) && daysBetween(TODAY, String(a.web_news.on).slice(0, 10)) <= NEWS_STALE_DAYS))));
+}
+function newsQueueText() {
+  const q = newsQueue();
+  return q.length ? `Run the "In the news" refresh on the Target Now dashboard for ${q.length === 1 ? 'this account' : `these ${q.length} accounts`}: ` + q.map(a => a.company + (a.website ? ` (${domainOf(a.website)})` : '')).join('; ') + '.' : '';
+}
+function renderNewsQueueBtn() {
+  const b = document.getElementById('btnNewsQ'); if (!b) return;
+  b.classList.toggle('hidden', share.mode !== 'writer');
+  b.textContent = `🔎 In the news: refresh queue (${newsQueue().length})`;
+}
 const WEB_NEWS_KINDS = ['Leadership change', 'New location', 'Growth', 'Award', 'Acquisition', 'Funding', 'Hiring', 'Partnership', 'Other'];
 function webNews(a) {
   const it = ((a.web_news && a.web_news.items) || []).filter(n => n && n.text);
@@ -1028,10 +1053,25 @@ function webNewsHtml(a) {
       <div class="soc-add" style="flex-wrap:wrap"><input class="search" type="date" data-wn-date style="flex:0 0 150px"><select data-wn-kind>${WEB_NEWS_KINDS.map(k => `<option>${esc(k)}</option>`).join('')}</select>
       <input class="search" data-wn-text placeholder="What happened (e.g. New CFO: Jane Smith)" style="flex:1 1 220px"><input class="search" data-wn-url placeholder="Link (https://…)" style="flex:1 1 220px">
       <button class="btn sm" data-wn-add="${esc(a.company)}">Add</button></div></details>` : '';
-  return `<div class="dblock"><div class="dlabel">🔎 In the news · web search${a.web_news && a.web_news.on ? ' · checked ' + fmtDate(String(a.web_news.on).slice(0, 10)) : ''}</div>
-    ${rows || '<div class="muted">No news found yet.</div>'}${form}</div>`;
+  const req = newsRequested(a);
+  const reqHtml = own ? `<div style="margin-top:6px">${req
+      ? `<span class="muted">↻ Refresh requested ${fmtDate(String(a.web_news.requested_on).slice(0, 10))}: Claude picks it up on the next news run.</span> <button class="btn sm" data-wn-req="${esc(a.company)}" data-cancel="1">Cancel</button>`
+      : `<button class="btn sm" data-wn-req="${esc(a.company)}" title="Queue this account for a fresh web news search">↻ Request news refresh</button>`}</div>` : '';
+  return `<div class="dblock"><div class="dlabel">🔎 In the news · web search${a.web_news && a.web_news.on ? ' · checked ' + fmtDate(String(a.web_news.on).slice(0, 10)) : ' · not checked yet'}</div>
+    ${rows || `<div class="muted">${a.web_news && a.web_news.on ? 'No news found in the last 12 months.' : 'Not searched yet.'}</div>`}${reqHtml}${form}</div>`;
 }
 document.addEventListener('click', e => {
+  const rq = e.target.closest('[data-wn-req]');
+  if (rq && share.mode !== 'reader') {
+    e.stopPropagation();
+    const a = byName(rq.dataset.wnReq); if (!a) return;
+    a.web_news = { items: [], ...(a.web_news || {}) };
+    if (rq.dataset.cancel) delete a.web_news.requested_on; else a.web_news.requested_on = new Date().toISOString();
+    a.web_news.req_changed = new Date().toISOString();
+    persist(); render();
+    setSaveState(share.mode === 'writer' ? '' : 'ok', rq.dataset.cancel ? `${a.company}: news refresh cancelled` : `${a.company}: news refresh requested. It's in the ⚙ Owner → In the news queue.`);
+    return;
+  }
   const add = e.target.closest('[data-wn-add]'), del = e.target.closest('[data-wn-del]');
   if (!(add || del) || share.mode === 'reader') return;
   e.stopPropagation();
@@ -1354,7 +1394,8 @@ function mergeInto(ex, inc, mode) {
   if (inc.ai_openers && (inc.ai_openers.at || '') > ((ex.ai_openers && ex.ai_openers.at) || '')) ex.ai_openers = inc.ai_openers;
   if ((inc.social_manual_on || '') > (ex.social_manual_on || '')) { ex.social_manual = inc.social_manual; ex.social_manual_on = inc.social_manual_on; }
   if (inc.web_social && (inc.web_social.on || '') >= ((ex.web_social && ex.web_social.on) || '')) ex.web_social = inc.web_social;
-  if (inc.web_news && ((inc.web_news.on || '') > ((ex.web_news && ex.web_news.on) || ''))) ex.web_news = inc.web_news;
+  const wnT = w => [w && w.on, w && w.req_changed].filter(Boolean).sort().pop() || '';
+  if (inc.web_news && wnT(inc.web_news) > wnT(ex.web_news)) ex.web_news = inc.web_news;
   if ((inc.emp_manual_on || '') > (ex.emp_manual_on || '')) { ex.emp_manual = inc.emp_manual || null; ex.emp_manual_on = inc.emp_manual_on; }
   if ((inc.vendor_manual_on || '') > (ex.vendor_manual_on || '')) { ex.vendor_manual = inc.vendor_manual || null; ex.vendor_manual_on = inc.vendor_manual_on; }
   if (inc.vendor_list && (inc.vendor_list_on || '') >= (ex.vendor_list_on || '')) { ex.vendor_list = inc.vendor_list; ex.vendor_list_on = inc.vendor_list_on; }
@@ -1590,6 +1631,7 @@ function spark(a) {
 }
 
 function renderTable() {
+  try { renderNewsQueueBtn(); } catch (e) { /* menu not ready */ }
   bookLoaded = allAccounts().some(a => a.book);
   const list = sortList(filtered());
   const el = document.getElementById('list');
@@ -3639,6 +3681,21 @@ async function ziHrTechRun() {
   render();
 }
 document.getElementById('btnZiTech').addEventListener('click', () => ziHrTechRun());
+// The page can't search the web itself: the queue is a hand-off. Copy the request into a Claude session (or the daily news task picks it up).
+document.getElementById('btnNewsQ').addEventListener('click', () => {
+  const q = newsQueue(), p = document.getElementById('newsQPanel');
+  document.getElementById('newsQInfo').textContent = q.length
+    ? `${q.length} account${q.length === 1 ? '' : 's'} waiting: ${q.filter(newsRequested).length} you requested, ${q.filter(a => !newsRequested(a)).length} in Call today not searched in ${NEWS_STALE_DAYS} days. Copy this into a Claude session to run the searches; results show up here with dates and links.`
+    : 'Nothing waiting. Every Call today account was searched in the last 14 days and there are no open requests.';
+  document.getElementById('newsQText').value = newsQueueText();
+  p.classList.remove('hidden'); p.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+document.getElementById('btnNewsQCopy').addEventListener('click', async () => {
+  const ta = document.getElementById('newsQText');
+  try { await navigator.clipboard.writeText(ta.value); setSaveState('ok', 'Copied. Paste it into a Claude session.'); }
+  catch (e) { ta.select(); setSaveState('ok', 'Selected: press Ctrl+C (Cmd+C on a Mac) to copy.'); }
+});
+document.getElementById('btnNewsQClose').addEventListener('click', () => document.getElementById('newsQPanel').classList.add('hidden'));
 
 async function ziRun(list, { allowCredits = false, single = null } = {}) {
   if (ziState.busy || !ziCanRefresh()) return;
