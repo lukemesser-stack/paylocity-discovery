@@ -146,6 +146,7 @@ Re-running is safe: the output is the same each time, and a `.bak` copy of the p
 | Signal volume (log-scaled) | 5 | |
 | Competitor research | 5 | Shows they're shopping, so there's a chance to displace a competitor |
 | Known contact / form fill | +2 | |
+| On our site (added 2026-11-14) | +4 / +2 | A visit to our own website in the last 7 days (+4) or 30 days (+2). Off-site keyword research doesn't count here, so a direct visit scores a little higher. Shown as **On our site** in the score breakdown. |
 | ZoomInfo + BenefitFlow boost | up to +20 | Weekly-digest buying signals (competitor 8, site visit 8, payroll/benefits/HR research 6, other research 4, new leader 5, M&A 4, hiring surge 3; full for 7 days, half to 14, quarter to 30; leaders/M&A/hiring last longer), ZoomInfo HR intent 80+ in 30 days +3, BenefitFlow renewal ≤90 days +5 / ≤180 +3, broker or carrier change in 6 months +3 |
 
 Tiers: **A ≥65 Call today · B ≥45 This week · C ≥28 Nurture · D Monitor**. An account with no activity for 60+ days is capped at C. A new ZoomInfo digest buying signal in the last 14 days keeps an account in This week at least, and turns a P3/P4 next step into "Follow up on ZoomInfo signal".
@@ -214,3 +215,9 @@ Change the weights, competitor list, page patterns and aliases in the config blo
 - `peer_kit/` was rebuilt on request for a new AE starting from a blank slate: `Target_Now_Starter.html` (current dashboard, no accounts), a new `Target_Now_Setup_Guide.docx` written for a first-time user (setup, daily routine, page tour, imports incl. ZoomInfo 🚨 alerts, score, credits, backups, troubleshooting, and a standing-instructions block for asking Claude to change the dashboard or run the In the news refresh), `READ_ME_FIRST.txt`, zipped as `Target_Now_Peer_Kit.zip`.
 - The starter's built-in setup prompt (`SETUP_PROMPT`) now passes `"sample":{}` (✨ AI openers) and ZoomInfo `lookup` (HR tech), matching the live dashboard. The getting-started steps point to **⬆ Import**. These only show on an empty dashboard, so the live page is unaffected.
 - Checked: none of the owner's 294 account names appear in the starter; it loads with no errors both as a plain file (setup steps + Copy prompt) and as a fresh owner page.
+
+## 2026-11-14: Website visits score a little higher
+
+- New score part **On our site** (`web` in the breakdown, max 4): +4 when someone was on our website in the last 7 days, +2 within 30 days, from the page-visit dates in the 6sense emails. Keyword research elsewhere earns nothing here. Same in Python (`score`) and JS (`score`); `parity.js`: 294 accounts, 0 differences.
+- Only 5 accounts had a site visit in the last 30 days on 11/14, so the change is small: Frontline Performance Group 85→89, InterMed 76→80 (now above Entec Polymers 77), Ocala Eye 67→69, Real Life Christian Church 59→61, Park Place Behavioral Health Care 43→45 (Nurture → This week).
+- Background (6sense's own docs): their intent score predicts an opportunity in the next 90 days from web visits, keyword research on their B2B network, third-party intent and CRM/marketing activity; weights aren't published. Buying stage is their summary of all of it. Discussed but not done yet: fading demo/contact/pricing visits after 90 days, counting keyword-only days for less, weighting 6sense stage more, adding Airbase to the competitor list.

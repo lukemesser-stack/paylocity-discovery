@@ -1014,9 +1014,13 @@ function score(a) {
   const volume = Math.min(5, Math.floor(Math.log2(1 + a.signal_count)));
   const comp = a.competitor_keywords.length ? 5 : 0;
   const known = (a.contacts.length || a.form_fills.length) ? 2 : 0;
+  // Website visit (4): someone was on our own site recently, a little stronger than off-site keyword research
+  const webAges = a.decoded_urls.filter(u => isISO(u.date) && u.date <= TODAY).map(u => daysBetween(TODAY, u.date));
+  const webAge = webAges.length ? Math.min(...webAges) : 999;
+  const web = webAge <= 7 ? 4 : webAge <= 30 ? 2 : 0;
 
   const boost = signalBoost(a).total;
-  const total = Math.min(100, recency + momentum + stage + fit + pages + volume + comp + known + boost);
+  const total = Math.min(100, recency + momentum + stage + fit + pages + volume + comp + known + web + boost);
   let tier = total >= 65 ? 'A' : total >= 45 ? 'B' : total >= 28 ? 'C' : 'D';
   if (since > 60 && (tier === 'A' || tier === 'B')) tier = 'C';
   const floored = freshDigestSignal(a) && (tier === 'C' || tier === 'D');
@@ -1034,7 +1038,7 @@ function score(a) {
     active_days_prev_30d: d60,
     trend: d30 > d60 ? 'heating up' : d30 < d60 ? 'cooling' : 'steady',
     hot_pages: uniqSorted([...hand, ...ad].map(u => pagePath(u.decoded || u.raw))),
-    breakdown: { recency, momentum, stage, fit, pages, volume, competitor: comp, known_contact: known, boost },
+    breakdown: { recency, momentum, stage, fit, pages, volume, competitor: comp, known_contact: known, web, boost },
     scored_on: TODAY,
   };
 }
@@ -2409,8 +2413,8 @@ document.addEventListener('click', e => {
 
 function detailParts(a) {
   const p = a.priority, b = p.breakdown;
-  const max = { recency: 25, momentum: 15, stage: 20, fit: 15, pages: 15, volume: 5, competitor: 5, known_contact: 2, boost: 20 };
-  const label = { recency: 'Recency', momentum: 'Momentum', stage: 'Stage', fit: 'Fit', pages: 'Pages', volume: 'Volume', competitor: 'Competitor', known_contact: 'Known contact', boost: 'ZoomInfo + BenefitFlow' };
+  const max = { recency: 25, momentum: 15, stage: 20, fit: 15, pages: 15, volume: 5, competitor: 5, known_contact: 2, web: 4, boost: 20 };
+  const label = { recency: 'Recency', momentum: 'Momentum', stage: 'Stage', fit: 'Fit', pages: 'Pages', volume: 'Volume', competitor: 'Competitor', known_contact: 'Known contact', web: 'On our site', boost: 'ZoomInfo + BenefitFlow' };
   // Display only: shows the points the score already gave, it never changes them.
   const keys = Object.keys(max);
   const frac = k => Math.min(1, (b[k] || 0) / max[k]);

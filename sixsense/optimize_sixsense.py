@@ -357,9 +357,13 @@ def score(a, today):
     comp = 5 if a["competitor_keywords"] else 0
     # Penalties: we already have a known person to call -> small bump instead
     known = 2 if a["contacts"] or a["form_fills"] else 0
+    # 9. Website visit (4): someone was on our own site recently, a little stronger than off-site keyword research
+    web_ages = [(today - d).days for d in (parse_d(u.get("date")) for u in a["decoded_urls"]) if d and d <= today]
+    web_age = min(web_ages) if web_ages else 999
+    web = 4 if web_age <= 7 else 2 if web_age <= 30 else 0
 
     boost = signal_boost(a, today)
-    total = min(100, recency + momentum + stage + fit + pages + volume + comp + known + boost)
+    total = min(100, recency + momentum + stage + fit + pages + volume + comp + known + web + boost)
     tier = "A - Call today" if total >= 65 else "B - This week" if total >= 45 else "C - Nurture" if total >= 28 else "D - Monitor"
     if since > 60 and tier[0] in "AB":  # gone quiet: good account, wrong moment
         tier = "C - Nurture"
@@ -381,7 +385,7 @@ def score(a, today):
         "trend": "heating up" if d30 > d60 else "cooling" if d30 < d60 else "steady",
         "hot_pages": sorted({page_path(u.get("decoded")) for u in hot}),
         "breakdown": {"recency": recency, "momentum": momentum, "stage": stage, "fit": fit,
-                      "pages": pages, "volume": volume, "competitor": comp, "known_contact": known, "boost": boost},
+                      "pages": pages, "volume": volume, "competitor": comp, "known_contact": known, "web": web, "boost": boost},
         "scored_on": today.isoformat(),
     }
 
